@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -14,12 +14,14 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
-} from "@mui/material";
-import MainCard from "ui-component/cards/MainCard";
-import { gridSpacing } from "store/constant";
-import api, { userDetails } from "../../../utils/apiService";
-import BackButton from "layout/MainLayout/Button/BackButton";
+  TableRow,
+  Autocomplete
+} from '@mui/material';
+import MainCard from 'ui-component/cards/MainCard';
+import { gridSpacing } from 'store/constant';
+import api, { userDetails } from '../../../utils/apiService';
+import BackButton from 'layout/MainLayout/Button/BackButton';
+import { toast } from 'react-hot-toast';
 
 const defaultActions = ["add", "edit", "view", "delete"];
 
@@ -29,23 +31,37 @@ const RoleEdit = () => {
   const [role, setRole] = useState({
     id: null,
     name: "",
-    permissions: []
+    permissions: [],
+    schoolId: null,
+    schoolName: ""
   });
   const [entities, setEntities] = useState([]);
-
-  // Fetch entities and role data if editing
+  const [schools, setSchools] = useState([]);
+  const accountId = userDetails.getAccountId();
+  
+  // Fetch entities, schools, and role data if editing
   useEffect(() => {
-    // Fetch all entities (API should return all possible entities)
-    api.get(`api/features/getAllByAccountId/${userDetails.getAccountId()}`).then((res) => {
-      setEntities(res.data || []);
-    });
+    const fetchData = async () => {
+      try {
+        const [entitiesRes, schoolsRes] = await Promise.all([
+          api.get(`api/features/getAllByAccountId/${accountId}`),
+          api.get(`api/schoolBranches/getAllBy/${accountId}`)
+        ]);
 
-    if (id) {
-      api.get(`api/roles/getById?id=${id}`).then((res) => {
-        setRole(res.data);
-      });
-    }
-  }, [id]);
+        setEntities(entitiesRes.data || []);
+        setSchools(schoolsRes.data || []);
+
+        if (id) {
+          const roleRes = await api.get(`api/roles/getById?id=${id}`);
+          setRole(roleRes.data);
+        }
+      } catch (err) {
+        toast.error("Failed to fetch initial data.");
+        console.error(err);
+      }
+    };
+    fetchData();
+  }, [id, accountId]);
 
   // Handle role name change
   const handleNameChange = (e) => {
@@ -53,16 +69,15 @@ const RoleEdit = () => {
   };
 
   // Handle permission change
-  const handlePermissionChange = (name, action) => (e) => {
+  const handlePermissionChange = (entityName, action) => (e) => {
     setRole((prevRole) => {
       const permissions = [...prevRole.permissions];
-      let permIdx = permissions.findIndex((p) => p.name === name);
+      let permIdx = permissions.findIndex((p) => p.entityName === entityName);
       if (permIdx === -1) {
-        // Add new permission for this entity
         permissions.push({
           id: null,
-          name: entities.find((ent) => ent.name === name)?.name || "",
-          entityName: entities.find((ent) => ent.name === name)?.name || "",
+          name: entities.find((ent) => ent.name === entityName)?.name || "",
+          entityName: entityName,
           actions: {
             id: null,
             add: false,
@@ -70,7 +85,7 @@ const RoleEdit = () => {
             view: false,
             delete: false
           },
-          accountId: null
+          accountId: accountId
         });
         permIdx = permissions.length - 1;
       }
@@ -86,21 +101,28 @@ const RoleEdit = () => {
   };
 
   // Get checked state for a permission
-  const isChecked = (name, action) => {
-    const perm = role.permissions.find((p) => p.name === name);
+  const isChecked = (entityName, action) => {
+    const perm = role.permissions.find((p) => p.entityName === entityName);
     return perm?.actions?.[action] || false;
   };
 
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    role.accountId = userDetails.getAccountId();
-    if (role.id) {
-      await api.post("api/roles/save", role);
-    } else {
-      await api.post("api/roles/save", role);
+    const payload = { ...role, accountId: accountId };
+    try {
+      if (id) {
+        await api.put("api/roles/update", payload);
+        toast.success("Role updated successfully!");
+      } else {
+        await api.post("api/roles/save", payload);
+        toast.success("Role created successfully!");
+      }
+      navigate("/masters/roles");
+    } catch (err) {
+      toast.error("Failed to save role.");
+      console.error(err);
     }
-    navigate("/masters/roles");
   };
 
   return (
@@ -114,6 +136,18 @@ const RoleEdit = () => {
               onChange={handleNameChange}
               fullWidth
               required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Autocomplete
+              disablePortal
+              options={schools}
+              getOptionLabel={(option) => option.name}
+              value={schools.find(s => s.id === role.schoolId) || null}
+              onChange={(event, newValue) => {
+                setRole({ ...role, schoolId: newValue?.id, schoolName: newValue?.name });
+              }}
+              renderInput={(params) => <TextField {...params} label="School" />}
             />
           </Grid>
         </Grid>
@@ -157,8 +191,7 @@ const RoleEdit = () => {
             {role.id ? "Update" : "Create"}
           </Button>
           <Grid container spacing={gridSpacing}>
-
-          <BackButton BackUrl={"/masters/roles"}/> 
+            <BackButton BackUrl={"/masters/roles"}/> 
           </Grid>
         </Box>
       </form>

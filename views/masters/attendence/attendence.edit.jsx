@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid';
 import Avatar from '@mui/material/Avatar';
-import { Button, Checkbox, Paper, TextField, Alert, Box } from '@mui/material';
+import { Button, Checkbox, Paper, TextField, Alert, Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Autocomplete } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -35,9 +35,6 @@ const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: '#1A2027'
   })
 }));
-
-// Fetcher for API requests
-
 
 const AttendenceEdit = () => {
   const theme = useTheme();
@@ -202,164 +199,162 @@ const AttendenceEdit = () => {
   };
 
   return (
-    <MainCard title="Attendance" secondary={<SecondaryAction link="https://next.material-ui.com/system/palette/" />}>
-      <Grid container spacing={2} sx={{ ml: 2 }}>
-        {/* Validation Error Alert */}
-        {showValidation && Object.keys(validationErrors).length > 0 && (
-          <Grid item xs={12}>
-            <Alert severity="error" sx={{ mb: 2 }}>
-              Please fill all required fields: {Object.values(validationErrors).join(', ')}
-            </Alert>
-          </Grid>
-        )}
-
-        {/* All selection fields in a single responsive row */}
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Autocomplete
-            disablePortal
-            options={schools}
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => {
-              setReqData({ ...reqData, schoolId: value?.id, schoolName: value?.name });
-              if (validationErrors.schoolId) {
-                setValidationErrors({ ...validationErrors, schoolId: null });
-              }
-            }}
-            renderInput={(params) => (
-              <TextField 
-                {...params} 
-                label="School *" 
-                error={showValidation && !!validationErrors.schoolId}
-                helperText={showValidation && validationErrors.schoolId}
-              />
-            )}
-            value={schools.find((st) => st.id === reqData.schoolId) || null}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Autocomplete
-            disablePortal
-            options={classes}
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => {
-              setReqData({ ...reqData, schooldClassId: value?.id, className: value?.name });
-              if (validationErrors.schooldClassId) {
-                setValidationErrors({ ...validationErrors, schooldClassId: null });
-              }
-            }}
-            renderInput={(params) => (
-              <TextField 
-                {...params} 
-                label="Class *" 
-                error={showValidation && !!validationErrors.schooldClassId}
-                helperText={showValidation && validationErrors.schooldClassId}
-              />
-            )}
-            value={classes.find((st) => st.id === reqData.schooldClassId) || null}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Autocomplete
-            disablePortal
-            options={divisions}
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => {
-              setReqData({ ...reqData, divisionId: value?.id, divisionName: value?.name });
-              if (validationErrors.divisionId) {
-                setValidationErrors({ ...validationErrors, divisionId: null });
-              }
-            }}
-            renderInput={(params) => (
-              <TextField 
-                {...params} 
-                label="Division *" 
-                error={showValidation && !!validationErrors.divisionId}
-                helperText={showValidation && validationErrors.divisionId}
-              />
-            )}
-            value={divisions.find((st) => st.id === reqData.divisionId) || null}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Autocomplete
-            disablePortal
-            options={subjects}
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => {
-              setReqData({ ...reqData, subjectId: value?.id, subjectName: value?.name });
-              if (validationErrors.subjectId) {
-                setValidationErrors({ ...validationErrors, subjectId: null });
-              }
-            }}
-            renderInput={(params) => (
-              <TextField 
-                {...params} 
-                label="Subject *" 
-                error={showValidation && !!validationErrors.subjectId}
-                helperText={showValidation && validationErrors.subjectId}
-              />
-            )}
-            value={subjects.find((st) => st.id === reqData.subjectId) || null}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              label="Date *"
-              value={reqData.date ? dayjs(reqData.date) : null}
-              onChange={(newValue) => {
-                setReqData({ ...reqData, date: newValue ? dayjs(newValue).format('YYYY-MM-DD') : null });
-                if (validationErrors.date) {
-                  setValidationErrors({ ...validationErrors, date: null });
-                }
-              }}
-              renderInput={(params) => (
-                <TextField 
-                  {...params} 
-                  fullWidth 
-                  error={showValidation && !!validationErrors.date}
-                  helperText={showValidation && validationErrors.date}
-                />
-              )}
+    <MainCard title="Attendance">
+    {/* ... (rest of your component logic) ... */}
+  
+    {/* All selection fields in a single responsive row */}
+    <Grid container spacing={gridSpacing} sx={{ p: 2 }}>
+      {/* School */}
+      <Grid item xs={12} sm={6} md={3} lg={2}>
+        <Autocomplete
+          disablePortal
+          options={schools}
+          getOptionLabel={(option) => option.name}
+          onChange={(event, value) => {
+            setReqData({ ...reqData, schoolId: value?.id, schoolName: value?.name });
+            if (validationErrors.schoolId) {
+              setValidationErrors({ ...validationErrors, schoolId: null });
+            }
+          }}
+          renderInput={(params) => (
+            <TextField 
+              {...params} 
+              label="School *" 
+              error={showValidation && !!validationErrors.schoolId}
+              helperText={showValidation && validationErrors.schoolId}
             />
-          </LocalizationProvider>
-        </Grid>
-        {/* Student Attendance List */}
-        <Grid item xs={12}>
-          <SubCard title={reqData.className ? `${reqData.className} - ${reqData.divisionName} - ${reqData.subjectName}` : 'Select Class, Division and Subject'}>
-            <Grid container spacing={2}>
-              {students.map((student, index) => (
-                <Grid item xs={12} sm={6} md={4} key={student.rollno}>
-                  <Item>
-                    <Avatar sx={{ bgcolor: '#673ab7', color: '#fff' }}>S</Avatar>
-                    <div style={{ paddingLeft: '10px', minWidth: '200px' }}>
-                      {student.studentName}
-                      <p style={{ marginTop: 0, marginBottom: 0 }}>Roll No: {student.studentRollNo}</p>
-                    </div>
-                    <Checkbox
-                      edge="end"
-                      checked={!!student.vailable}
-                      onChange={() => handleToggle(index)}
-                      sx={{ position: 'absolute', right: '22px' }}
-                    />
-                  </Item>
-                </Grid>
-              ))}
-            </Grid>
-          </SubCard>
-        </Grid>
-        {/* Submit Button */}
-        <Grid item xs={12}>
-          <Button variant="contained" sx={{ float: 'right', mt: 1, bgcolor: '#673ab7' }} onClick={onHandleClickSubmit}>
-            Submit
-          </Button>
-        </Grid>
+          )}
+          value={schools.find((st) => st.id === reqData.schoolId) || null}
+          fullWidth
+        />
       </Grid>
-    </MainCard>
+      {/* Class */}
+      <Grid item xs={12} sm={6} md={3} lg={2}>
+        <Autocomplete
+          disablePortal
+          options={classes}
+          getOptionLabel={(option) => option.name}
+          onChange={(event, value) => {
+            setReqData({ ...reqData, schooldClassId: value?.id, className: value?.name });
+            if (validationErrors.schooldClassId) {
+              setValidationErrors({ ...validationErrors, schooldClassId: null });
+            }
+          }}
+          renderInput={(params) => (
+            <TextField 
+              {...params} 
+              label="Class *" 
+              error={showValidation && !!validationErrors.schooldClassId}
+              helperText={showValidation && validationErrors.schooldClassId}
+            />
+          )}
+          value={classes.find((st) => st.id === reqData.schooldClassId) || null}
+          fullWidth
+        />
+      </Grid>
+      {/* Division */}
+      <Grid item xs={12} sm={6} md={3} lg={2}>
+        <Autocomplete
+          disablePortal
+          options={divisions}
+          getOptionLabel={(option) => option.name}
+          onChange={(event, value) => {
+            setReqData({ ...reqData, divisionId: value?.id, divisionName: value?.name });
+            if (validationErrors.divisionId) {
+              setValidationErrors({ ...validationErrors, divisionId: null });
+            }
+          }}
+          renderInput={(params) => (
+            <TextField 
+              {...params} 
+              label="Division *" 
+              error={showValidation && !!validationErrors.divisionId}
+              helperText={showValidation && validationErrors.divisionId}
+            />
+          )}
+          value={divisions.find((st) => st.id === reqData.divisionId) || null}
+          fullWidth
+        />
+      </Grid>
+      {/* Subject */}
+      <Grid item xs={12} sm={6} md={3} lg={2}>
+        <Autocomplete
+          disablePortal
+          options={subjects}
+          getOptionLabel={(option) => option.name}
+          onChange={(event, value) => {
+            setReqData({ ...reqData, subjectId: value?.id, subjectName: value?.name });
+            if (validationErrors.subjectId) {
+              setValidationErrors({ ...validationErrors, subjectId: null });
+            }
+          }}
+          renderInput={(params) => (
+            <TextField 
+              {...params} 
+              label="Subject *" 
+              error={showValidation && !!validationErrors.subjectId}
+              helperText={showValidation && validationErrors.subjectId}
+            />
+          )}
+          value={subjects.find((st) => st.id === reqData.subjectId) || null}
+          fullWidth
+        />
+      </Grid>
+      {/* Date Picker */}
+      <Grid item xs={12} sm={6} md={3} lg={2}>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label="Date *"
+            value={reqData.date ? dayjs(reqData.date) : null}
+            onChange={(newValue) => {
+              setReqData({ ...reqData, date: newValue ? dayjs(newValue).format('YYYY-MM-DD') : null });
+              if (validationErrors.date) {
+                setValidationErrors({ ...validationErrors, date: null });
+              }
+            }}
+            renderInput={(params) => (
+              <TextField 
+                {...params} 
+                fullWidth 
+                error={showValidation && !!validationErrors.date}
+                helperText={showValidation && validationErrors.date}
+              />
+            )}
+          />
+        </LocalizationProvider>
+      </Grid>
+      {/* Student Attendance List */}
+      <Grid item xs={12}>
+        <SubCard title={reqData.className ? `${reqData.className} - ${reqData.divisionName} - ${reqData.subjectName}` : 'Select Class, Division and Subject'}>
+          <Grid container spacing={2}>
+            {students.map((student, index) => (
+              <Grid item xs={12} sm={6} md={4} key={student.rollno}>
+                <Item>
+                  <Avatar sx={{ bgcolor: '#673ab7', color: '#fff' }}>S</Avatar>
+                  <div style={{ paddingLeft: '10px', minWidth: '200px' }}>
+                    {student.studentName}
+                    <p style={{ marginTop: 0, marginBottom: 0 }}>Roll No: {student.studentRollNo}</p>
+                  </div>
+                  <Checkbox
+                    edge="end"
+                    checked={!!student.vailable}
+                    onChange={() => handleToggle(index)}
+                    sx={{ position: 'absolute', right: '22px' }}
+                  />
+                </Item>
+              </Grid>
+            ))}
+          </Grid>
+        </SubCard>
+      </Grid>
+      {/* Submit Button */}
+      <Grid item xs={12}>
+        <Button variant="contained" sx={{ float: 'right', mt: 1, bgcolor: '#673ab7' }} onClick={onHandleClickSubmit}>
+          Submit
+        </Button>
+      </Grid>
+    </Grid>
+  </MainCard>
   );
 };
 

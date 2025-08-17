@@ -236,14 +236,14 @@ const rawUtilities = {
             icon: icons.IconKey,
             breadcrumbs: false
         },
-        {
-            id: 'STUDENT_PARENT', // Assuming this is the entity name for permissions
-            title: 'StudentParents',
-            type: 'item',
-            url: '/masters/studentParents',
-            icon: icons.IconUsersGroup,
-            breadcrumbs: false
-        },
+        // {
+        //     id: 'STUDENT_PARENT', // Assuming this is the entity name for permissions
+        //     title: 'StudentParents',
+        //     type: 'item',
+        //     url: '/masters/studentParents',
+        //     icon: icons.IconUsersGroup,
+        //     breadcrumbs: false
+        // },
         {
             id: 'EXAM', // Assuming this is the entity name for permissions
             title: 'Exams',
@@ -285,7 +285,7 @@ const rawUtilities = {
         //     icon: icons.IconUserCircle,
         //     breadcrumbs: false
         // },
-        {
+        {   
             id: 'FEE_MANAGEMENT',
             title: 'Fee Management',
             type: 'collapse',
@@ -293,7 +293,7 @@ const rawUtilities = {
             breadcrumbs: false,
             children: [
                 {
-                    id: 'FEE',
+                    id: 'FEE_MANAGEMENT',
                     title: 'Admin Fee Dashboard',
                     type: 'item',
                     url: '/masters/fees',
@@ -301,7 +301,7 @@ const rawUtilities = {
                     breadcrumbs: false
                 },
                 {
-                    id: 'FEE_STUDENT',
+                    id: 'FEE_MANAGEMENT',
                     title: 'My Fees',
                     type: 'item',
                     url: '/masters/student/fees',
@@ -328,7 +328,7 @@ const rawUtilities = {
                     breadcrumbs: false
                 },
                 {
-                    id: 'QUIZ_STUDENT',
+                    id: 'QUIZ',
                     title: 'Available Quizzes',
                     type: 'item',
                     url: '/masters/student/quizzes',

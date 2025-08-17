@@ -1,8 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// project imports
+import AddIcon from '@mui/icons-material/Add';
+import MainCard from 'ui-component/cards/MainCard';
+import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
+import { gridSpacing } from 'store/constant';
+import { Grid, Box, Typography } from '@mui/material';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid';
+import { userDetails } from '../../../utils/apiService';
 
 // Define the columns for exams
 const columnsConfig = [
@@ -22,10 +26,9 @@ const columnsConfig = [
   }
 ];
 
-// ==============================|| EXAMS LIST PAGE ||============================== //
-
 const Exams = () => {
   const navigate = useNavigate();
+  const accountId = userDetails.getAccountId();
 
   // Custom actions for exams
   const customActions = [
@@ -54,7 +57,6 @@ const Exams = () => {
       color: 'error',
       onClick: (row) => {
         if (window.confirm('Are you sure you want to delete this exam?')) {
-          // Handle delete logic here
           console.log('Deleting exam:', row.id);
         }
       }
@@ -68,38 +70,40 @@ const Exams = () => {
   });
 
   return (
-    <ReusableDataGrid
-      title="Exams Management"
-      fetchUrl="/api/exams/getAll" // Replace with actual API endpoint
-      columns={columnsConfig}
-      editUrl="/masters/exam/edit"
-      deleteUrl="/api/exams/delete"
-      addActionUrl="/masters/exam/add"
-      viewUrl="/masters/exam/view"
-      entityName="EXAM"
-      isPostRequest={true}
-      customActions={customActions}
-      searchPlaceholder="Search exams by name, type, or year..."
-      showSearch={true}
-      showRefresh={true}
-      showFilters={true}
-      pageSizeOptions={[5, 10, 25, 50]}
-      defaultPageSize={10}
-      height={600}
-      transformData={transformExamData}
-      // Enable filters for exams
-      enableFilters={true}
-      showSchoolFilter={true}
-      showClassFilter={true}
-      showDivisionFilter={true}
-      customToolbar={() => (
-        <div style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-          <strong>Exams Overview:</strong> Manage all exams with search, pagination, and comprehensive action capabilities.
-          <br />
-          <small>Use the filters above to narrow down exams by school, class, or division.</small>
-        </div>
-      )}
-    />
+    <MainCard
+      // title="Exams Management"
+      // secondary={<SecondaryAction icon={<AddIcon />} link="/masters/exam/add" />}
+    >
+      <Grid container spacing={gridSpacing}>
+        <Grid item xs={12}>
+          <ReusableDataGrid
+            title="Exams Management"
+            fetchUrl={`/api/exams/getAll/${accountId}`}
+            columns={columnsConfig}
+            editUrl="/masters/exam/edit"
+            deleteUrl="/api/exams/delete"
+            addActionUrl="/masters/exam/add"
+            viewUrl="/masters/exam/view"
+            entityName="EXAM"
+            isPostRequest={true}
+            customActions={customActions}
+            searchPlaceholder="Search exams by name, type, or year..."
+            showSearch={true}
+            showRefresh={true}
+            showFilters={true}
+            pageSizeOptions={[5, 10, 25, 50]}
+            defaultPageSize={10}
+            height={600}
+            transformData={transformExamData}
+            enableFilters={true}
+            showSchoolFilter={true}
+            showClassFilter={true}
+            showDivisionFilter={true}
+           
+          />
+        </Grid>
+      </Grid>
+    </MainCard>
   );
 };
 

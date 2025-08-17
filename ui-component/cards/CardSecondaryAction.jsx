@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import ButtonBase from '@mui/material/ButtonBase';
-import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 
 // project imports
@@ -13,12 +13,18 @@ import Avatar from '../extended/Avatar';
 
 const CardSecondaryAction = ({ title, link, icon }) => {
   const theme = useTheme();
+  const navigate = useNavigate(); // Initialize useNavigate hook
+
+  const handleNavigation = (e) => {
+    e.preventDefault(); // Prevent default link behavior
+    navigate(link); // Use navigate to open the link in the same tab
+  };
 
   return (
     <Tooltip title={title || 'Reference'} placement="left">
-      <ButtonBase disableRipple>
+      <ButtonBase disableRipple onClick={handleNavigation}>
         {!icon && (
-          <Avatar component={Link} href={link} aria-label="redirect pages" target="_blank" alt="MUI Logo" size="badge" outline>
+          <Avatar aria-label="redirect pages" alt="MUI Logo" size="badge" outline>
             <svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g clipPath="url(#clip0)">
                 <path d="M100 260.9V131L212.5 195.95V239.25L137.5 195.95V282.55L100 260.9Z" fill={theme.palette.primary[800]} />
@@ -41,7 +47,7 @@ const CardSecondaryAction = ({ title, link, icon }) => {
           </Avatar>
         )}
         {icon && (
-          <Avatar component={Link} href={link} target="_blank" size="badge" color="primary" outline aria-label="material-ui">
+          <Avatar size="badge" color="primary" outline aria-label="material-ui">
             {icon}
           </Avatar>
         )}

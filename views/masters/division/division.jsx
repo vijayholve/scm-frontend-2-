@@ -1,6 +1,9 @@
 import React from 'react';
-
-// project imports
+import AddIcon from '@mui/icons-material/Add';
+import { Grid } from '@mui/material';
+import MainCard from 'ui-component/cards/MainCard';
+import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
+import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx'; 
 import { userDetails } from '../../../utils/apiService';
 
@@ -18,14 +21,28 @@ const Devision = () => {
     const accountId = userDetails.getAccountId();
 
     return (
-        <ReusableDataGrid
-            title="Manage Devision"
-            fetchUrl={`/api/divisions/getAll/${accountId}`}
-            columns={columns}
-            addActionUrl="/masters/division/add"
-            editUrl="/masters/division/edit"
-            deleteUrl="/api/devisions/delete"
-        />
+        <MainCard
+        title="Manage Divisions"
+        secondary={<SecondaryAction icon={<AddIcon />} link="/masters/division/add" />}
+      >
+        <Grid container spacing={gridSpacing}>
+          <Grid item xs={12}>
+            <ReusableDataGrid
+              // title="Manage Division"
+              fetchUrl={`/api/divisions/getAll/${accountId}`}
+              columns={columns}
+              // addActionUrl="/masters/division/add"
+              editUrl="/masters/division/edit"
+              deleteUrl="/api/devisions/delete"
+              entityName="DIVISION"
+              enableFilters={true}
+              showSchoolFilter={true}
+              showClassFilter={true}
+              showDivisionFilter={false}
+            />
+          </Grid>
+        </Grid>
+      </MainCard>
     );
 };
 

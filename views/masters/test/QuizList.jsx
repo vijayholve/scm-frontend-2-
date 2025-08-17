@@ -1,25 +1,17 @@
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-// material-ui
-import Grid from '@mui/material/Grid';
-import { styled } from '@mui/system';
-import Box from '@mui/material/Box';
-import { Button } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Grid, Box, Typography, Chip, IconButton, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/Delete';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import Chip from '@mui/material/Chip';
 
-// project imports
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import { toast } from 'react-hot-toast';
-import api, { userDetails } from '../../../utils/apiService';
+import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
+import { userDetails } from '../../../utils/apiService';
 
-// The columns definition remains the same.
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'title', headerName: 'Title', width: 200, editable: false },
@@ -54,119 +46,77 @@ const columns = [
     }
 ];
 
-const ActionWrapper = styled('div')({
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '4px 2px',
-    flexWrap: 'wrap',
-    '@media (max-width: 768px)': {
-        gap: '2px',
-        padding: '2px 1px'
-    }
-});
-
 const QuizList = () => {
-    const [quizzes, setQuizzes] = useState([]);
     const navigate = useNavigate();
-    const [paginationModel, setPaginationModel] = useState({
-        page: 0,
-        pageSize: 10
-    });
-    const [rowCount, setRowCount] = useState(0);
-    const [loading, setLoading] = useState(false);
-
-    const fetchQuizzes = async () => {
-        setLoading(true);
-        try {
-            const response = await api.post(`api/quizzes/getAll/${userDetails.getAccountId()}`, {
-                page: paginationModel.page,
-                size: paginationModel.pageSize,
-                sortBy: "id",
-                sortDir: "desc",
-                search: ""
-            });
-            setQuizzes(response.data.content || []);
-            setRowCount(response.data.totalElements || 0);
-        } catch (err) {
-            console.error(err);
-            toast.error('Failed to fetch quizzes');
-            setQuizzes([]);
-            setRowCount(0);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const accountId = userDetails.getAccountId();
     
-    useEffect(() => {
-        fetchQuizzes();
-    }, [paginationModel]);
-
-    // ✅ CORRECTED DELETE HANDLER
-    // This version re-fetches data from the server to ensure consistency.
-    const handleOnClickDelete = async (data) => {
-        if (data.id && window.confirm('Are you sure you want to delete this quiz?')) {
-            try {
-                await api.delete(`api/quiz/delete?id=${data.id}`);
-                toast.success('Quiz deleted successfully!');
-                
-                // Edge case: If the deleted item was the last one on the current page,
-                // go back to the previous page.
-                if (quizzes.length === 1 && paginationModel.page > 0) {
-                    setPaginationModel(prev => ({ ...prev, page: prev.page - 1 }));
-                } else {
-                    // Otherwise, just re-fetch the data for the current page.
-                    fetchQuizzes();
+    const customActions = [
+        {
+            icon: <PlayArrowIcon />,
+            label: 'Preview Quiz',
+            tooltip: 'Preview the quiz questions and details',
+            color: 'secondary',
+            onClick: (row) => {
+                navigate(`/masters/quiz/dashboard/${row.id}`);
+            },
+            permission: 'view'
+        },
+        {
+            icon: <EditOutlinedIcon />,
+            label: 'Edit',
+            tooltip: 'Edit Quiz',
+            color: 'primary',
+            onClick: (row) => {
+                navigate(`/masters/quiz/edit/${row.id}`);
+            },
+            permission: 'edit'
+        },
+        {
+            icon: <DeleteIcon />,
+            label: 'Delete',
+            tooltip: 'Delete Quiz',
+            color: 'error',
+            onClick: (row) => {
+                if (window.confirm('Are you sure you want to delete this quiz?')) {
+                    // Logic for deletion will be handled by ReusableDataGrid
                 }
-            } catch (err) {
-                console.error(err);
-                toast.error('Failed to delete quiz.');
-            }
+            },
+            permission: 'delete'
         }
-    };
+    ];
 
-    const handlePreviewQuiz = (quizId) => {
-        navigate(`/masters/quiz/dashboard/${quizId}`);
-    };
-    
-    const actionColumn = { /* ... Unchanged action column definition ... */ };
+    const customToolbar = () => (
+      <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+        <Typography variant="h6">Quizzes Overview</Typography>
+        <Typography variant="body2" color="textSecondary">
+          This grid shows all quizzes, with filtering capabilities.
+        </Typography>
+      </Box>
+    );
 
     return (
         <MainCard
-            title="Quiz Management"
-            secondary={
-                <SecondaryAction
-                    icon={<AddIcon onClick={() => navigate(`/masters/quiz/add`)} style={{ cursor: 'pointer' }} />}
-                />
-            }
+            
         >
-            <Box sx={{ height: 'calc(100vh - 200px)', /* other styles */ }}>
-                <Grid container spacing={gridSpacing}>
-                    <Grid item xs={12}>
-                        <Box sx={{ height: '70vh', width: '100%', /* other styles */ }}>
-                            <DataGrid
-                                rows={quizzes}
-                                columns={[...columns, actionColumn]}
-                                loading={loading}
-                                rowCount={rowCount}
-                                getRowId={(row) => row.id}
-                                
-                                // ✅ CORRECTED PAGINATION
-                                // Using the modern `paginationModel` and `onPaginationModelChange` API for DataGrid v5+
-                                paginationMode="server"
-                                paginationModel={paginationModel}
-                                onPaginationModelChange={setPaginationModel}
-                                pageSizeOptions={[5, 10, 25]}
-                                
-                                checkboxSelection
-                                disableRowSelectionOnClick
-                                sx={{ minWidth: 1000, /* other styles */ }}
-                            />
-                        </Box>
-                    </Grid>
+            <Grid container spacing={gridSpacing}>
+                <Grid item xs={12}>
+                    <ReusableDataGrid
+                        title="Quizzes"
+                        fetchUrl={`/api/quizzes/getAll/${accountId}`}
+                        columns={columns}
+                        addActionUrl="/masters/quiz/add"
+                        editUrl="/masters/quiz/edit"
+                        deleteUrl="/api/quiz/delete"
+                        entityName="QUIZ"
+                        isPostRequest={true}
+                        customActions={customActions}
+                        enableFilters={true}
+                        showSchoolFilter={true}
+                        showClassFilter={true}
+                        showDivisionFilter={true}
+                    />
                 </Grid>
-            </Box>
+            </Grid>
         </MainCard>
     );
 };

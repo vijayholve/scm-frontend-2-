@@ -283,7 +283,6 @@ const IdCardManagement = () => {
     useEffect(() => {
         fetchClassesAndDivisions();
     }, []);
-
     const fetchClassesAndDivisions = async () => {
         try {
             const [classResponse, divisionResponse] = await Promise.all([
@@ -297,6 +296,7 @@ const IdCardManagement = () => {
             console.error('Error fetching classes and divisions:', error);
         }
     };
+
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);

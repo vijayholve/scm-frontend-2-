@@ -31,9 +31,8 @@ const Assignments = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
   const user = useSelector((state) => state.user);
-  console.log(user);
   const permissions = user?.permissions || [];
-  console.log(permissions);
+  
   // State for filter dropdowns and date picker
   const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -44,6 +43,9 @@ const Assignments = () => {
   const [selectedDivisionId, setSelectedDivisionId] = useState('');
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [deadlineDate, setDeadlineDate] = useState(null);
+  // const [selectedUserId, setSelectedUserId] = useState('');
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
 
   // Fetch all dropdown data for filters
   useEffect(() => {
@@ -77,7 +79,10 @@ const Assignments = () => {
     classId: selectedClassId || null,
     divisionId: selectedDivisionId || null,
     subjectId: selectedSubjectId || null,
-    deadLine: deadlineDate ? dayjs(deadlineDate).format('YYYY-MM-DD') : null
+    deadLine: deadlineDate ? dayjs(deadlineDate).format('YYYY-MM-DD') : null,
+    userId: selectedUserId || null,
+    fromDate: fromDate ? dayjs(fromDate).toISOString() : null,
+    toDate: toDate ? dayjs(toDate).toISOString() : null,
   };
 
   return (
@@ -88,7 +93,6 @@ const Assignments = () => {
       <Grid container spacing={gridSpacing}>
         {/* Filter Section Wrapper */}
         <Grid item xs={12}>
-          {/* Removed sx={{ ml: 2 }} from here */}
           <Grid container spacing={gridSpacing}>
             {/* School Filter Dropdown */}
             <Grid item xs={12} sm={6} md={2.4}>
@@ -180,10 +184,46 @@ const Assignments = () => {
           </Grid>
         </Grid>
 
+        {/* New filters added for user request */}
+        <Grid item xs={12}>
+          <Grid container spacing={gridSpacing}>
+            <Grid item xs={12} sm={6} md={2.4}>
+              <TextField
+                fullWidth
+                label="User ID"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={2.4}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="From Date"
+                  value={fromDate}
+                  onChange={(newValue) => setFromDate(newValue)}
+                  renderInput={(params) => <TextField {...params} />}
+                />
+              </LocalizationProvider>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2.4}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="To Date"
+                  value={toDate}
+                  onChange={(newValue) => setToDate(newValue)}
+                  renderInput={(params) => <TextField {...params} />}
+                />
+              </LocalizationProvider>
+            </Grid>
+          </Grid>
+        </Grid>
+        
+
         {/* DataGrid Section */}
         <Grid item xs={12}>
           <ReusableDataGrid
-            fetchUrl={`/api/assignments/getAllBy/${accountId}`}
+          
+            fetchUrl={`/api/assignments/getAll/${accountId}`}
             columns={columns}
             editUrl="/masters/assignment/edit"
             deleteUrl="/api/assignments/delete"
