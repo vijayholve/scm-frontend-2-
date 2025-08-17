@@ -21,6 +21,8 @@ const UtilsColor = Loadable(lazy(() => import('views/utilities/Color')));
 const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
 // const UtilsMaterialIcons = Loadable(lazy(() => import('views/utilities/MaterialIcons')));
 // const UtilsTablerIcons = Loadable(lazy(() => import('views/utilities/TablerIcons')));
+const TeacherView = Loadable(lazy(() => import('../views/masters/teacher/TeacherView'))); // Corrected import path
+const StudentView = Loadable(lazy(() => import('../views/masters/student/StudentView'))); // Corrected import path
 
 const Users = Loadable(lazy(() => import('views/masters/teacher/index')));
 const EditUsers = Loadable(lazy(() => import('views/masters/teacher/edit')));
@@ -138,6 +140,10 @@ const getMainRoutes = (permissions = []) => ({
           path: 'teacher/add',
           element: <EditUsers />
         },
+        hasPermission(permissions, 'TEACHER', 'view') && { // Added Teacher View Route
+          path: 'teachers/view/:id',
+          element: <TeacherView />
+        },
         hasPermission(permissions, 'STUDENT', 'view') && {
           path: 'students',
           element: <Students />
@@ -149,6 +155,10 @@ const getMainRoutes = (permissions = []) => ({
         hasPermission(permissions, 'STUDENT', 'add') && {
           path: 'student/add',
           element: <EditStudents />
+        },
+        hasPermission(permissions, 'STUDENT', 'view') && { // Added Student View Route
+          path: 'students/view/:id',
+          element: <StudentView />
         },
         // ...repeat for other entities like 'INSTITUTE', 'SCHOOL', etc.
         // Example for roles:
