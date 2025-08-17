@@ -85,104 +85,112 @@ const Assignments = () => {
       title="Assignments"
       secondary={hasPermission(permissions, 'ASSIGNMENT', 'add') ? <SecondaryAction icon={<AddIcon onClick={() => navigate(`/masters/assignment/add`)} />} /> : null}
     >
-      <Grid container spacing={gridSpacing} sx={{ ml: 2}}>
-        {/* School Filter Dropdown */}
-        <Grid item xs={12} sm={6} md={2.4}>
-          <FormControl fullWidth>
-            <InputLabel id="school-select-label">School</InputLabel>
-            <Select
-              labelId="school-select-label"
-              id="school-select"
-              value={selectedSchoolId}
-              label="School"
-              onChange={(e) => setSelectedSchoolId(e.target.value)}
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {schools.map((school) => (
-                <MenuItem key={school.id} value={school.id}>{school.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+      <Grid container spacing={gridSpacing}>
+        {/* Filter Section Wrapper */}
+        <Grid item xs={12}>
+          {/* Removed sx={{ ml: 2 }} from here */}
+          <Grid container spacing={gridSpacing}>
+            {/* School Filter Dropdown */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <FormControl fullWidth>
+                <InputLabel id="school-select-label">School</InputLabel>
+                <Select
+                  labelId="school-select-label"
+                  id="school-select"
+                  value={selectedSchoolId}
+                  label="School"
+                  onChange={(e) => setSelectedSchoolId(e.target.value)}
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {schools.map((school) => (
+                    <MenuItem key={school.id} value={school.id}>{school.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Class Filter Dropdown */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <FormControl fullWidth>
+                <InputLabel id="class-select-label">Class</InputLabel>
+                <Select
+                  labelId="class-select-label"
+                  id="class-select"
+                  value={selectedClassId}
+                  label="Class"
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {classes.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Division Filter Dropdown */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <FormControl fullWidth>
+                <InputLabel id="division-select-label">Division</InputLabel>
+                <Select
+                  labelId="division-select-label"
+                  id="division-select"
+                  value={selectedDivisionId}
+                  label="Division"
+                  onChange={(e) => setSelectedDivisionId(e.target.value)}
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {divisions.map((division) => (
+                    <MenuItem key={division.id} value={division.id}>{division.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Subject Filter Dropdown */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <FormControl fullWidth>
+                <InputLabel id="subject-select-label">Subject</InputLabel>
+                <Select
+                  labelId="subject-select-label"
+                  id="subject-select"
+                  value={selectedSubjectId}
+                  label="Subject"
+                  onChange={(e) => setSelectedSubjectId(e.target.value)}
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {subjects.map((subject) => (
+                    <MenuItem key={subject.id} value={subject.id}>{subject.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Deadline Date Picker */}
+            <Grid item xs={12} sm={6} md={2.4}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Deadline"
+                  value={deadlineDate}
+                  onChange={(newValue) => setDeadlineDate(newValue)}
+                  renderInput={(params) => <TextField {...params} />}
+                />
+              </LocalizationProvider>
+            </Grid>
+          </Grid>
         </Grid>
 
-        {/* Class Filter Dropdown */}
-        <Grid item xs={12} sm={6} md={2.4}>
-          <FormControl fullWidth>
-            <InputLabel id="class-select-label">Class</InputLabel>
-            <Select
-              labelId="class-select-label"
-              id="class-select"
-              value={selectedClassId}
-              label="Class"
-              onChange={(e) => setSelectedClassId(e.target.value)}
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {classes.map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        {/* DataGrid Section */}
+        <Grid item xs={12}>
+          <ReusableDataGrid
+            fetchUrl={`/api/assignments/getAllBy/${accountId}`}
+            columns={columns}
+            editUrl="/masters/assignment/edit"
+            deleteUrl="/api/assignments/delete"
+            filters={filters}
+            isPostRequest={true}
+          />
         </Grid>
-
-        {/* Division Filter Dropdown */}
-        <Grid item xs={12} sm={6} md={2.4}>
-          <FormControl fullWidth>
-            <InputLabel id="division-select-label">Division</InputLabel>
-            <Select
-              labelId="division-select-label"
-              id="division-select"
-              value={selectedDivisionId}
-              label="Division"
-              onChange={(e) => setSelectedDivisionId(e.target.value)}
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {divisions.map((division) => (
-                <MenuItem key={division.id} value={division.id}>{division.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Subject Filter Dropdown */}
-        <Grid item xs={12} sm={6} md={2.4}>
-          <FormControl fullWidth>
-            <InputLabel id="subject-select-label">Subject</InputLabel>
-            <Select
-              labelId="subject-select-label"
-              id="subject-select"
-              value={selectedSubjectId}
-              label="Subject"
-              onChange={(e) => setSelectedSubjectId(e.target.value)}
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {subjects.map((subject) => (
-                <MenuItem key={subject.id} value={subject.id}>{subject.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Deadline Date Picker */}
-        <Grid item xs={12} sm={6} md={2.4}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              label="Deadline"
-              value={deadlineDate}
-              onChange={(newValue) => setDeadlineDate(newValue)}
-              renderInput={(params) => <TextField {...params} />}
-            />
-          </LocalizationProvider>
-        </Grid>
-      </Grid>
-      <Grid item xs={12}>
-        <ReusableDataGrid
-          fetchUrl={`/api/assignments/getAllBy/${accountId}`}
-          columns={columns}
-          editUrl="/masters/assignment/edit"
-          deleteUrl="/api/assignments/delete"
-          filters={filters}
-          isPostRequest={true}
-        />
       </Grid>
     </MainCard>
   );

@@ -21,8 +21,6 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 
-// --- THIS IS THE CRITICAL PART ---
-// The values MUST be uppercase to match the backend Java Enum.
 const examTypes = ["MIDTERM", "FINAL", "QUIZ", "PRACTICAL", "ORAL", "INTERNAL", "OTHER"];
 
 const CreateExam = () => {
@@ -31,6 +29,7 @@ const CreateExam = () => {
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [subjects, setSubjects] = useState([]);
+    const [quizzes, setQuizzes] = useState([]); // New state for quizzes
     const [examData, setExamData] = useState({
         examName: '',
         academicYear: new Date().getFullYear().toString(),
@@ -40,6 +39,7 @@ const CreateExam = () => {
         maxMarksOverall: 0,
         examSubjects: [{
             subjectId: '',
+            quizId: '', // Add quizId to the state
             maxMarksSubject: '',
             passingMarksSubject: '',
             durationMinutes: '',
@@ -78,13 +78,24 @@ const CreateExam = () => {
         const { name, value } = e.target;
         const updatedSubjects = [...examData.examSubjects];
         updatedSubjects[index][name] = value;
+
+        if (name === 'subjectId') {
+            updatedSubjects[index]['quizId'] = ''; // Reset quiz selection when subject changes
+            // Dummy data for quizzes
+            const dummyQuizzes = [
+                { id: 101, title: `Math Quiz (Easy)` },
+                { id: 102, title: `Math Quiz (Hard)` }
+            ];
+            setQuizzes(dummyQuizzes);
+        }
+        
         setExamData(prev => ({ ...prev, examSubjects: updatedSubjects }));
     };
 
     const addSubject = () => {
         setExamData(prev => ({
             ...prev,
-            examSubjects: [...prev.examSubjects, { subjectId: '', maxMarksSubject: '', passingMarksSubject: '', durationMinutes: '', examDateTime: '' }]
+            examSubjects: [...prev.examSubjects, { subjectId: '', quizId: '', maxMarksSubject: '', passingMarksSubject: '', durationMinutes: '', examDateTime: '' }]
         }));
     };
 
@@ -108,7 +119,6 @@ const CreateExam = () => {
             accountId: userDetails.getAccountId(),
         };
         
-        // --- ADDED FOR DEBUGGING ---
         console.log("Submitting this payload to the backend:", payload);
         
         try {
@@ -162,6 +172,14 @@ const CreateExam = () => {
                                         <InputLabel>Subject</InputLabel>
                                         <Select name="subjectId" value={subject.subjectId} onChange={(e) => handleSubjectChange(index, e)}>
                                             {subjects.map((s) => (<MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={3}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Quiz</InputLabel>
+                                        <Select name="quizId" value={subject.quizId} onChange={(e) => handleSubjectChange(index, e)}>
+                                            {quizzes.map((q) => (<MenuItem key={q.id} value={q.id}>{q.title}</MenuItem>))}
                                         </Select>
                                     </FormControl>
                                 </Grid>

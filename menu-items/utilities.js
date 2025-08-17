@@ -39,7 +39,12 @@ import {
     IconFileText,
     IconClock,
     IconUserCircle,
-    IconCreditCard
+    IconCreditCard,
+    IconBook2, // for LMS
+    IconAward,  // for Quiz & Tests 
+        // ... other icons
+        IconListDetails, 
+        IconDeviceGamepad, 
 } from '@tabler/icons-react'; // Moved imports here for better organization
 
 // constant
@@ -62,7 +67,12 @@ const icons = {
     IconFileText,
     IconClock,
     IconUserCircle,
-    IconCreditCard
+    IconCreditCard ,
+    IconBook2, // for LMS
+    IconAward,  // for Quiz & Tests 
+        // ... other icons
+        IconListDetails, 
+        IconDeviceGamepad, 
 };
 
 // ==============================|| UTILITIES MENU ITEMS ||============================== //
@@ -263,7 +273,8 @@ const rawUtilities = {
             title: 'LMS',
             type: 'item',
             url: '/masters/lms',
-            icon: icons.IconUsers,
+
+    icon: icons.IconBook2, // Use the new icon here
             breadcrumbs: false
         },
         // {
@@ -278,7 +289,7 @@ const rawUtilities = {
             id: 'FEE_MANAGEMENT',
             title: 'Fee Management',
             type: 'collapse',
-            icon: icons.IconUsersGroup,
+            icon: icons.IconAward, // Use the new icon here
             breadcrumbs: false,
             children: [
                 {
@@ -299,11 +310,13 @@ const rawUtilities = {
                 }
             ]
         },
+        // IconBook2, // for LMS
+        // IconAward,  // for Quiz & Tests
         {
             id: 'QUIZ_MANAGEMENT',
             title: 'Quiz & Tests',
             type: 'collapse',
-            icon: icons.IconUsers,
+            icon: icons.IconAward, // Use the new icon here
             breadcrumbs: false,
             children: [
                 {
@@ -311,7 +324,7 @@ const rawUtilities = {
                     title: 'Manage Quizzes',
                     type: 'item',
                     url: '/masters/quiz',
-                    icon: icons.IconUsers,
+                    icon: icons.IconListDetails, // Use the new icon here
                     breadcrumbs: false
                 },
                 {
@@ -319,7 +332,7 @@ const rawUtilities = {
                     title: 'Available Quizzes',
                     type: 'item',
                     url: '/masters/student/quizzes',
-                    icon: icons.IconUsers,
+                    icon: icons.IconDeviceGamepad, // Use the new icon here
                     breadcrumbs: false
                 }
             ]

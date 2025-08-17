@@ -9,6 +9,7 @@ import Exams from 'views/masters/exam';
 import { use } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+const NotFound = Loadable(lazy(() => import('views/pages/NotFound')));
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard')));
@@ -374,7 +375,12 @@ const getMainRoutes = (permissions = []) => ({
           path: 'student/fees',
           element: <StudentFeeView />
         }
+
       ]
+    },
+     {
+      path: '*',
+      element: <NotFound />
     }
   ]
 });
