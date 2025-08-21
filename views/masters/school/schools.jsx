@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Grid, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import MainCard from 'ui-component/cards/MainCard';
@@ -6,6 +6,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
+import api from '../../../utils/apiService';
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -20,11 +21,30 @@ const columns = [
 
 const Schools = () => {
     const accountId = userDetails.getAccountId();
+    const [schools, setSchools] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchAllSchools = async () => {
+            setLoading(true);
+            try {
+                const response = await api.post(`/api/schoolBranches/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
+                setSchools(response.data.content || []);
+            } catch (error) {
+                console.error('Failed to fetch schools:', error);
+                setSchools([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAllSchools();
+    }, [accountId]);
+    
     const customToolbar = () => (
       <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
         <Typography variant="h6">Schools Overview</Typography>
         <Typography variant="body2" color="textSecondary">
-          This grid shows all schools, with filtering capabilities.
+          This grid shows all schools.
         </Typography>
       </Box>
     );
@@ -37,15 +57,15 @@ const Schools = () => {
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
-                        fetchUrl={`/api/schoolBranches/getAll/${accountId}`}
+                        data={schools}
+                        loading={loading}
+                        fetchUrl={null} // Explicitly set to null to indicate client-side mode
+                        isPostRequest={false}
                         columns={columns}
                         editUrl="/masters/school/edit"
                         deleteUrl="/api/schoolBranches/delete"
                         entityName="SCHOOL"
-                        enableFilters={true}
-                        showSchoolFilter={true}
-                        showClassFilter={false}
-                        showDivisionFilter={false}
+                        enableFilters={false}
                     />
                 </Grid>
             </Grid>

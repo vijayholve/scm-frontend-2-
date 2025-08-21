@@ -16,27 +16,77 @@ const SchoolClassDivisionSelector = ({ formik }) => {
         return <Typography color="error">Error: Selector is missing required form properties.</Typography>;
     }
 
+    // Effect to fetch all schools on initial load
     useEffect(() => {
-        const fetchData = async (endpoint, setter) => {
+        const fetchSchools = async () => {
             try {
-                // Corrected payload to include sortBy and sortDir
-                const payload = {
-                    page: 0,
-                    size: 1000,
-                    sortBy: 'id',
-                    sortDir: 'asc'
-                };
-                const response = await api.post(`/api/${endpoint}/getAll/${accountId}`, payload);
-                setter(response.data.content || []);
+                const payload = { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' };
+                const response = await api.post(`/api/schoolBranches/getAll/${accountId}`, payload);
+                setSchools(response.data.content || []);
             } catch (error) {
-                console.error(`Failed to fetch ${endpoint}:`, error);
+                console.error(`Failed to fetch schools:`, error);
+            }
+        };
+        fetchSchools();
+    }, [accountId]);
+
+    // Effect to fetch classes when a school is selected
+    useEffect(() => {
+        const fetchClasses = async () => {
+            if (formik.values.schoolId) {
+                try {
+                    const payload = {
+                        page: 0,
+                        size: 1000,
+                        sortBy: 'id',
+                        sortDir: 'asc',
+                        schoolId: formik.values.schoolId
+                    };
+                    const response = await api.post(`/api/schoolClasses/getAll/${accountId}`, payload);
+                    setClasses(response.data.content || []);
+                } catch (error) {
+                    console.error(`Failed to fetch classes for school ${formik.values.schoolId}:`, error);
+                }
+            } else {
+                setClasses([]);
             }
         };
 
-        fetchData('schoolBranches', setSchools);
-        fetchData('schoolClasses', setClasses);
-        fetchData('divisions', setDivisions);
-    }, [accountId]);
+        // Reset class and division when school changes
+        formik.setFieldValue('classId', '');
+        formik.setFieldValue('divisionId', '');
+        fetchClasses();
+
+    }, [accountId, formik.values.schoolId, formik.setFieldValue]);
+
+    // Effect to fetch divisions when a class is selected
+    useEffect(() => {
+        const fetchDivisions = async () => {
+            if (formik.values.classId) {
+                try {
+                    const payload = {
+                        page: 0,
+                        size: 1000,
+                        sortBy: 'id',
+                        sortDir: 'asc',
+                        classId: formik.values.classId
+                    };
+                    const response = await api.post(`/api/divisions/getAll/${accountId}`, payload);
+                    setDivisions(response.data.content || []);
+                } catch (error) {
+                    console.error(`Failed to fetch divisions for class ${formik.values.classId}:`, error);
+                }
+            } else {
+                setDivisions([]);
+            }
+        };
+
+        // Reset division when class changes
+        formik.setFieldValue('divisionId', '');
+        fetchDivisions();
+
+    }, [accountId, formik.values.classId, formik.setFieldValue]);
+
 
     return (
         <Grid container spacing={2}>
@@ -45,10 +95,14 @@ const SchoolClassDivisionSelector = ({ formik }) => {
                     <InputLabel>School</InputLabel>
                     <Select
                         name="schoolId"
-                        value={formik.values.schoolId}
+                        value={formik.values.schoolId || ''}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
+                        label="School"
                     >
+                        <MenuItem value="">
+                            <em>None</em>
+                        </MenuItem>
                         {schools.map((school) => (
                             <MenuItem key={school.id} value={school.id}>
                                 {school.name}
@@ -63,10 +117,15 @@ const SchoolClassDivisionSelector = ({ formik }) => {
                     <InputLabel>Class</InputLabel>
                     <Select
                         name="classId"
-                        value={formik.values.classId}
+                        value={formik.values.classId || ''}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
+                        label="Class"
+                        disabled={!formik.values.schoolId}
                     >
+                        <MenuItem value="">
+                            <em>None</em>
+                        </MenuItem>
                         {classes.map((cls) => (
                             <MenuItem key={cls.id} value={cls.id}>
                                 {cls.name}
@@ -81,10 +140,15 @@ const SchoolClassDivisionSelector = ({ formik }) => {
                     <InputLabel>Division</InputLabel>
                     <Select
                         name="divisionId"
-                        value={formik.values.divisionId}
+                        value={formik.values.divisionId || ''}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
+                        label="Division"
+                        disabled={!formik.values.classId}
                     >
+                        <MenuItem value="">
+                            <em>None</em>
+                        </MenuItem>
                         {divisions.map((division) => (
                             <MenuItem key={division.id} value={division.id}>
                                 {division.name}
@@ -99,7 +163,7 @@ const SchoolClassDivisionSelector = ({ formik }) => {
 };
 
 SchoolClassDivisionSelector.propTypes = {
-  formik: PropTypes.object.isRequired
+    formik: PropTypes.object.isRequired
 };
 
 export default SchoolClassDivisionSelector;

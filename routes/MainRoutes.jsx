@@ -35,6 +35,7 @@ const EditSchools = Loadable(lazy(() => import('views/masters/school/school.edit
 
 const Students = Loadable(lazy(() => import('views/masters/student/index')));
 const EditStudents = Loadable(lazy(() => import('views/masters/student/edit')));
+// const BulkStudentAdd = Loadable(lazy(() => import('views/masters/student/BulkStudentAdd')));
 
 const Attendence = Loadable(lazy(() => import('views/masters/attendence/attendenceList')));
 
@@ -93,6 +94,7 @@ const ExamList = Loadable(lazy(() => import('views/masters/exam/index')));
 const FeeDashboard = Loadable(lazy(() => import('views/masters/fee/index')));
 const StudentFeeView = Loadable(lazy(() => import('views/masters/fee/StudentFeeView')));
 
+const AuditLogList = Loadable(lazy(() => import('views/masters/profile/AuditLogList')));
 
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
@@ -156,6 +158,10 @@ const getMainRoutes = (permissions = []) => ({
           path: 'student/add',
           element: <EditStudents />
         },
+      //   hasPermission(permissions, 'STUDENT', 'add') && {
+      //     path: 'student/bulk-add',
+      //     element: <BulkStudentAdd />
+      // },
         hasPermission(permissions, 'STUDENT', 'view') && { // Added Student View Route
           path: 'students/view/:id',
           element: <StudentView />
@@ -384,7 +390,14 @@ const getMainRoutes = (permissions = []) => ({
         {
           path: 'student/fees',
           element: <StudentFeeView />
+        },
+        // NEW AUDIT LOG ROUTE
+        hasPermission(permissions, 'AUDIT_LOG', 'view') && 
+        {
+            path: 'audit-log',
+            element: <AuditLogList />
         }
+
 
       ]
     },

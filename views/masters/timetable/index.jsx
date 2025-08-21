@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Grid from '@mui/material/Grid';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
@@ -10,7 +11,6 @@ import Box from '@mui/material/Box';
 import { IconButton, Typography } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIconNew, Visibility as ViewIcon } from '@mui/icons-material';
 import api, { userDetails } from '../../../utils/apiService';
-import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { hasPermission } from '../../../utils/permissionUtils';
 
@@ -51,12 +51,51 @@ const Timetables = () => {
   const user = useSelector((state) => state.user.user);
   const permissions = user?.role?.permissions;
   
+  const [allTimetables, setAllTimetables] = useState([]);
+  const [filteredTimetables, setFilteredTimetables] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+      const fetchAllTimetables = async () => {
+          setLoading(true);
+          try {
+              const response = await api.post(`/api/timetable/getAllBy/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
+              setAllTimetables(response.data.content || []);
+              setFilteredTimetables(response.data.content || []);
+          } catch (error) {
+              console.error('Failed to fetch timetables:', error);
+              setAllTimetables([]);
+              setFilteredTimetables([]);
+          } finally {
+              setLoading(false);
+          }
+      };
+      fetchAllTimetables();
+  }, [accountId]);
+
+  const handleFilterChange = useCallback((newFilters) => {
+      let tempFiltered = allTimetables;
+      if (newFilters.schoolId) {
+          tempFiltered = tempFiltered.filter(timetable => timetable.schoolId == newFilters.schoolId);
+      }
+      if (newFilters.classId) {
+          tempFiltered = tempFiltered.filter(timetable => timetable.classId == newFilters.classId);
+      }
+      if (newFilters.divisionId) {
+          tempFiltered = tempFiltered.filter(timetable => timetable.divisionId == newFilters.divisionId);
+      }
+      setFilteredTimetables(tempFiltered);
+  }, [allTimetables]);
+  
   const handleOnClickDelete = (data) => {
-    if (data.id) {
-      api.delete(`api/timetable/delete?id=${data?.id}`).then(response => {
-        const filterTimetables = timetables.filter(timetable => timetable.id !== data.id);
-        setTimetables([...filterTimetables]);
-      }).catch(err => console.error(err));
+    if (window.confirm('Are you sure you want to delete this item?')) {
+        if (data.id) {
+          api.delete(`api/timetable/delete?id=${data?.id}`).then(response => {
+            const filterTimetables = allTimetables.filter(timetable => timetable.id !== data.id);
+            setAllTimetables(filterTimetables);
+            setFilteredTimetables(filterTimetables);
+          }).catch(err => console.error(err));
+        }
     }
   };
 
@@ -119,14 +158,6 @@ const Timetables = () => {
     }
   };
 
-//   const customToolbar = () => (
-//     <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-//       <Typography variant="h6">Timetables Overview</Typography>
-//       <Typography variant="body2" color="textSecondary">
-//         This grid shows all timetables with filtering capabilities.
-//       </Typography>
-//     </Box>
-//   );
 
   return (
     <MainCard
@@ -140,19 +171,20 @@ const Timetables = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            fetchUrl={`/api/timetable/getAllBy/${accountId}`}
+            data={filteredTimetables}
+            loading={loading}
+            onFiltersChange={handleFilterChange}
+            fetchUrl={null}
+            isPostRequest={false}
             columns={columns}
             editUrl="/masters/timetable/edit"
             deleteUrl="/api/timetable/delete"
-            filters={{}}
-            isPostRequest={true}
             viewUrl="/masters/timetable/view"
             entityName="TIMETABLE"
             enableFilters={true}
             showSchoolFilter={true}
             showClassFilter={true}
             showDivisionFilter={true}
-            // customToolbar={customToolbar}
           />
         </Grid>
       </Grid>

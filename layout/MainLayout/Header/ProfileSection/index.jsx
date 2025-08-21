@@ -28,9 +28,10 @@ import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import User1 from 'assets/images/users/user-round.svg';
 import { userDetails } from 'utils/apiService';
+import { hasPermission } from 'utils/permissionUtils'; // ADD THIS LINE
 
 // assets
-import { IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
+import { IconLogout, IconSettings, IconUser, IconHistory } from '@tabler/icons-react';
 
 // ==============================|| PROFILE MENU ||============================== //
 
@@ -38,6 +39,7 @@ const ProfileSection = () => {
     const theme = useTheme();
     const customization = useSelector((state) => state.customization);
     const navigate = useNavigate();
+    const permissions = useSelector((state) => state.user.permissions); // Get permissions from state
 
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [open, setOpen] = useState(false);
@@ -186,9 +188,23 @@ const ProfileSection = () => {
                                                     <ListItemText primary={<Typography variant="body2">My Profile</Typography>} />
                                                 </ListItemButton>
                                                 
+                                                {/* Conditionally render Audit Log item */}
+                                                {hasPermission(permissions, 'AUDIT_LOG', 'view') && (
+                                                    <ListItemButton
+                                                        sx={{ borderRadius: `${customization.borderRadius}px` }}
+                                                        selected={selectedIndex === 1}
+                                                        onClick={(event) => handleListItemClick(event, 1, '/masters/audit-log')}
+                                                    >
+                                                        <ListItemIcon>
+                                                            <IconHistory stroke={1.5} size="1.3rem" />
+                                                        </ListItemIcon>
+                                                        <ListItemText primary={<Typography variant="body2">Audit Log</Typography>} />
+                                                    </ListItemButton>
+                                                )}
+                                                
                                                 <ListItemButton
                                                     sx={{ borderRadius: `${customization.borderRadius}px` }}
-                                                    selected={selectedIndex === 1}
+                                                    selected={selectedIndex === 2}
                                                     onClick={handleLogout}
                                                 >
                                                     <ListItemIcon>

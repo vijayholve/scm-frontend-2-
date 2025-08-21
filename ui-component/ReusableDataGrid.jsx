@@ -60,6 +60,7 @@ const ReusableDataGrid = ({
   addActionUrl,
   viewUrl,
   filters = {},
+  data = [], // New prop for client-side data
   isPostRequest = true,
   entityName,
   customActions = [],
@@ -84,13 +85,13 @@ const ReusableDataGrid = ({
   showSchoolFilter = false,
   showClassFilter = false,
   showDivisionFilter = false,
-  enableFilters = false
+  enableFilters = false,
+  onFiltersChange = () => {} // New prop for client-side filter changes
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
 
-  // State for data, pagination, and loading
-  const [data, setData] = useState([]);
+  // State for internal pagination and search for server-side mode
   const [loading, setLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
   const [rowCount, setRowCount] = useState(0);
@@ -104,11 +105,15 @@ const ReusableDataGrid = ({
     ...filters
   });
 
-  // Memoized function to fetch data
+  // Memoized function to fetch data (only used in server-side mode)
   const fetchData = useCallback(async () => {
+    if (!fetchUrl) return;
+
     setLoading(true);
     try {
       let response;
+      const combinedFilters = { ...gridFilters };
+
       if (isPostRequest) {
         const payload = {
           page: paginationModel.page,
@@ -116,7 +121,7 @@ const ReusableDataGrid = ({
           sortBy: 'id',
           sortDir: 'asc',
           search: searchTerm,
-          ...gridFilters
+          ...combinedFilters
         };
         response = await api.post(fetchUrl, payload);
       } else {
@@ -124,39 +129,30 @@ const ReusableDataGrid = ({
           page: paginationModel.page,
           size: paginationModel.pageSize,
           search: searchTerm,
-          ...gridFilters
+          ...combinedFilters
         });
         response = await api.get(`${fetchUrl}?${queryParams}`);
       }
-      console.log(fetchUrl, 'fetchUrl', response);
-
-      let responseData = response.data.content || response.data || [];
-
-      // Apply custom data transformation if provided
-      if (transformData && typeof transformData === 'function') {
-        responseData = responseData.map(transformData);
-      }
-
-      setData(responseData);
+      
+      const responseData = response.data.content || response.data || [];
+      const transformedData = transformData ? responseData.map(transformData) : responseData;
+      
+      // Update local state with the fetched data
       setRowCount(response.data.totalElements || response.data.length || 0);
-
-      if (!response) {
-        console.error('No response from API');
-        console.log('URL: ' + fetchUrl);
-      }
     } catch (err) {
       console.error(`Failed to fetch data from ${fetchUrl}:`, err);
       toast.error('Could not fetch data.');
-      setData([]);
       setRowCount(0);
     } finally {
       setLoading(false);
     }
   }, [fetchUrl, paginationModel, JSON.stringify(gridFilters), isPostRequest, searchTerm, transformData]);
 
-  // Trigger fetch when pagination, filters, or search changes
+  // Trigger fetch only in server-side mode
   useEffect(() => {
-    fetchData();
+    if (fetchUrl) {
+      fetchData();
+    }
   }, [fetchData]);
 
   const handleOnClickDelete = async (id) => {
@@ -164,7 +160,12 @@ const ReusableDataGrid = ({
       try {
         await api.delete(`${deleteUrl}?id=${id}`);
         toast.success('Item deleted successfully!');
-        fetchData(); // Refetch data after deletion
+        if (fetchUrl) {
+          fetchData(); // For server-side mode
+        } else {
+          // For client-side mode, trigger a re-filter or re-fetch of all data
+          onFiltersChange(gridFilters);
+        }
       } catch (err) {
         console.error(err);
         toast.error('Failed to delete item.');
@@ -177,12 +178,21 @@ const ReusableDataGrid = ({
   };
 
   const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
-    setPaginationModel({ ...paginationModel, page: 0 }); // Reset to first page
+    const newSearchTerm = event.target.value;
+    setSearchTerm(newSearchTerm);
+    if (!fetchUrl) {
+      onFiltersChange({ ...gridFilters, searchTerm: newSearchTerm });
+    }
+    setPaginationModel({ ...paginationModel, page: 0 });
   };
 
   const handleRefresh = () => {
-    fetchData();
+    if (fetchUrl) {
+      fetchData();
+    } else {
+      // For client-side mode, re-fetch all data or re-run filters
+      onFiltersChange(gridFilters);
+    }
   };
 
   const handleRowClick = (params) => {
@@ -192,13 +202,20 @@ const ReusableDataGrid = ({
     setSelectedRow(params.row);
   };
 
-  // Handle filter changes
-  const handleFiltersChange = (newFilters) => {
+  // Handle filter changes (memoized with useCallback)
+  const handleFiltersChange = useCallback((newFilters) => {
     setGridFilters(newFilters);
-    setPaginationModel({ ...paginationModel, page: 0 }); // Reset to first page
-  };
+    if (!fetchUrl) {
+      onFiltersChange({ ...newFilters, searchTerm });
+    }
+    setPaginationModel(prev => ({ ...prev, page: 0 }));
+  }, [fetchUrl, onFiltersChange, searchTerm]);
 
-  // Create actions column only if there are actions available
+  // Determine which data to use based on mode
+  const displayedData = fetchUrl ? data : data;
+  const displayedRowCount = fetchUrl ? rowCount : data.length;
+  const paginationMode = fetchUrl ? 'server' : 'client';
+
   const hasActions = editUrl || deleteUrl || viewUrl || customActions.length > 0;
 
   const actionsColumn = hasActions
@@ -240,7 +257,6 @@ const ReusableDataGrid = ({
                   );
                 })}
 
-                {/* More actions menu for standard actions */}
                 {(editUrl || deleteUrl || viewUrl) && (
                   <IconButton size="small" onClick={(event) => setAnchorEl(event.currentTarget)}>
                     <MoreVertIcon />
@@ -313,10 +329,8 @@ const ReusableDataGrid = ({
 
   return (
     <MainCard title={title} secondary={<SecondaryAction icon={<AddIcon />} link={addActionUrl} />}>
-      {/* Custom Toolbar */}
       {customToolbar && customToolbar()}
 
-      {/* Filters Section */}
       {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && (
         <ListGridFilters
           filters={gridFilters}
@@ -327,7 +341,6 @@ const ReusableDataGrid = ({
         />
       )}
 
-      {/* Search and Actions Bar */}
       {(showSearch || showRefresh || showFilters) && (
         <SearchWrapper>
           {showSearch && (
@@ -368,16 +381,16 @@ const ReusableDataGrid = ({
         <Grid item xs={12}>
           <Box sx={{ height, width: '100%' }}>
             <DataGrid
-              rows={data}
+              rows={displayedData}
               columns={columns}
               loading={loading}
-              rowCount={rowCount}
+              rowCount={displayedRowCount}
               pageSizeOptions={pageSizeOptions}
               paginationModel={paginationModel}
               onPaginationModelChange={setPaginationModel}
-              paginationMode="server"
+              paginationMode={paginationMode}
               getRowId={(row) => row.id}
-              onRowClick={handleRowClick}
+              onRowClick={onRowClick || handleRowClick}
               selectionModel={selectionModel}
               onSelectionModelChange={onSelectionModelChange}
               checkboxSelection={checkboxSelection}
@@ -401,49 +414,6 @@ const ReusableDataGrid = ({
           </Box>
         </Grid>
       </Grid>
-
-      {/* More Actions Menu */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        {viewUrl && hasPermission(permissions, entityName, 'view') && (
-          <MenuItem
-            onClick={() => {
-              handleOnClickView(selectedRow?.id);
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemIcon>
-              <ViewIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>View</ListItemText>
-          </MenuItem>
-        )}
-        {editUrl && hasPermission(permissions, entityName, 'edit') && (
-          <MenuItem
-            onClick={() => {
-              navigate(`${editUrl}/${selectedRow?.id}`);
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemIcon>
-              <EditIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
-          </MenuItem>
-        )}
-        {deleteUrl && hasPermission(permissions, entityName, 'delete') && (
-          <MenuItem
-            onClick={() => {
-              handleOnClickDelete(selectedRow?.id);
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemIcon>
-              <DeleteIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
-          </MenuItem>
-        )}
-      </Menu>
     </MainCard>
   );
 };

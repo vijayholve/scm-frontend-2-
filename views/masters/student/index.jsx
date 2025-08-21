@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -8,6 +8,9 @@ import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
 import api from '../../../utils/apiService';
+import { useDispatch, useSelector } from 'react-redux';
+import { setAllStudents, filterStudents } from '../../../store/userSlice';
+import ListGridFilters from '../../../ui-component/ListGridFilters';
 
 const columnsConfig = [
   { field: 'rollno', headerName: 'Roll No', width: 90 },
@@ -22,76 +25,64 @@ const columnsConfig = [
 
 const Students = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const accountId = userDetails.getAccountId();
   const [classNames, setClassNames] = useState({});
   const [divisionNames, setDivisionNames] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  // Get filtered student data from the Redux store
+  const filteredStudents = useSelector((state) => state.user.filteredStudents);
+  const allStudents = useSelector((state) => state.user.allStudents);
 
   useEffect(() => {
-    const fetchNames = async () => {
+    const fetchInitialData = async () => {
       try {
-        const classResponse = await api.post(`/api/schoolClasses/getAll/${accountId}`, {
-          page: 0,
-          size: 1000,
-          sortBy: 'id',
-          sortDir: 'asc'
-        });
-
+        const [classResponse, divisionResponse, studentResponse] = await Promise.all([
+          api.post(`/api/schoolClasses/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
+          api.post(`/api/divisions/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
+          api.post(`/api/users/getAll/${accountId}?type=STUDENT`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' })
+        ]);
+        
         const classMap = {};
         (classResponse.data.content || []).forEach((cls) => {
           classMap[cls.id] = cls.name;
         });
         setClassNames(classMap);
-
-        const divisionResponse = await api.post(`/api/divisions/getAll/${accountId}`, {
-          page: 0,
-          size: 1000,
-          sortBy: 'id',
-          sortDir: 'asc'
-        });
-
+        
         const divisionMap = {};
         (divisionResponse.data.content || []).forEach((div) => {
           divisionMap[div.id] = div.name;
         });
         setDivisionNames(divisionMap);
+        
+        dispatch(setAllStudents(studentResponse.data.content || []));
+        setLoading(false);
+
       } catch (error) {
-        console.error('Failed to fetch class/division names:', error);
+        console.error('Failed to fetch initial data:', error);
+        setLoading(false);
       }
     };
 
-    fetchNames();
-  }, [accountId]);
+    if (allStudents.length === 0) {
+      fetchInitialData();
+    } else {
+      setLoading(false);
+    }
+  }, [accountId, dispatch, allStudents.length]);
 
-  const transformStudentData = (student) => ({
+  const transformStudentData = useCallback((student) => ({
     ...student,
     rollno: student.rollNo || student.id,
     name: `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.userName,
-    className: classNames[student.classId] || `Class ID: ${student.classId}` || 'N/A',
-    divisionName: divisionNames[student.divisionId] || `Division ID: ${student.divisionId}` || 'N/A'
-  });
+    className: classNames[student.classId] || 'N/A',
+    divisionName: divisionNames[student.divisionId] || 'N/A'
+  }), [classNames, divisionNames]);
 
-  const customActions = [
-    {
-      icon: <span>📚</span>,
-      label: 'View Assignments',
-      tooltip: 'View student assignments',
-      color: 'info',
-      onClick: (row) => {
-        navigate(`/masters/assignments/student/${row.id}`);
-      }
-    },
-    {
-      icon: <span>📊</span>,
-      label: 'View Attendance',
-      tooltip: 'View student attendance',
-      color: 'secondary',
-      onClick: (row) => {
-        navigate(`/masters/attendance/student/${row.id}`);
-      }
-    }
-  ];
-  
-
+  const handleFilterChange = useCallback((newFilters) => {
+    dispatch(filterStudents(newFilters));
+  }, [dispatch]);
 
   return (
     <MainCard
@@ -101,23 +92,24 @@ const Students = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            fetchUrl={`/api/users/getAll/${accountId}?type=STUDENT`}
+            data={filteredStudents.map(transformStudentData)}
+            fetchUrl={null}
+            isPostRequest={false}
+            loading={loading}
+            onFiltersChange={handleFilterChange}
             columns={columnsConfig}
             editUrl="/masters/student/edit"
             deleteUrl="/api/users/delete"
             addActionUrl="/masters/student/add"
             viewUrl="/masters/students/view"
             entityName="STUDENT"
-            isPostRequest={true}
-            // customActions={customActions}
             searchPlaceholder="Search students by name, email, or roll number..."
             showSearch={true}
-            showRefresh={true}
+            showRefresh={false}
             showFilters={true}
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}
             height={600}
-            transformData={transformStudentData}
             onRowClick={(params) => {
               navigate(`/masters/students/view/${params.row.id}`);
             }}

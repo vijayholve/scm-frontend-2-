@@ -37,8 +37,6 @@ const EditSchool = ({ ...others }) => {
 
   // State for the list of institutes to populate the dropdown
   const [institutes, setInstitutes] = useState([]);
-  // State to track if the school name is unique
-  const [isNameUnique, setIsNameUnique] = useState(true);
 
   const Title = schoolId ? 'Edit School' : 'Add School';
 
@@ -83,69 +81,37 @@ const EditSchool = ({ ...others }) => {
   }, [schoolId]);
 
   /**
-   * Checks if the school name is unique for the current account.
-   * @param {string} name - The name of the school to check.
-   */
-  const checkNameUniqueness = async (name) => {
-    if (!name) return; // Don't run check if name is empty
-
-    try {
-      const response = await api.post(`/api/schools/checkName`, {
-        name: name,
-        accountId: userDetails.getAccountId(),
-        id: schoolId || 0 // Exclude current school from check in edit mode
-      });
-      setIsNameUnique(response.data.isUnique);
-    } catch (error) {
-      toast.error('Error checking school name uniqueness.');
-      console.error(error);
-    }
-  };
-
-  /**
-   * Handles form submission. It validates, checks for uniqueness, and then
+   * Handles form submission. It validates and then
    * calls the appropriate API to create or update a school.
    */
   const handleSubmit = async (values, { setSubmitting }) => {
-    // Perform a final uniqueness check on submit
-    await checkNameUniqueness(values.name);
+    const schoolPayload = {
+      ...values,
+      id: schoolData?.id,
+      accountId: userDetails.getAccountId()
+    };
 
-    // Use a short timeout to ensure the state update from the async check is processed
-    setTimeout(async () => {
-      if (!isNameUnique) {
-        toast.error("School name already exists. Please use a different name.");
-        setSubmitting(false);
-        return;
-      }
+    try {
+      const apiCall = schoolId
+        ? api.put(`/api/schools/update`, schoolPayload)
+        : api.post(`/api/schools/create`, schoolPayload);
 
-      const schoolPayload = {
-        ...values,
-        id: schoolData?.id,
-        accountId: userDetails.getAccountId()
-      };
+      await apiCall;
 
-      try {
-        const apiCall = schoolId
-          ? api.put(`/api/schools/update`, schoolPayload)
-          : api.post(`/api/schools/create`, schoolPayload);
-
-        await apiCall;
-
-        setSubmitting(false);
-        toast.success(schoolId ? "School updated successfully!" : "School created successfully!", {
-          autoClose: 1000,
-          onClose: () => navigate('/masters/schools')
-        });
-      } catch (error) {
-        toast.error("An error occurred while saving the school. Please try again.");
-        setSubmitting(false);
-        console.error("Failed to save school data:", error);
-      }
-    }, 100);
+      setSubmitting(false);
+      toast.success(schoolId ? "School updated successfully!" : "School created successfully!", {
+        autoClose: 1000,
+        onClose: () => navigate('/masters/schools')
+      });
+    } catch (error) {
+      toast.error("An error occurred while saving the school. Please try again.");
+      setSubmitting(false);
+      console.error("Failed to save school data:", error);
+    }
   };
 
   return (
-    <MainCard title={Title} secondary={<BackButton BackUrl='/masters/schools'/>}>
+    <MainCard title={Title} secondary={<BackButton BackUrl='/masters/schools' />}>
       <Formik
         key={schoolData.id || 'new-school'} // Ensures form re-initializes when data loads
         enableReinitialize
@@ -179,21 +145,17 @@ const EditSchool = ({ ...others }) => {
             <Grid container spacing={gridSpacing}>
               {/* School Name */}
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth error={Boolean(touched.name && errors.name) || !isNameUnique}>
+                <FormControl fullWidth error={Boolean(touched.name && errors.name)}>
                   <InputLabel htmlFor="school-name">School Name</InputLabel>
                   <OutlinedInput
                     id="school-name"
                     name="name"
                     value={values.name}
                     label="School Name"
-                    onBlur={(e) => {
-                      handleBlur(e);
-                      checkNameUniqueness(values.name);
-                    }}
+                    onBlur={handleBlur}
                     onChange={handleChange}
                   />
                   {touched.name && errors.name && <FormHelperText error>{errors.name}</FormHelperText>}
-                  {!isNameUnique && <FormHelperText error>This school name already exists.</FormHelperText>}
                 </FormControl>
               </Grid>
 

@@ -1,17 +1,18 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { act } from 'react';
 import { userDetails } from 'utils/apiService';
 
 // Initial state for the user slice from local storage
 const storedUser = userDetails.getUser();
-
 
 const initialState = {
   isLoggedIn: false,
   user: storedUser? storedUser : null,
   accessToken: null,
   role: null,
-  permissions: userDetails.getPermissions() || []
+  permissions: userDetails.getPermissions() || [],
+  // New state for student data filtering
+  allStudents: [],
+  filteredStudents: [],
 };
 
 const userSlice = createSlice({
@@ -28,9 +29,42 @@ const userSlice = createSlice({
     setLogout(state) {
       state.isLoggedIn = false;
       state.user = null;
+    },
+    // New reducer to set the initial list of all students
+    setAllStudents(state, action) {
+      state.allStudents = action.payload;
+      state.filteredStudents = action.payload; // Initially, all students are the filtered students
+    },
+    // New reducer to apply filters to the student list
+    filterStudents(state, action) {
+      const { schoolId, classId, divisionId, searchTerm } = action.payload;
+
+      let filteredData = state.allStudents;
+
+      if (schoolId) {
+        filteredData = filteredData.filter(student => student.schoolId == schoolId);
+      }
+      if (classId) {
+        filteredData = filteredData.filter(student => student.classId == classId);
+      }
+      if (divisionId) {
+        filteredData = filteredData.filter(student => student.divisionId == divisionId);
+      }
+      if (searchTerm) {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        filteredData = filteredData.filter(student =>
+          (student.firstName?.toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (student.lastName?.toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (student.email?.toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (student.rollNo?.toString().includes(lowerCaseSearchTerm)) ||
+          (student.userName?.toLowerCase().includes(lowerCaseSearchTerm))
+        );
+      }
+      
+      state.filteredStudents = filteredData;
     }
   }
 });
 
-export const { setLogin, setLogout } = userSlice.actions;
+export const { setLogin, setLogout, setAllStudents, filterStudents } = userSlice.actions;
 export default userSlice.reducer;

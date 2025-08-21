@@ -274,7 +274,7 @@ const rawUtilities = {
             type: 'item',
             url: '/masters/lms',
 
-    icon: icons.IconBook2, // Use the new icon here
+            icon: icons.IconBook2, // Use the new icon here
             breadcrumbs: false
         },
         // {
@@ -289,7 +289,7 @@ const rawUtilities = {
             id: 'FEE_MANAGEMENT',
             title: 'Fee Management',
             type: 'collapse',
-            icon: icons.IconAward, // Use the new icon here
+            icon: icons.IconCreditCard, // Use the new icon here
             breadcrumbs: false,
             children: [
                 {
@@ -297,7 +297,7 @@ const rawUtilities = {
                     title: 'Admin Fee Dashboard',
                     type: 'item',
                     url: '/masters/fees',
-                    icon: icons.IconUsersGroup,
+                    icon: icons.IconCreditCard,
                     breadcrumbs: false
                 },
                 {
@@ -305,7 +305,7 @@ const rawUtilities = {
                     title: 'My Fees',
                     type: 'item',
                     url: '/masters/student/fees',
-                    icon: icons.IconUsersGroup,
+                    icon: icons.IconCreditCard,
                     breadcrumbs: false
                 }
             ]

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -7,6 +7,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../../utils/apiService';
+import api from '../../../../utils/apiService';
 
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -19,6 +20,41 @@ const columns = [
 
 const CourseList = () => {
   const accountId = userDetails.getAccountId();
+  const [allCourses, setAllCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAllCourses = async () => {
+      setLoading(true);
+      try {
+        const response = await api.post(`/api/lms/course/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
+        setAllCourses(response.data.content || []);
+        setFilteredCourses(response.data.content || []);
+      } catch (error) {
+        console.error('Failed to fetch courses:', error);
+        setAllCourses([]);
+        setFilteredCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllCourses();
+  }, [accountId]);
+
+  const handleFilterChange = useCallback((newFilters) => {
+    let tempFiltered = allCourses;
+    if (newFilters.schoolId) {
+      tempFiltered = tempFiltered.filter(course => course.schoolId == newFilters.schoolId);
+    }
+    if (newFilters.classId) {
+      tempFiltered = tempFiltered.filter(course => course.classId == newFilters.classId);
+    }
+    if (newFilters.divisionId) {
+      tempFiltered = tempFiltered.filter(course => course.divisionId == newFilters.divisionId);
+    }
+    setFilteredCourses(tempFiltered);
+  }, [allCourses]);
 
   return (
     <MainCard
@@ -28,14 +64,17 @@ const CourseList = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            entityName="LMS"
-            fetchUrl={`/api/lms/course/getAll/${accountId}`}
+            data={filteredCourses}
+            loading={loading}
+            onFiltersChange={handleFilterChange}
+            fetchUrl={null}
+            isPostRequest={false}
             columns={columns}
             editUrl="/masters/lms/course/edit"
             deleteUrl="/api/lms/course/delete"
             addActionUrl="/masters/lms/course/add"
             viewUrl="/masters/lms/course/view"
-            isPostRequest={true}
+            entityName="LMS"
             enableFilters={true}
             showSchoolFilter={true}
             showClassFilter={true}

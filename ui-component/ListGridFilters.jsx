@@ -12,20 +12,17 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
   const [loading, setLoading] = useState(false);
   const accountId = userDetails.getAccountId();
 
-  // Initialize filters with current values
-  const [localFilters, setLocalFilters] = useState({
-    schoolId: filters?.schoolId || '',
-    classId: filters?.classId || '',
-    divisionId: filters?.divisionId || '',
-    ...filters
-  });
+  // Use state to track selected filters locally
+  const [selectedSchool, setSelectedSchool] = useState(filters.schoolId || '');
+  const [selectedClass, setSelectedClass] = useState(filters.classId || '');
+  const [selectedDivision, setSelectedDivision] = useState(filters.divisionId || '');
 
-  // Debug logging for filters
+  // Sync internal state with props if they change
   useEffect(() => {
-    console.log('ListGridFilters - Props:', { showSchool, showClass, showDivision, filters });
-    console.log('ListGridFilters - Local Filters:', localFilters);
-    console.log('ListGridFilters - Initial filters prop:', filters);
-  }, [showSchool, showClass, showDivision, filters, localFilters]);
+    setSelectedSchool(filters.schoolId || '');
+    setSelectedClass(filters.classId || '');
+    setSelectedDivision(filters.divisionId || '');
+  }, [filters]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,20 +36,14 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
             sortBy: 'id',
             sortDir: 'asc'
           };
-          console.log('Fetching schools with payload:', schoolPayload);
           try {
             const schoolResponse = await api.post(`/api/schoolBranches/getAll/${accountId}`, schoolPayload);
-            console.log('Schools response:', schoolResponse.data);
             setSchools(schoolResponse.data.content || []);
           } catch (schoolError) {
-            console.error('Failed to fetch schools:', schoolError);
-            // Try alternative endpoint
             try {
               const altResponse = await api.get(`/api/schoolBranches/${accountId}`);
-              console.log('Alternative schools response:', altResponse.data);
               setSchools(altResponse.data || []);
             } catch (altError) {
-              console.error('Alternative schools endpoint also failed:', altError);
               setSchools([]);
             }
           }
@@ -66,26 +57,17 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
             sortBy: 'id',
             sortDir: 'asc'
           };
-
-          // Only add schoolId filter if it's selected
-          if (localFilters.schoolId) {
-            classPayload.schoolId = localFilters.schoolId;
+          if (selectedSchool) {
+            classPayload.schoolId = selectedSchool;
           }
-
-          console.log('Fetching classes with payload:', classPayload);
           try {
             const classResponse = await api.post(`/api/schoolClasses/getAll/${accountId}`, classPayload);
-            console.log('Classes response:', classResponse.data);
             setClasses(classResponse.data.content || []);
           } catch (classError) {
-            console.error('Failed to fetch classes:', classError);
-            // Try alternative endpoint
             try {
               const altResponse = await api.get(`/api/schoolClasses/${accountId}`);
-              console.log('Alternative classes response:', altResponse.data);
               setClasses(altResponse.data || []);
             } catch (altError) {
-              console.error('Alternative classes endpoint also failed:', altError);
               setClasses([]);
             }
           }
@@ -99,26 +81,17 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
             sortBy: 'id',
             sortDir: 'asc'
           };
-
-          // Only add classId filter if it's selected
-          if (localFilters.classId) {
-            divisionPayload.classId = localFilters.classId;
+          if (selectedClass) {
+            divisionPayload.classId = selectedClass;
           }
-
-          console.log('Fetching divisions with payload:', divisionPayload);
           try {
             const divisionResponse = await api.post(`/api/divisions/getAll/${accountId}`, divisionPayload);
-            console.log('Divisions response:', divisionResponse.data);
             setDivisions(divisionResponse.data.content || []);
           } catch (divisionError) {
-            console.error('Failed to fetch divisions:', divisionError);
-            // Try alternative endpoint
             try {
               const altResponse = await api.get(`/api/divisions/${accountId}`);
-              console.log('Alternative divisions response:', altResponse.data);
               setDivisions(altResponse.data || []);
             } catch (altError) {
-              console.error('Alternative divisions endpoint also failed:', altError);
               setDivisions([]);
             }
           }
@@ -129,48 +102,47 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [accountId, showSchool, showClass, showDivision, localFilters.schoolId, localFilters.classId]);
+  }, [accountId, showSchool, showClass, showDivision, selectedSchool, selectedClass]);
 
-  // Handle filter changes
-  const handleFilterChange = (field, value) => {
-    console.log('Filter change:', field, value);
-    const newFilters = { ...localFilters, [field]: value };
+  // Pass filter changes up to the parent component (ReusableDataGrid)
+  useEffect(() => {
+    onFiltersChange({
+      schoolId: selectedSchool,
+      classId: selectedClass,
+      divisionId: selectedDivision
+    });
+  }, [selectedSchool, selectedClass, selectedDivision, onFiltersChange]);
 
-    // Reset dependent filters when parent filter changes
-    if (field === 'schoolId') {
-      newFilters.classId = '';
-      newFilters.divisionId = '';
-    } else if (field === 'classId') {
-      newFilters.divisionId = '';
-    }
-
-    console.log('New filters after change:', newFilters);
-    setLocalFilters(newFilters);
-    onFiltersChange(newFilters);
+  const handleSchoolChange = (e) => {
+    const newSchool = e.target.value;
+    setSelectedSchool(newSchool);
+    setSelectedClass('');
+    setSelectedDivision('');
   };
 
-  // Clear all filters
+  const handleClassChange = (e) => {
+    const newClass = e.target.value;
+    setSelectedClass(newClass);
+    setSelectedDivision('');
+  };
+
+  const handleDivisionChange = (e) => {
+    setSelectedDivision(e.target.value);
+  };
+
   const clearAllFilters = () => {
-    const clearedFilters = {
+    setSelectedSchool('');
+    setSelectedClass('');
+    setSelectedDivision('');
+    onFiltersChange({
       schoolId: '',
       classId: '',
-      divisionId: '',
-      ...Object.keys(filters || {}).reduce((acc, key) => {
-        if (!['schoolId', 'classId', 'divisionId'].includes(key)) {
-          acc[key] = filters[key];
-        }
-        return acc;
-      }, {})
-    };
-    console.log('Clearing all filters:', clearedFilters);
-    setLocalFilters(clearedFilters);
-    onFiltersChange(clearedFilters);
+      divisionId: ''
+    });
   };
 
-  // Check if any filters are active
-  const hasActiveFilters = localFilters.schoolId || localFilters.classId || localFilters.divisionId;
+  const hasActiveFilters = selectedSchool || selectedClass || selectedDivision;
 
   return (
     <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
@@ -188,15 +160,14 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
       </Box>
 
       <Grid container spacing={2}>
-        {/* School Filter */}
         {showSchool && (
           <Grid item xs={12} sm={4} md={3}>
             <FormControl fullWidth size="small">
               <InputLabel>School</InputLabel>
               <Select
-                value={localFilters.schoolId || ''}
-                onChange={(e) => handleFilterChange('schoolId', e.target.value)}
+                value={selectedSchool}
                 label="School"
+                onChange={handleSchoolChange}
                 disabled={loading}
               >
                 <MenuItem value="">
@@ -212,16 +183,14 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
           </Grid>
         )}
 
-        {/* Class Filter */}
         {showClass && (
           <Grid item xs={12} sm={4} md={3}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size="small" disabled={loading || !selectedSchool}>
               <InputLabel>Class</InputLabel>
               <Select
-                value={localFilters.classId || ''}
-                onChange={(e) => handleFilterChange('classId', e.target.value)}
+                value={selectedClass}
                 label="Class"
-                disabled={loading || !localFilters.schoolId}
+                onChange={handleClassChange}
               >
                 <MenuItem value="">
                   <em>All Classes</em>
@@ -236,23 +205,21 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
           </Grid>
         )}
 
-        {/* Division Filter */}
         {showDivision && (
           <Grid item xs={12} sm={4} md={3}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size="small" disabled={loading || !selectedClass}>
               <InputLabel>Division</InputLabel>
               <Select
-                value={localFilters.divisionId || ''}
-                onChange={(e) => handleFilterChange('divisionId', e.target.value)}
+                value={selectedDivision}
                 label="Division"
-                disabled={loading || !localFilters.classId}
+                onChange={handleDivisionChange}
               >
                 <MenuItem value="">
                   <em>All Divisions</em>
                 </MenuItem>
-                {divisions.map((division) => (
-                  <MenuItem key={division.id} value={division.id}>
-                    {division.name}
+                {divisions.map((div) => (
+                  <MenuItem key={div.id} value={div.id}>
+                    {div.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -260,32 +227,30 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
           </Grid>
         )}
       </Grid>
-
-      {/* Active Filters Display */}
       {hasActiveFilters && (
         <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           <Typography variant="body2" color="textSecondary" sx={{ mr: 1 }}>
             Active filters:
           </Typography>
-          {localFilters.schoolId && (
+          {selectedSchool && (
             <Chip
-              label={`School: ${schools.find((s) => s.id === localFilters.schoolId)?.name || 'Unknown'}`}
+              label={`School: ${schools.find((s) => s.id === selectedSchool)?.name || 'Unknown'}`}
               size="small"
               color="primary"
               variant="outlined"
             />
           )}
-          {localFilters.classId && (
+          {selectedClass && (
             <Chip
-              label={`Class: ${classes.find((c) => c.id === localFilters.classId)?.name || 'Unknown'}`}
+              label={`Class: ${classes.find((c) => c.id === selectedClass)?.name || 'Unknown'}`}
               size="small"
               color="secondary"
               variant="outlined"
             />
           )}
-          {localFilters.divisionId && (
+          {selectedDivision && (
             <Chip
-              label={`Division: ${divisions.find((d) => d.id === localFilters.divisionId)?.name || 'Unknown'}`}
+              label={`Division: ${divisions.find((d) => d.id === selectedDivision)?.name || 'Unknown'}`}
               size="small"
               color="info"
               variant="outlined"

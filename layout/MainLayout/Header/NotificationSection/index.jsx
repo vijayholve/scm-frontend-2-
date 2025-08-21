@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast'; // Import toast for user feedback
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -16,7 +17,6 @@ import {
     Paper,
     Popper,
     Stack,
-    TextField,
     Typography,
     useMediaQuery
 } from '@mui/material';
@@ -63,6 +63,7 @@ const NotificationSection = () => {
     const [value, setValue] = useState('');
     const [notificationList, setNotificationList] = useState([]);
     const [rowCount, setRowCount] = useState(0);
+    const [displayCount, setDisplayCount] = useState(5);
     const anchorRef = useRef(null);
 
     const handleToggle = () => {
@@ -76,29 +77,28 @@ const NotificationSection = () => {
         setOpen(false);
     };
     
-    useEffect(() => {
-        const fetchNotifications = () => {
-            const pagination = {
-                page: 0,
-                size: 10, // Fetching 10 notifications for the dropdown
-                sortBy: "id",
-                sortDir: "desc", // Show latest notifications first
-                search: ""
-            };
-            apiService.post(`api/auditlogs/getAll/${userDetails.getAccountId()}`, pagination)
-                .then(response => {
-                    setNotificationList(response.data.content || []);
-                    // Corrected console.log:
-                    console.log("notification", response.data.content);
-                    setRowCount(response.data.totalElements || 0);
-                })
-                .catch(err => console.error(err));
+    // Function to fetch notifications
+    const fetchNotifications = () => {
+        const pagination = {
+            page: 0,
+            size: displayCount,
+            sortBy: "id",
+            sortDir: "desc",
+            search: ""
         };
+        apiService.post(`api/auditlogs/getAll/${userDetails.getAccountId()}`, pagination)
+            .then(response => {
+                setNotificationList(response.data.content || []);
+                setRowCount(response.data.totalElements || 0);
+            })
+            .catch(err => console.error(err));
+    };
+
+    useEffect(() => {
         if(open){
             fetchNotifications();
         }
-    }, [open]);
-
+    }, [open, displayCount]);
 
     const prevOpen = useRef(open);
     useEffect(() => {
@@ -110,6 +110,22 @@ const NotificationSection = () => {
 
     const handleChange = (event) => {
         if (event?.target.value) setValue(event?.target.value);
+    };
+    
+    const handleViewMore = () => {
+        setDisplayCount(prevCount => prevCount + 5);
+    };
+
+    const handleMarkAllAsRead = async () => {
+        try {
+            await apiService.post(`/api/auditlogs/markallread/${userDetails.getAccountId()}`);
+            toast.success("All notifications marked as read.");
+            // Refresh the list after marking as read
+            fetchNotifications();
+        } catch (error) {
+            console.error("Failed to mark all as read:", error);
+            toast.error("Failed to mark notifications as read.");
+        }
     };
 
     return (
@@ -187,7 +203,12 @@ const NotificationSection = () => {
                                                     </Stack>
                                                 </Grid>
                                                 <Grid item>
-                                                    <Typography component={Link} to="#" variant="subtitle2" color="primary">
+                                                    <Typography
+                                                        variant="subtitle2"
+                                                        color="primary"
+                                                        onClick={handleMarkAllAsRead}
+                                                        sx={{ cursor: 'pointer' }}
+                                                    >
                                                         Mark as all read
                                                     </Typography>
                                                 </Grid>
@@ -202,11 +223,13 @@ const NotificationSection = () => {
                                         </Grid>
                                     </Grid>
                                     <Divider />
-                                    <CardActions sx={{ p: 1.25, justifyContent: 'center' }}>
-                                        <Button size="small" disableElevation>
-                                            View All
-                                        </Button>
-                                    </CardActions>
+                                    {notificationList.length < rowCount && (
+                                        <CardActions sx={{ p: 1.25, justifyContent: 'center' }}>
+                                            <Button size="small" disableElevation onClick={handleViewMore}>
+                                                View More
+                                            </Button>
+                                        </CardActions>
+                                    )}
                                 </MainCard>
                             </ClickAwayListener>
                         </Paper>

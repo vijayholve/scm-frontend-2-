@@ -17,7 +17,6 @@ import NavigationScroll from 'layout/NavigationScroll';
 import 'react-toastify/dist/ReactToastify.css';
 import RouterProviderWrapper from 'routes';
 
-// ==============================|| APP ||============================== //
 
 const App = () => {
     const customization = useSelector((state) => state.customization);

@@ -36,7 +36,7 @@ import {
 
 // project imports
 import IdCardTemplate from './IdCardTemplate';
-import api from '../../../utils/apiService';
+import api, { userDetails } from '../../../utils/apiService';
 import { toast } from 'react-hot-toast';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
@@ -99,7 +99,7 @@ const IdCardGenerationModal = ({ open, onClose, selectedRows, entityType, onComp
     const [previewData, setPreviewData] = useState(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const idCardRef = useRef();
-
+    const accountId = userDetails.getAccountId();
     useEffect(() => {
         if (open && selectedRows.length > 0) {
             fetchSelectedData();
@@ -109,14 +109,10 @@ const IdCardGenerationModal = ({ open, onClose, selectedRows, entityType, onComp
     const fetchSelectedData = async () => {
         setLoading(true);
         try {
-            const endpoint = entityType === 'students' ? '/api/students/findall' : '/api/users/findall';
-            const response = await api.post(endpoint, {
-                page: 0,
-                pageSize: selectedRows.length,
-                ids: selectedRows
-            });
+            const endpoint = entityType === 'STUDENT' ? `/api/users/findAll/${accountId}?type=STUDENT` : `/api/users/findAll/${accountId}?type=TEACHER`;
+            const response = await api.post(endpoint, [...selectedRows]);
             
-            const data = response.data.content || [];
+            const data = response.data || [];
             setSelectedData(data);
             
             // Set first record as preview data

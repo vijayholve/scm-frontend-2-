@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 
@@ -10,6 +10,7 @@ import ReusableDataGrid from 'ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
 import dayjs from 'dayjs';
 import { Box, Grid } from '@mui/material';
+import api from '../../../utils/apiService';
 
 // Define the columns for the attendance data grid.
 const columns = [
@@ -32,6 +33,46 @@ const columns = [
 const AttendanceList = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
+  const [allAttendance, setAllAttendance] = useState([]);
+  const [filteredAttendance, setFilteredAttendance] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({});
+
+  useEffect(() => {
+    const fetchAllAttendance = async () => {
+      setLoading(true);
+      try {
+        const response = await api.post(`/api/attendance/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
+        setAllAttendance(response.data.content || []);
+        setFilteredAttendance(response.data.content || []);
+        console.log("allAttendance")
+        console.log(allAttendance)
+        console.log("attendance data ",allAttendance)
+      } catch (error) {
+        console.error('Failed to fetch attendance:', error);
+        setAllAttendance([]);
+        setFilteredAttendance([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllAttendance();
+  }, [accountId]);
+
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(newFilters);
+    let tempFiltered = allAttendance;
+    if (newFilters.schoolId) {
+      tempFiltered = tempFiltered.filter(attendance => attendance.schoolId == newFilters.schoolId);
+    }
+    if (newFilters.classId) {
+      tempFiltered = tempFiltered.filter(attendance => attendance.schooldClassId == newFilters.classId);
+    }
+    if (newFilters.divisionId) {
+      tempFiltered = tempFiltered.filter(attendance => attendance.divisionId == newFilters.divisionId);
+    }
+    setFilteredAttendance(tempFiltered);
+  }, [allAttendance]);
 
   return (
     <MainCard
@@ -42,13 +83,14 @@ const AttendanceList = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
             entityName="ATTENDANCE List"
-            fetchUrl={`/api/attendance/getAll/${accountId}`}
+            data={filteredAttendance}
+            loading={loading}
+            onFiltersChange={handleFilterChange}
+            fetchUrl={null}
+            isPostRequest={false}
             columns={columns}
-            addActionUrl="/masters/attendance/add"
             editUrl="/masters/attendance/edit"
             deleteUrl="/api/attendance/delete"
-            isPostRequest={true}
-            // Enable all filters since attendance is tied to all three
             enableFilters={true}
             showSchoolFilter={true}
             showClassFilter={true}
