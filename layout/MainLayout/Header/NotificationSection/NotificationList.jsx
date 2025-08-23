@@ -76,12 +76,12 @@ const getNotificationConfig = (entityType, theme) => {
 
 // Helper to format the message
 const formatNotificationMessage = (notification) => {
-    const { entityType, action, user } = notification;
+    const { entityType, action, user, entityName } = notification;
     // Assuming the 'user' field in the notification log contains the name of the user who made the change.
     const userName = user || 'A user';
     const actionText = action ? action.toLowerCase().replace(/_/g, ' ') : 'modified';
-    
-    return `${userName} ${actionText} a record in ${entityType || 'the system'}.`;
+        
+    return `${userName} ${actionText} a record in ${entityType || 'the system'}.with name ${entityName}`;
 };
 
 const ListItemWrapper = ({ children }) => {

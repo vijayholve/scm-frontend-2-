@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Grid, Box, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
+import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import api, { userDetails } from '../../../utils/apiService';
 import MainCard from 'ui-component/cards/MainCard';
-import { gridSpacing } from 'store/constant';
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -12,56 +14,15 @@ const columns = [
 
 const RolesList = () => {
     const accountId = userDetails.getAccountId();
-    const [allRoles, setAllRoles] = useState([]);
-    const [filteredRoles, setFilteredRoles] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchAllRoles = async () => {
-            setLoading(true);
-            try {
-                const response = await api.post(`/api/roles/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
-                setAllRoles(response.data.content || []);
-                setFilteredRoles(response.data.content || []);
-            } catch (error) {
-                console.error('Failed to fetch roles:', error);
-                setAllRoles([]);
-                setFilteredRoles([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchAllRoles();
-    }, [accountId]);
-
-    const handleFilterChange = useCallback((newFilters) => {
-        let tempFiltered = allRoles;
-        if (newFilters.schoolId) {
-            tempFiltered = tempFiltered.filter(role => role.schoolId == newFilters.schoolId);
-        }
-        setFilteredRoles(tempFiltered);
-    }, [allRoles]);
-
-    const customToolbar = () => (
-      <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-        <Typography variant="h6">Roles Overview</Typography>
-        <Typography variant="body2" color="textSecondary">
-          This grid shows all roles, with filtering capabilities.
-        </Typography>
-      </Box>
-    );
-
+    
     return (
       <MainCard>
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12}>
             <ReusableDataGrid
               title="Manage Roles"
-              data={filteredRoles}
-              loading={loading}
-              onFiltersChange={handleFilterChange}
-              fetchUrl={null}
-              isPostRequest={false}
+              fetchUrl={`/api/roles/getAll/${accountId}`}
+              isPostRequest={true}
               columns={columns}
               addActionUrl="/masters/role/add"
               editUrl="/masters/role/edit"

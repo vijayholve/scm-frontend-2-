@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -7,7 +7,6 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
-import api from '../../../utils/apiService';
 
 const columnsConfig = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -20,36 +19,7 @@ const columnsConfig = [
 const Teachers = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
-  const [allTeachers, setAllTeachers] = useState([]);
-  const [filteredTeachers, setFilteredTeachers] = useState([]);
-  const [loading, setLoading] = useState(true);
   
-  useEffect(() => {
-    const fetchAllTeachers = async () => {
-      setLoading(true);
-      try {
-        const response = await api.post(`/api/users/getAll/${accountId}?type=TEACHER`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
-        setAllTeachers(response.data.content || []);
-        setFilteredTeachers(response.data.content || []);
-      } catch (error) {
-        console.error('Failed to fetch teachers:', error);
-        setAllTeachers([]);
-        setFilteredTeachers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllTeachers();
-  }, [accountId]);
-
-  const handleFilterChange = useCallback((newFilters) => {
-    let tempFiltered = allTeachers;
-    if (newFilters.schoolId) {
-      tempFiltered = tempFiltered.filter(teacher => teacher.schoolId == newFilters.schoolId);
-    }
-    setFilteredTeachers(tempFiltered);
-  }, [allTeachers]);
-
   const customActions = [
     {
       icon: <span>📚</span>,
@@ -88,11 +58,8 @@ const Teachers = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            data={filteredTeachers}
-            loading={loading}
-            onFiltersChange={handleFilterChange}
-            fetchUrl={null}
-            isPostRequest={false}
+            fetchUrl={`/api/users/getAll/${accountId}?type=TEACHER`}
+            isPostRequest={true}
             columns={columnsConfig}
             editUrl="/masters/teacher/edit"
             deleteUrl="/api/users/delete"
@@ -101,7 +68,7 @@ const Teachers = () => {
             entityName="TEACHER"
             searchPlaceholder="Search teachers by name, email, or username..."
             showSearch={true}
-            showRefresh={false}
+            showRefresh={true}
             showFilters={true}
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}

@@ -70,10 +70,10 @@ const EditStudent = () => {
         mobile: '',
         email: '',
         address: '',
-        rollNo: null,
-        schoolId: null,
-        classId: null,
-        divisionId: null,
+        rollNo: '',
+        schoolId: '',
+        classId: '',
+        divisionId: '',
         role: null,
         status: 'active',
     });
@@ -126,7 +126,9 @@ const EditStudent = () => {
                 // Ensure classId and divisionId are treated consistently (e.g., as strings)
                 classId: response.data.classId ? String(response.data.classId) : '',
                 divisionId: response.data.divisionId ? String(response.data.divisionId) : '',
-                role: response.data.role ? roles.find(r => String(r.id) === String(response.data.role.id)) || response.data.role : null
+                rollNo: response.data.rollNo ? String(response.data.rollNo) : '',
+                schoolId: response.data.schoolId ? response.data.schoolId : '',
+                role: response.data.role ? (roles.find(r => String(r.id) === String(response.data.role.id)) || { id: response.data.role.id, name: response.data.role.name }) : null
             };
             setStudentData(fetchedData);
             console.log("Fetched Student Data:", fetchedData); // Log fetched student data
@@ -157,10 +159,10 @@ const EditStudent = () => {
                 mobile: '',
                 email: '',
                 address: '',
-                rollNo: null,
-                schoolId: null,
-                classId: null,
-                divisionId: null,
+                rollNo: '',
+                schoolId: '',
+                classId: '',
+                divisionId: '',
                 role: null,
                 status: 'active',
             });
@@ -174,25 +176,31 @@ const EditStudent = () => {
             type: 'STUDENT',
             accountId: userDetails.getAccountId(),
             status: 'active',
-            // Ensure role is sent as an object with at least 'id' and 'name' if required by API
+            // Normalize role payload to expected shape
             role: values.role ? { id: values.role.id, name: values.role.name } : null
         };
 
         try {
-            // CORRECTED LINE: Changed 'api/users/add' to 'api/users/save'
             const apiCall = userId ? api.put(`api/users/update`, userData) : api.post(`api/users/save`, userData);
             const response = await apiCall;
-            setStudentData(response.data);
-            setSubmitting(false);
+
+            if (!response || (response.data?.status !== 200 && response.data?.status !== 201)) {
+                const backendMessage = response?.data?.message || 'Unexpected server response.';
+                toast.error(backendMessage);
+                return;
+            }
+
             toast.success(`Student ${userId ? 'updated' : 'added'} successfully`, {
-                autoClose: 500,
+                autoClose: 200,
                 onClose: () => {
                     navigate('/masters/students');
                 }
             });
         } catch (error) {
+            const backendMessage = error?.response?.data?.message || error?.message || `Failed to ${userId ? 'update' : 'add'} student.`;
             console.error('Failed to save student data:', error);
-            toast.error(`Failed to ${userId ? 'update' : 'add'} student.`);
+            toast.error(backendMessage);
+        } finally {
             setSubmitting(false);
         }
     };
@@ -216,6 +224,7 @@ const EditStudent = () => {
                     <Formik
                         enableReinitialize
                         initialValues={studentData}
+                        validateOnMount
                         validationSchema={Yup.object().shape({
                             email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
                             password: userId
@@ -382,6 +391,7 @@ const EditStudent = () => {
                                                 onChange={(event, newValue) => {
                                                     setFieldValue('schoolId', newValue?.id ? newValue?.id : null);
                                                 }}
+                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
                                                 renderInput={(params) => <TextField {...params} label="School" />}
                                             />
                                             {touched.schoolId && errors.schoolId && <FormHelperText>{errors.schoolId}</FormHelperText>}
@@ -401,6 +411,7 @@ const EditStudent = () => {
                                                     setFieldValue('classId', newValue ? String(newValue.id) : ''); // Store as string
                                                     setFieldValue('divisionId', ''); // Reset division when class changes
                                                 }}
+                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
                                                 renderInput={(params) => <TextField {...params} label="Class" />}
                                             />
                                             {touched.classId && errors.classId && <FormHelperText>{errors.classId}</FormHelperText>}
@@ -421,6 +432,7 @@ const EditStudent = () => {
                                                 }}
                                                 renderInput={(params) => <TextField {...params} label="Division" />}
                                                 disabled={!values.classId} // Disable if no class is selected
+                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
                                             />
                                             {touched.divisionId && errors.divisionId && <FormHelperText>{errors.divisionId}</FormHelperText>}
                                         </FormControl>
@@ -438,6 +450,7 @@ const EditStudent = () => {
                                                 onChange={(event, newValue) => {
                                                     setFieldValue('role', newValue);
                                                 }}
+                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
                                                 renderInput={(params) => <TextField {...params} label="Role" />}
                                             />
                                             {touched.role && errors.role && <FormHelperText>{errors.role}</FormHelperText>}

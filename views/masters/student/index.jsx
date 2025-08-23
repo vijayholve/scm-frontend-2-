@@ -90,10 +90,6 @@ const Students = () => {
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}
             height={600}
-            transformData={transformStudentData}
-            onRowClick={(params) => {
-              navigate(`/masters/students/view/${params.row.id}`);
-            }}
             enableFilters={true}
             showSchoolFilter={true}
             showClassFilter={true}

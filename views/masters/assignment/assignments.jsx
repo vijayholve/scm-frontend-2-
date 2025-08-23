@@ -33,13 +33,6 @@ const Assignments = () => {
   const user = useSelector((state) => state.user);
   const permissions = user?.permissions || [];
   
-  // Note: These states are no longer needed for filtering on the frontend
-  // const [allAssignments, setAllAssignments] = useState([]);
-  // const [filteredAssignments, setFilteredAssignments] = useState([]);
-  
-  const [loading, setLoading] = useState(false); // Let the data grid handle this
-  const [filters, setFilters] = useState({});
-
   return (
     <MainCard
       title="Assignments"
@@ -56,12 +49,11 @@ const Assignments = () => {
             entityName="ASSIGNMENT"
             searchPlaceholder="Search assignments by name, type, or year..."
             showSearch={true}
-            showRefresh={true} // Re-enable refresh button
+            showRefresh={true}
             showFilters={true}
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}
             height={600}
-            // Enable backend-driven filtering for school, class, and division
             enableFilters={true}
             showSchoolFilter={true}
             showClassFilter={true}

@@ -97,7 +97,7 @@ const ReusableDataGrid = ({
   const [selectedRow, setSelectedRow] = useState(null);
   const [gridFilters, setGridFilters] = useState(filters);
   const [gridData, setGridData] = useState([]);
-  
+
   // Use a ref to store the latest filters without triggering a re-render
   const latestFilters = useRef(gridFilters);
   useEffect(() => {
@@ -109,7 +109,7 @@ const ReusableDataGrid = ({
     // Return early if no fetch URL is provided
     if (!fetchUrl) {
       // Client-side filtering fallback
-      const filteredData = clientSideData.filter(item => {
+      const filteredData = clientSideData.filter((item) => {
         let isMatch = true;
         if (latestFilters.current.schoolId) {
           isMatch = isMatch && item.schoolId == latestFilters.current.schoolId;
@@ -153,10 +153,10 @@ const ReusableDataGrid = ({
         });
         response = await api.get(`${fetchUrl}?${queryParams}`);
       }
-      
+
       const responseData = response.data.content || response.data || [];
       const transformedData = transformData ? responseData.map(transformData) : responseData;
-      
+
       setGridData(transformedData);
       setRowCount(response.data.totalElements || response.data.length || 0);
     } catch (err) {
@@ -167,23 +167,18 @@ const ReusableDataGrid = ({
     } finally {
       setLoading(false);
     }
-  }, [fetchUrl, isPostRequest, searchTerm, transformData, clientSideData, paginationModel]);
+  }, [fetchUrl, isPostRequest, searchTerm, transformData, clientSideData, paginationModel, JSON.stringify(gridFilters)]);
 
   // Handle filter changes from ListGridFilters
   const handleFiltersChange = useCallback((newFilters) => {
     setGridFilters(newFilters);
-    setPaginationModel(prev => ({ ...prev, page: 0 }));
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
 
-  // Effect to trigger data fetch on component mount or when dependencies change
-  // We use a debounce here to prevent a flood of API calls
   useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchData();
-    }, 1000); // 300ms debounce
-    return () => clearTimeout(handler);
-  }, [fetchData, paginationModel.page, paginationModel.pageSize, searchTerm, gridFilters]);
-  
+    fetchData();
+  }, [paginationModel.page, paginationModel.pageSize, searchTerm, gridFilters]);
+
   const handleOnClickDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {

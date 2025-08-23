@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
-
-// project imports
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
 import dayjs from 'dayjs';
-import { Box, Grid } from '@mui/material';
-import api from '../../../utils/apiService';
+import { Grid } from '@mui/material';
 
 // Define the columns for the attendance data grid.
 const columns = [
@@ -21,7 +18,7 @@ const columns = [
     field: 'attendanceDate',
     headerName: 'Attendance Date',
     width: 160,
-    valueFormatter: (params) => (params ? dayjs(params.value).format('YYYY-MM-DD') : '')
+    valueFormatter: (params) => (params.value ? dayjs(params.value).format('YYYY-MM-DD') : '')
   },
   {
     field: 'schoolName',
@@ -33,42 +30,7 @@ const columns = [
 const AttendanceList = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
-  const [allAttendance, setAllAttendance] = useState([]);
-  const [filteredAttendance, setFilteredAttendance] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAllAttendance = async () => {
-      setLoading(true);
-      try {
-        const response = await api.post(`/api/attendance/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
-        setAllAttendance(response.data.content || []);
-        setFilteredAttendance(response.data.content || []);
-      } catch (error) {
-        console.error('Failed to fetch attendance:', error);
-        setAllAttendance([]);
-        setFilteredAttendance([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllAttendance();
-  }, [accountId]);
-
-  const handleFilterChange = useCallback((newFilters) => {
-    let tempFiltered = allAttendance;
-    if (newFilters.schoolId) {
-      tempFiltered = tempFiltered.filter(attendance => attendance.schoolId == newFilters.schoolId);
-    }
-    if (newFilters.classId) {
-      tempFiltered = tempFiltered.filter(attendance => attendance.schooldClassId == newFilters.classId);
-    }
-    if (newFilters.divisionId) {
-      tempFiltered = tempFiltered.filter(attendance => attendance.divisionId == newFilters.divisionId);
-    }
-    setFilteredAttendance(tempFiltered);
-  }, [allAttendance]);
-
+  
   return (
     <MainCard
       title="Attendance List"
@@ -78,11 +40,8 @@ const AttendanceList = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
             entityName="ATTENDANCE List"
-            data={filteredAttendance}
-            loading={loading}
-            onFiltersChange={handleFilterChange}
-            fetchUrl={null}
-            isPostRequest={false}
+            fetchUrl={`/api/attendance/getAll/${accountId}`}
+            isPostRequest={true}
             columns={columns}
             editUrl="/masters/attendance/edit"
             deleteUrl="/api/attendance/delete"

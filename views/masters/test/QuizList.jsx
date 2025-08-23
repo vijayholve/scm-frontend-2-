@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Typography, Chip, IconButton, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -11,7 +11,6 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
-import api from '../../../utils/apiService';
 import { hasPermission } from 'utils/permissionUtils.js';
 
 const columns = [
@@ -30,14 +29,14 @@ const columns = [
         headerName: 'Start Time',
         width: 180,
         editable: false,
-        renderCell: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
+        valueFormatter: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
     },
     {
         field: 'endTime',
         headerName: 'End Time',
         width: 180,
         editable: false,
-        renderCell: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
+        valueFormatter: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
     },
     {
         field: 'showScoreAfterSubmission',
@@ -51,41 +50,6 @@ const columns = [
 const QuizList = () => {
     const navigate = useNavigate();
     const accountId = userDetails.getAccountId();
-    const [allQuizzes, setAllQuizzes] = useState([]);
-    const [filteredQuizzes, setFilteredQuizzes] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchAllQuizzes = async () => {
-            setLoading(true);
-            try {
-                const response = await api.post(`/api/quizzes/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
-                setAllQuizzes(response.data.content || []);
-                setFilteredQuizzes(response.data.content || []);
-            } catch (error) {
-                console.error('Failed to fetch quizzes:', error);
-                setAllQuizzes([]);
-                setFilteredQuizzes([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchAllQuizzes();
-    }, [accountId]);
-
-    const handleFilterChange = useCallback((newFilters) => {
-        let tempFiltered = allQuizzes;
-        if (newFilters.schoolId) {
-            tempFiltered = tempFiltered.filter(quiz => quiz.schoolId == newFilters.schoolId);
-        }
-        if (newFilters.classId) {
-            tempFiltered = tempFiltered.filter(quiz => quiz.classId == newFilters.classId);
-        }
-        if (newFilters.divisionId) {
-            tempFiltered = tempFiltered.filter(quiz => quiz.divisionId == newFilters.divisionId);
-        }
-        setFilteredQuizzes(tempFiltered);
-    }, [allQuizzes]);
     
     const customActions = [
         {
@@ -139,11 +103,8 @@ const QuizList = () => {
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
-                        data={filteredQuizzes}
-                        loading={loading}
-                        onFiltersChange={handleFilterChange}
-                        fetchUrl={null}
-                        isPostRequest={false}
+                        fetchUrl={`/api/quizzes/getAll/${accountId}`}
+                        isPostRequest={true}
                         columns={columns}
                         addActionUrl="/masters/quiz/add"
                         editUrl="/masters/quiz/edit"

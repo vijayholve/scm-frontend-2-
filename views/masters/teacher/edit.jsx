@@ -6,7 +6,7 @@ import {
   Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput,
   TextField, Tabs, Tab, Typography, AppBar, Stack
 } from '@mui/material';
-import { Formik } from 'formik';
+import { Formik, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 
@@ -62,11 +62,7 @@ const EditUsers = ({ ...others }) => {
     gender: null,
     schoolId: null,
     type: null,
-    higherQualification: '',
-    schoolName: '',
-    universityName: '',
-    passOutYear: '',
-    percentage: ''
+    educations: []
   });
 
   const Title = userId ? 'Edit Teacher' : 'Add Teacher';
@@ -116,7 +112,11 @@ const EditUsers = ({ ...others }) => {
   const fetchTeacherData = async (id) => {
     try {
       const response = await api.get(`api/users/getById?id=${id}`);
-      setTeacherData(response.data);
+      const data = response.data || {};
+      const normalizedEducations = Array.isArray(data.educations)
+        ? data.educations
+        : (data.educations ? [data.educations] : []);
+      setTeacherData({ ...data, educations: normalizedEducations });
     } catch (error) {
       console.error('Failed to fetch teacher data:', error);
     }
@@ -125,17 +125,17 @@ const EditUsers = ({ ...others }) => {
   const handleSubmit = async (values, { setSubmitting }) => {
     const userData = { ...values, id: teacherData.id, accountId: userDetails.getAccountId() };
     try {
-      const response = await api.put(`api/users/update`, userData);
+      const apiCall = userId ? api.put(`api/users/update`, userData) : api.post(`api/users/save`, userData);
+      const response = await apiCall;
       setTeacherData(response.data);
       setSubmitting(false);
-      console.log('User updated:', response.data);
-      toast.success("Teacher updated successfully", {
+      toast.success(userId ? 'Teacher updated successfully' : 'Teacher created successfully', {
         autoClose: '500', onClose: () => {
           navigate('/masters/teachers');
         }
-      })
+      });
     } catch (error) {
-      console.error('Failed to update teacher data:', error);
+      console.error('Failed to submit teacher data:', error);
     }
   };
 
@@ -169,12 +169,23 @@ const EditUsers = ({ ...others }) => {
         validationSchema={Yup.object().shape({
           email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
           password: Yup.string().max(255).required('Password is required'),
-          // Add validation for new fields
-          higherQualification: Yup.string().nullable(),
-          schoolName: Yup.string().nullable(),
-          universityName: Yup.string().nullable(),
-          passOutYear: Yup.number().nullable().min(1900).max(currentYear), // Max year validation
-          percentage: Yup.number().nullable().min(0).max(100) // Percentage validation
+          educations: Yup.array().of(
+            Yup.object().shape({
+              higherQualification: Yup.string().required('Higher Qualification is required'),
+              institutionName: Yup.string().required('School/College Name is required'),
+              boardOrUniversity: Yup.string().required('Board/University Name is required'),
+              passOutYear: Yup.number()
+                .typeError('Pass Out Year is required')
+                .required('Pass Out Year is required')
+                .min(1900)
+                .max(currentYear),
+              percentage: Yup.number()
+                .typeError('Percentage is required')
+                .required('Percentage is required')
+                .min(0)
+                .max(100)
+            })
+          )
         })}
         onSubmit={handleSubmit}
       >
@@ -359,76 +370,107 @@ const EditUsers = ({ ...others }) => {
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>
-              <Grid container spacing={gridSpacing}>
-                {/* Higher Qualification */}
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    disablePortal
-                    id="higher-qualification"
-                    options={higherQualificationOptions}
-                    value={values.higherQualification}
-                    onBlur={handleBlur}
-                    onChange={(event, newValue) => {
-                      setFieldValue('higherQualification', newValue);
-                    }}
-                    renderInput={(params) => <TextField {...params} label="Higher Qualification" />}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel htmlFor="school-college-name">School/College Name</InputLabel>
-                    <OutlinedInput
-                      id="school-college-name"
-                      name="schoolName"
-                      value={values.schoolName}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      label="School/College Name"
-                    />
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel htmlFor="university-name">University Name</InputLabel>
-                    <OutlinedInput
-                      id="university-name"
-                      name="universityName"
-                      value={values.universityName}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      label="University Name"
-                    />
-                  </FormControl>
-                </Grid>
-                {/* Pass Out Year */}
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    disablePortal
-                    id="pass-out-year"
-                    options={years}
-                    value={values.passOutYear ? values.passOutYear.toString() : null}
-                    onBlur={handleBlur}
-                    onChange={(event, newValue) => {
-                      setFieldValue('passOutYear', newValue ? parseInt(newValue, 10) : null);
-                    }}
-                    renderInput={(params) => <TextField {...params} label="Pass Out Year" />}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel htmlFor="percentage">Percentage</InputLabel>
-                    <OutlinedInput
-                      id="percentage"
-                      name="percentage"
-                      type="number"
-                      value={values.percentage}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      label="Percentage"
-                    />
-                  </FormControl>
-                </Grid>
-              </Grid>
+              <FieldArray name="educations">
+                {({ push, remove }) => (
+                  <Box>
+                    {values.educations && values.educations.length > 0 ? (
+                      values.educations.map((edu, index) => (
+                        <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                            <Typography variant="subtitle1">Education {index + 1}</Typography>
+                            <Button color="error" size="small" onClick={() => remove(index)} disabled={values.educations.length === 1}>
+                              Remove
+                            </Button>
+                          </Stack>
+                          <Grid container spacing={gridSpacing}>
+                            <Grid item xs={12} sm={6}>
+                              <Autocomplete
+                                disablePortal
+                                options={higherQualificationOptions}
+                                value={edu.higherQualification || null}
+                                onBlur={handleBlur}
+                                onChange={(event, newValue) => {
+                                  setFieldValue(`educations[${index}].higherQualification`, newValue);
+                                }}
+                                renderInput={(params) => <TextField {...params} label="Higher Qualification" />}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel htmlFor={`school-college-name-${index}`}>School/College Name</InputLabel>
+                                <OutlinedInput
+                                  id={`school-college-name-${index}`}
+                                  name={`educations[${index}].institutionName`}
+                                  value={edu.institutionName || ''}
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  label="School/College Name"
+                                />
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel htmlFor={`university-name-${index}`}>Board/University Name</InputLabel>
+                                <OutlinedInput
+                                  id={`university-name-${index}`}
+                                  name={`educations[${index}].boardOrUniversity`}
+                                  value={edu.boardOrUniversity || ''}
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  label="Board/University Name"
+                                />
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <Autocomplete
+                                disablePortal
+                                options={years}
+                                value={edu.passOutYear ? edu.passOutYear.toString() : null}
+                                onBlur={handleBlur}
+                                onChange={(event, newValue) => {
+                                  setFieldValue(`educations[${index}].passOutYear`, newValue ? parseInt(newValue, 10) : null);
+                                }}
+                                renderInput={(params) => <TextField {...params} label="Pass Out Year" />}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel htmlFor={`education-percentage-${index}`}>Percentage</InputLabel>
+                                <OutlinedInput
+                                  id={`education-percentage-${index}`}
+                                  name={`educations[${index}].percentage`}
+                                  type="number"
+                                  value={edu.percentage || ''}
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  label="Percentage"
+                                />
+                              </FormControl>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      ))
+                    ) : (
+                      <Typography color="text.secondary" sx={{ mb: 2 }}>No education records. Add one below.</Typography>
+                    )}
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() =>
+                        push({
+                          higherQualification: null,
+                          institutionName: '',
+                          boardOrUniversity: '',
+                          passOutYear: null,
+                          percentage: ''
+                        })
+                      }
+                    >
+                      Add Education
+                    </Button>
+                  </Box>
+                )}
+              </FieldArray>
             </TabPanel>
 
             <Grid item xs={12}>

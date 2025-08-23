@@ -121,7 +121,7 @@ const MobileSearch = ({ value, setValue, popupState, filteredResults, showAll, s
           setValue(e.target.value);
           setShowAll(false); // Reset "Show more" when typing
         }}
-        placeholder="Search anything..."
+        placeholder="Search anything...1"
         startAdornment={
           <InputAdornment position="start">
             <IconSearch stroke={1.5} size="16px" />

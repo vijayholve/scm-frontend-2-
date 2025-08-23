@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import { Grid, Box, Typography } from '@mui/material';
+import { Grid } from '@mui/material';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
-import api from '../../../utils/apiService';
 
 // Define the columns for exams
 const columnsConfig = [
@@ -24,8 +23,8 @@ const columnsConfig = [
     headerName: 'Start Date',
     width: 180,
     valueFormatter: (params) => {
-      if (!params || !params.startDate) return 'N/A';
-      return new Date(params.startDate).toLocaleString();
+      if (!params || !params.value) return 'N/A';
+      return new Date(params.value).toLocaleString();
     }
   }
 ];
@@ -33,42 +32,7 @@ const columnsConfig = [
 const Exams = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
-  const [allExams, setAllExams] = useState([]);
-  const [filteredExams, setFilteredExams] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAllExams = async () => {
-      setLoading(true);
-      try {
-        const response = await api.post(`/api/exams/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
-        setAllExams(response.data.content || []);
-        setFilteredExams(response.data.content || []);
-      } catch (error) {
-        console.error('Failed to fetch exams:', error);
-        setAllExams([]);
-        setFilteredExams([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllExams();
-  }, [accountId]);
-
-  const handleFilterChange = useCallback((newFilters) => {
-    let tempFiltered = allExams;
-    if (newFilters.schoolId) {
-      tempFiltered = tempFiltered.filter(exam => exam.schoolId == newFilters.schoolId);
-    }
-    if (newFilters.classId) {
-      tempFiltered = tempFiltered.filter(exam => exam.classId == newFilters.classId);
-    }
-    if (newFilters.divisionId) {
-      tempFiltered = tempFiltered.filter(exam => exam.divisionId == newFilters.divisionId);
-    }
-    setFilteredExams(tempFiltered);
-  }, [allExams]);
-
+  
   // Custom actions for exams
   const customActions = [
     {
@@ -114,14 +78,8 @@ const Exams = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
             title="Exams Management"
-// <<<<<<< HEAD
-            data={filteredExams}
-            loading={loading}
-            onFiltersChange={handleFilterChange}
-            fetchUrl={null}
-            isPostRequest={false}
-// =======
-            // fetchUrl={`/api/exams/getAllBy/${accountId}`}
+            fetchUrl={`/api/exams/getAll/${accountId}`}
+            isPostRequest={true}
             columns={columnsConfig}
             editUrl="/masters/exam/edit"
             deleteUrl="/api/exams/delete"
@@ -131,7 +89,7 @@ const Exams = () => {
             customActions={customActions}
             searchPlaceholder="Search exams by name, type, or year..."
             showSearch={true}
-            showRefresh={false}
+            showRefresh={true}
             showFilters={true}
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}

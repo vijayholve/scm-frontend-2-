@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -7,7 +7,6 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
-import api from '../../../utils/apiService';
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -19,36 +18,7 @@ const columns = [
 const Classes = () => {
     const accountId = userDetails.getAccountId();
     const navigate = useNavigate();
-    const [allClasses, setAllClasses] = useState([]);
-    const [filteredClasses, setFilteredClasses] = useState([]);
-    const [loading, setLoading] = useState(true);
     
-    useEffect(() => {
-        const fetchAllClasses = async () => {
-            setLoading(true);
-            try {
-                const response = await api.post(`/api/schoolClasses/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
-                setAllClasses(response.data.content || []);
-                setFilteredClasses(response.data.content || []);
-            } catch (error) {
-                console.error('Failed to fetch classes:', error);
-                setAllClasses([]);
-                setFilteredClasses([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchAllClasses();
-    }, [accountId]);
-
-    const handleFilterChange = useCallback((newFilters) => {
-        let tempFiltered = allClasses;
-        if (newFilters.schoolId) {
-            tempFiltered = tempFiltered.filter(cls => cls.schoolbranchId == newFilters.schoolId);
-        }
-        setFilteredClasses(tempFiltered);
-    }, [allClasses]);
-
     const customActions = [
       {
         icon: <span>👁️</span>,
@@ -113,11 +83,8 @@ const Classes = () => {
                 <Grid item xs={12}>
                     <ReusableDataGrid
                         entityName="CLASS"
-                        data={filteredClasses}
-                        loading={loading}
-                        onFiltersChange={handleFilterChange}
-                        fetchUrl={null}
-                        isPostRequest={false}
+                        fetchUrl={`/api/schoolClasses/getAll/${accountId}`}
+                        isPostRequest={true}
                         columns={columns}
                         editUrl="/masters/class/edit"
                         deleteUrl="/api/schoolClasses/delete"
