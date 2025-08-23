@@ -69,6 +69,7 @@ const SchoolClassDivisionSelector = ({ formik }) => {
                         size: 1000,
                         sortBy: 'id',
                         sortDir: 'asc',
+                        schoolId: formik.values.schoolId,
                         classId: formik.values.classId
                     };
                     const response = await api.post(`/api/divisions/getAll/${accountId}`, payload);
@@ -81,11 +82,12 @@ const SchoolClassDivisionSelector = ({ formik }) => {
             }
         };
 
-        // Reset division when class changes
-        formik.setFieldValue('divisionId', '');
+        // This line was causing the issue. The divisionId should not be cleared here.
+        // The reset is already handled by the parent effect when classId changes.
+        // formik.setFieldValue('divisionId', '');
         fetchDivisions();
 
-    }, [accountId, formik.values.classId, formik.setFieldValue]);
+    }, [accountId, formik.values.classId, formik.values.schoolId, formik.setFieldValue]);
 
 
     return (

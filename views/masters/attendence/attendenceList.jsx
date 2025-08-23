@@ -36,7 +36,6 @@ const AttendanceList = () => {
   const [allAttendance, setAllAttendance] = useState([]);
   const [filteredAttendance, setFilteredAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({});
 
   useEffect(() => {
     const fetchAllAttendance = async () => {
@@ -45,9 +44,6 @@ const AttendanceList = () => {
         const response = await api.post(`/api/attendance/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
         setAllAttendance(response.data.content || []);
         setFilteredAttendance(response.data.content || []);
-        console.log("allAttendance")
-        console.log(allAttendance)
-        console.log("attendance data ",allAttendance)
       } catch (error) {
         console.error('Failed to fetch attendance:', error);
         setAllAttendance([]);
@@ -60,7 +56,6 @@ const AttendanceList = () => {
   }, [accountId]);
 
   const handleFilterChange = useCallback((newFilters) => {
-    setFilters(newFilters);
     let tempFiltered = allAttendance;
     if (newFilters.schoolId) {
       tempFiltered = tempFiltered.filter(attendance => attendance.schoolId == newFilters.schoolId);

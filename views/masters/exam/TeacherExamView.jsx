@@ -1,41 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Button, Box, Select, MenuItem, FormControl, InputLabel, TextField, Typography, Paper, Tabs, Tab, IconButton } from '@mui/material';
+import { Button, Box, Select, MenuItem, FormControl, InputLabel, TextField, Typography, Paper, Tabs, Tab, IconButton, Autocomplete, Grid } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MainCard from 'ui-component/cards/MainCard';
 import { toast } from 'react-hot-toast';
+import { userDetails } from 'utils/apiService';
+import api from 'utils/apiService';
 
-// --- Dummy Data ---
-const dummyExams = [
-    { 
-        id: 1, 
-        examName: 'Mid-Term Exam - Class 10A', 
-        subjects: [
-            { id: 101, subjectName: 'Mathematics', totalMarks: 100 },
-            { id: 102, subjectName: 'Science', totalMarks: 75 }
-        ] 
-    },
-    { 
-        id: 2, 
-        examName: 'Final Exam - Class 10A', 
-        subjects: [
-            { id: 101, subjectName: 'Mathematics', totalMarks: 100 },
-            { id: 102, subjectName: 'Science', totalMarks: 75 },
-            { id: 103, subjectName: 'History', totalMarks: 50 }
-        ] 
-    }
-];
-const dummyEnrolledStudents = {
-    1: [
-        { studentId: 1, studentName: 'Alice Johnson', marks: { '101': 88, '102': 65 } },
-        { studentId: 2, studentName: 'Bob Williams', marks: { '101': 92 } }
-    ],
-    2: [
-        { studentId: 1, studentName: 'Alice Johnson', marks: { '101': 95, '102': 70, '103': 45 } },
-        { studentId: 2, studentName: 'Bob Williams', marks: { '101': 85, '102': 68, '103': 40 } },
-        { studentId: 3, studentName: 'Charlie Brown', marks: {} }
-    ]
-};
 
 // --- New Dummy Data for Questions and Answers ---
 const dummyQuestions = {
@@ -63,7 +34,7 @@ const dummyStudentAnswers = {
 // Component for the detailed tabbed view
 const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, onBack }) => {
     const [tabValue, setTabValue] = useState(0);
-    const marksValue = marks[`${student.studentId}-${subject.id}`] || '';
+    console.log("Marks value:", marks);
 
     // Dynamically get the question and answer from dummy data
     const question = dummyQuestions[subject.id] || "No question found for this subject.";
@@ -81,13 +52,16 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
             </Box>
             {tabValue === 0 && (
                 <Box sx={{ p: 2 }}>
-                    <Typography variant="h6">Enter Marks (Out of {subject.totalMarks})</Typography>
+                    <Typography variant="h6">Enter Marks (Out of {subject.maxMarksSubject})</Typography>
                     <TextField
                         type="number"
                         size="small"
-                        value={marksValue}
-                        onChange={(e) => onMarksChange(student.studentId, subject.id, e.target.value)}
-                        inputProps={{ max: subject.totalMarks, min: 0 }}
+                        value={marks}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            onMarksChange(student.studentId, subject.subjectId, val);
+                        }}
+                        inputProps={{ max: subject.maxMarksSubject, min: 0 }}
                         sx={{ mt: 2, mb: 2, width: '150px' }}
                     />
                     <Box>
@@ -115,26 +89,105 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
 
 const TeacherExamView = () => {
     const [exams, setExams] = useState([]);
+    const [subjects, setSubjects] = useState([]);
     const [selectedExamId, setSelectedExamId] = useState('');
     const [enrolledStudents, setEnrolledStudents] = useState([]);
     const [marks, setMarks] = useState({});
     const [currentView, setCurrentView] = useState(null);
+    const [schools, setSchools] = useState([]);
+    const [classes, setClasses] = useState([]);
+    const [divisions, setDivisions] = useState([]);
+    const [selectedSchoolId, setSelectedSchoolId] = useState('');
+    const [selectedClassId, setSelectedClassId] = useState('');
+    const [selectedDivisionId, setSelectedDivisionId] = useState('');
 
     useEffect(() => {
-        setExams(dummyExams);
+        const fetchSchools = async () => {
+            try {
+                const schoolsRes = await api.get(`/api/schoolBranches/getAllBy/${userDetails.getAccountId()}`);
+                setSchools(schoolsRes.data || []);
+            } catch (error) {
+                console.error('Failed to fetch schools', error);
+                toast.error('Failed to load schools');
+            }
+        };
+        const fetchClasses = async () => {
+            try {
+                const classesRes = await api.get(`/api/schoolClasses/getAllBy/${userDetails.getAccountId()}`);
+                setClasses(classesRes.data || []);
+            } catch (error) {
+                console.error('Failed to fetch classes', error);
+                toast.error('Failed to load classes');
+            }
+        };
+        const fetchDivisions = async () => {
+            try {
+                const divisionsRes = await api.get(`/api/divisions/getAllBy/${userDetails.getAccountId()}`);
+                setDivisions(divisionsRes.data || []);
+            } catch (error) {
+                console.error('Failed to fetch divisions', error);
+                toast.error('Failed to load divisions');
+            }
+        };
+        fetchSchools();
+        fetchClasses();
+        fetchDivisions();
     }, []);
+
+
+    useEffect(() => {
+        const fetchExams = async () => {
+            try {   
+                const examsRes = await api.post(`/api/exams/getAllBy/${userDetails.getAccountId()}`, {
+                    page: 0,
+                    size: 1000,
+                    sortBy: 'id',
+                    sortDir: 'asc',
+                    schoolId: selectedSchoolId,
+                    classId: selectedClassId,
+                    divisionId: selectedDivisionId
+                });
+                setExams(examsRes.data.content || []);
+            } catch (error) {
+                console.error('Failed to fetch exams', error);
+                toast.error('Failed to load exams');
+            }
+        };
+        fetchExams();   
+    }, [selectedSchoolId, selectedClassId, selectedDivisionId]);
 
     useEffect(() => {
         if (selectedExamId) {
-            const students = dummyEnrolledStudents[selectedExamId] || [];
-            setEnrolledStudents(students);
-            
+
+            const fetchSubjects = async () => {
+                const subjectsRes = await api.get(`/api/exams/getSubjectsForExam/${selectedExamId}`);
+                setSubjects(subjectsRes.data || []);
+            };
+            fetchSubjects();
+
+            const fetchStudents = async () => {
+            const studentsRes = await api.post(`api/exams/getStudentForExam/${selectedExamId}/${userDetails.getAccountId()}`, {
+                page: 0,
+                size: 1000,
+                sortBy: 'id',
+                sortDir: 'asc',
+                schoolId: selectedSchoolId,
+                classId: selectedClassId,
+                divisionId: selectedDivisionId
+                });
+                setEnrolledStudents(studentsRes.data.content || []);
+            };  
+            fetchStudents();
+        }
+    }, [selectedExamId]);
+
+    useEffect(() => {
+        if (selectedExamId) {
             const initialMarks = {};
-            students.forEach(student => {
-                const selectedExam = dummyExams.find(e => e.id === selectedExamId);
-                selectedExam?.subjects.forEach(subject => {
-                    if (student.marks && student.marks[subject.id] !== undefined) {
-                        initialMarks[`${student.studentId}-${subject.id}`] = student.marks[subject.id];
+                enrolledStudents.forEach(student => {
+                    subjects.forEach(subject => {
+                    if (student.marks && student.marks[subject.subjectId] !== undefined) {
+                        initialMarks[`${student.studentId}-${subject.subjectId}`] = student.marks[subject.subjectId];
                     }
                 });
             });
@@ -143,22 +196,30 @@ const TeacherExamView = () => {
         } else {
             setEnrolledStudents([]);
         }
-    }, [selectedExamId]);
+    }, [selectedExamId, enrolledStudents]);
 
     const handleMarksChange = (studentId, subjectId, value) => {
         setMarks(prev => ({ ...prev, [`${studentId}-${subjectId}`]: value }));
+        console.log("Marks changed for student:", studentId, subjectId, value, marks);
     };
 
-    const handleSaveMarks = (studentId) => {
-        toast.success(`(Dummy) Marks saved for student ${studentId}`);
+    const handleSaveMarks = async (studentId, marks) => {
         console.log("Saving marks for student:", studentId, marks);
+        const marksRes = await api.put(`/api/exams/updateExamStudentMarks/${selectedExamId}`, {
+            studentId: studentId,
+            marks: marks,
+            schoolId: selectedSchoolId,
+            classId: selectedClassId,
+            divisionId: selectedDivisionId
+        });
+        toast.success(`(Dummy) Marks saved for student ${studentId}`);
     };
 
     const columns = [
         { field: 'studentName', headerName: 'Student Name', flex: 1, minWidth: 150 },
-        ...(exams.find(e => e.id === selectedExamId)?.subjects || []).map(subject => ({
-            field: `subject-${subject.id}`,
-            headerName: `${subject.subjectName} (/${subject.totalMarks})`,
+        ...(subjects || []).map(subject => ({
+            field: `subject-${subject.subjectId}`,
+            headerName: `${subject.subjectName} (/${subject.maxMarksSubject})`,
             width: 220,
             sortable: false,
             renderCell: (params) => (
@@ -167,9 +228,9 @@ const TeacherExamView = () => {
                         type="number"
                         size="small"
                         placeholder="Marks"
-                        value={marks[`${params.row.studentId}-${subject.id}`] || ''}
-                        onChange={(e) => handleMarksChange(params.row.studentId, subject.id, e.target.value)}
-                        inputProps={{ max: subject.totalMarks, min: 0 }}
+                        value={marks[`${params.row.studentId}-${subject.subjectId}`] || ''}
+                        onChange={(e) => handleMarksChange(params.row.studentId, subject.subjectId, e.target.value)}
+                        inputProps={{ max: subject.maxMarksSubject, min: 0 }}
                         sx={{ width: '100px' }}
                     />
                     <IconButton color="secondary" size="small" onClick={() => setCurrentView({ student: params.row, subject: subject })}>
@@ -184,7 +245,24 @@ const TeacherExamView = () => {
             width: 150,
             sortable: false,
             renderCell: (params) => (
-                <Button variant="contained" color="primary" size="small" onClick={() => handleSaveMarks(params.row.studentId)}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    onClick={() => {
+                        // Gather all subject marks for this student
+                        const studentId = params.row.studentId;
+                        // Build a subject-mark map for this student
+                        const studentSubjectMarks = {};
+                        (subjects || []).forEach(subject => {
+                            const key = `${studentId}-${subject.subjectId}`;
+                            if (marks[key] !== undefined && marks[key] !== '') {
+                                studentSubjectMarks[subject.subjectId] = marks[key];
+                            }
+                        });
+                        handleSaveMarks(studentId, studentSubjectMarks);
+                    }}
+                >
                     Save All
                 </Button>
             ),
@@ -192,14 +270,18 @@ const TeacherExamView = () => {
     ];
 
     if (currentView) {
+        console.log("Current view:", currentView);
         return (
             <MainCard title="Grade Exam">
-                <StudentGradingView 
+                <StudentGradingView
                     student={currentView.student}
                     subject={currentView.subject}
-                    marks={marks}
+                    marks={marks[`${currentView.student.studentId}-${currentView.subject.subjectId}`] || ''}
                     onMarksChange={handleMarksChange}
-                    onSave={handleSaveMarks}
+                    onSave={() => handleSaveMarks(
+                        currentView.student.studentId,
+                        { [currentView.subject.subjectId]: marks[`${currentView.student.studentId}-${currentView.subject.subjectId}`] }
+                    )}
                     onBack={() => setCurrentView(null)}
                 />
             </MainCard>
@@ -208,12 +290,77 @@ const TeacherExamView = () => {
 
     return (
         <MainCard title="Grade Exams">
-            <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel>Select Exam</InputLabel>
-                <Select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)}>
-                    {exams.map((exam) => (<MenuItem key={exam.id} value={exam.id}>{exam.examName}</MenuItem>))}
-                </Select>
-            </FormControl>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                {/* School Autocomplete */}
+                <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                        disablePortal
+                        id="timetable-school-autocomplete"
+                        options={schools}
+                        getOptionLabel={(option) => option.name || ''}
+                        value={schools.find((sch) => sch.id === selectedSchoolId) || null}
+                        onChange={(event, newValue) => {
+                            setSelectedSchoolId(newValue ? newValue.id : '');
+                        }}
+                        renderInput={(params) => (
+                            <TextField {...params} label="Select School" variant="outlined" fullWidth />
+                        )}
+                    />
+                </Grid>
+
+                {/* Class Autocomplete */}
+                <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                        disablePortal
+                        id="timetable-class-autocomplete"
+                        options={classes}
+                        getOptionLabel={(option) => option.name || ''}
+                        value={classes.find((cls) => cls.id === selectedClassId) || null}
+                        onChange={(event, newValue) => {
+                            setSelectedClassId(newValue ? newValue.id : '');
+                        }}
+                        renderInput={(params) => (
+                            <TextField {...params} label="Select Class" variant="outlined" fullWidth />
+                        )}
+                    />
+                </Grid>
+
+                {/* Division Autocomplete */}
+                <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                        disablePortal
+                        id="timetable-division-autocomplete"
+                        options={divisions}
+                        getOptionLabel={(option) => option.name || ''}
+                        value={divisions.find((div) => div.id === selectedDivisionId) || null}
+                        onChange={(event, newValue) => {
+                            setSelectedDivisionId(newValue ? newValue.id : '');
+                        }}
+                        renderInput={(params) => (
+                            <TextField {...params} label="Select Division" variant="outlined" fullWidth />
+                        )}
+                    />
+                </Grid>
+
+                {/* Exam Select */}
+                <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                        <InputLabel id="select-exam-label">Select Exam</InputLabel>
+                        <Select
+                            labelId="select-exam-label"
+                            value={selectedExamId}
+                            label="Select Exam"
+                            onChange={(e) => setSelectedExamId(e.target.value)}
+                        >
+                            {exams.map((exam) => (
+                                <MenuItem key={exam.id} value={exam.id}>
+                                    {exam.examName}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+            </Grid>
             {selectedExamId && (
                 <Box sx={{ height: 600, width: '100%' }}>
                     <DataGrid rows={enrolledStudents} columns={columns} getRowId={(row) => row.studentId} />
@@ -223,4 +370,43 @@ const TeacherExamView = () => {
     );
 };
 
-export default TeacherExamView;
+// Simple Error Boundary to protect the view from runtime render errors
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, info) {
+        // eslint-disable-next-line no-console
+        console.error('Error in TeacherExamView:', error, info);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <MainCard title="Error">
+                    <Typography color="error">Something went wrong while loading the page.</Typography>
+                    <Box sx={{ mt: 2 }}>
+                        <Button variant="contained" onClick={() => this.setState({ hasError: false, error: null })}>
+                            Retry
+                        </Button>
+                    </Box>
+                </MainCard>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+const TeacherExamViewWithBoundary = () => (
+    <ErrorBoundary>
+        <TeacherExamView />
+    </ErrorBoundary>
+);
+
+export default TeacherExamViewWithBoundary;

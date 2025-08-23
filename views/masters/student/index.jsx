@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import ReusableDataGrid from 'ui-component/ReusableDataGrid';
+import ReusableDataGrid from '../../../ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
 import api from '../../../utils/apiService';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,23 +25,18 @@ const columnsConfig = [
 
 const Students = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const accountId = userDetails.getAccountId();
   const [classNames, setClassNames] = useState({});
   const [divisionNames, setDivisionNames] = useState({});
-  const [loading, setLoading] = useState(true);
 
-  // Get filtered student data from the Redux store
-  const filteredStudents = useSelector((state) => state.user.filteredStudents);
-  const allStudents = useSelector((state) => state.user.allStudents);
-
+  // This hook is now responsible for fetching and managing all data
+  // for the dropdowns. The main grid data is handled by ReusableDataGrid.
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchDropdownData = async () => {
       try {
-        const [classResponse, divisionResponse, studentResponse] = await Promise.all([
+        const [classResponse, divisionResponse] = await Promise.all([
           api.post(`/api/schoolClasses/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
-          api.post(`/api/divisions/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
-          api.post(`/api/users/getAll/${accountId}?type=STUDENT`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' })
+          api.post(`/api/divisions/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' })
         ]);
         
         const classMap = {};
@@ -55,23 +50,14 @@ const Students = () => {
           divisionMap[div.id] = div.name;
         });
         setDivisionNames(divisionMap);
-        
-        dispatch(setAllStudents(studentResponse.data.content || []));
-        setLoading(false);
-
       } catch (error) {
-        console.error('Failed to fetch initial data:', error);
-        setLoading(false);
+        console.error('Failed to fetch dropdown data:', error);
       }
     };
+    fetchDropdownData();
+  }, [accountId]);
 
-    if (allStudents.length === 0) {
-      fetchInitialData();
-    } else {
-      setLoading(false);
-    }
-  }, [accountId, dispatch, allStudents.length]);
-
+  // Transform data to include class and division names for display
   const transformStudentData = useCallback((student) => ({
     ...student,
     rollno: student.rollNo || student.id,
@@ -79,10 +65,6 @@ const Students = () => {
     className: classNames[student.classId] || 'N/A',
     divisionName: divisionNames[student.divisionId] || 'N/A'
   }), [classNames, divisionNames]);
-
-  const handleFilterChange = useCallback((newFilters) => {
-    dispatch(filterStudents(newFilters));
-  }, [dispatch]);
 
   return (
     <MainCard
@@ -92,11 +74,9 @@ const Students = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            data={filteredStudents.map(transformStudentData)}
-            fetchUrl={null}
-            isPostRequest={false}
-            loading={loading}
-            onFiltersChange={handleFilterChange}
+            data={[]} // We pass an empty array because data is now fetched by the grid
+            fetchUrl={`/api/users/getAll/${accountId}?type=STUDENT`}
+            isPostRequest={true} // Set to true to use a POST request with payload
             columns={columnsConfig}
             editUrl="/masters/student/edit"
             deleteUrl="/api/users/delete"
@@ -105,11 +85,12 @@ const Students = () => {
             entityName="STUDENT"
             searchPlaceholder="Search students by name, email, or roll number..."
             showSearch={true}
-            showRefresh={false}
+            showRefresh={true}
             showFilters={true}
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}
             height={600}
+            transformData={transformStudentData}
             onRowClick={(params) => {
               navigate(`/masters/students/view/${params.row.id}`);
             }}

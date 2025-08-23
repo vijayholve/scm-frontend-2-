@@ -19,6 +19,7 @@ import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import { MenuItem, Select } from '@mui/material';
 
 // third party
 import * as Yup from 'yup';
@@ -27,14 +28,13 @@ import { Formik } from 'formik';
 // project imports
 import AnimateButton from 'ui-component/extended/AnimateButton';
 import api from '../../../../utils/apiService'
+import { setLogin } from 'store/userSlice';
 
 // assets
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-
 import Google from 'assets/images/icons/social-google.svg';
-import { setLogin } from 'store/userSlice';
-import { MenuItem, Select } from '@mui/material';
+
 
 // ============================|| FIREBASE - LOGIN ||============================ //
 
@@ -59,18 +59,24 @@ const AuthLogin = ({ ...others }) => {
     event.preventDefault();
   };
 
+  const [apiError, setApiError] = useState('');
+
   const handleSubmit = async (values, { setSubmitting }) => {
-    const userData = { ...values };
     try {
-      const response = await api.post(`api/users/login`, userData);
+      const response = await api.post(`api/users/login`, values);
       if (response.data.statusCode === 200 && response.data.accessToken) {
         localStorage.setItem("SCM-AUTH", JSON.stringify(response.data));
         dispatch(setLogin(response.data));
         setSubmitting(false);
-        navigate('/')
+        navigate('/');
+      } else {
+        setApiError(response.data.message);
+        setSubmitting(false);
       }
     } catch (error) {
       console.error('Failed to login data:', error);
+      setApiError(error.response?.data?.message || 'An unexpected error occurred. Please try again.');
+      setSubmitting(false);
     }
   };
 
@@ -102,7 +108,10 @@ const AuthLogin = ({ ...others }) => {
                 value={values.userName}
                 name="userName"
                 onBlur={handleBlur}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  setApiError('');
+                }}
                 label="User Name"
                 inputProps={{}}
               />
@@ -121,7 +130,10 @@ const AuthLogin = ({ ...others }) => {
                 value={values.password}
                 name="password"
                 onBlur={handleBlur}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  setApiError('');
+                }}
                 endAdornment={
                   <InputAdornment position="end">
                     <IconButton
@@ -152,12 +164,20 @@ const AuthLogin = ({ ...others }) => {
                 value={values.accountId}
                 name="accountId"
                 onBlur={handleBlur}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  setApiError('');
+                }}
                 label="Account ID"
                 inputProps={{}}
               />
+              {touched.accountId && errors.accountId && (
+                <FormHelperText error id="standard-weight-helper-text-account-id-login">
+                  {errors.accountId}
+                </FormHelperText>
+              )}
             </FormControl>
-            <FormControl fullWidth>
+            <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
               <InputLabel id="user-type-label">User Type</InputLabel>
               <Select
                 labelId="user-type-label"
@@ -165,12 +185,20 @@ const AuthLogin = ({ ...others }) => {
                 name="type"
                 value={values.type}
                 label="User Type"
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  setApiError('');
+                }}
               >
                 <MenuItem value="ADMIN">ADMIN</MenuItem>
                 <MenuItem value="TEACHER">TEACHER</MenuItem>
                 <MenuItem value="STUDENT">STUDENT</MenuItem>
               </Select>
+              {touched.type && errors.type && (
+                <FormHelperText error id="standard-weight-helper-text-user-type-login">
+                  {errors.type}
+                </FormHelperText>
+              )}
             </FormControl>
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
               <FormControlLabel
@@ -183,9 +211,10 @@ const AuthLogin = ({ ...others }) => {
                 Forgot Password?
               </Typography>
             </Stack>
-            {errors.submit && (
+
+            {apiError && (
               <Box sx={{ mt: 3 }}>
-                <FormHelperText error>{errors.submit}</FormHelperText>
+                <FormHelperText error>{apiError}</FormHelperText>
               </Box>
             )}
 

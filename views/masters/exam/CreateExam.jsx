@@ -475,7 +475,9 @@ const CreateExam = () => {
                                                     </Grid>
                                                     <Grid item xs={12} sm={2}>
                                                         <IconButton
-                                                            onClick={() => remove(index)}
+                                                            onClick={() => remove(index)
+                                                                
+                                                            }
                                                             disabled={values.examSubjects.length <= 1}
                                                         >
                                                             <RemoveCircleOutlineIcon />

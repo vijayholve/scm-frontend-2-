@@ -253,6 +253,22 @@ const rawUtilities = {
             breadcrumbs: false
         },
         {
+            id: 'EXAM_TEACHER_VIEW',
+            title: 'Teacher View',
+            type: 'item',
+            url: '/masters/exams/teacher',
+            icon: icons.IconFileText,
+            breadcrumbs: false
+        },
+        {
+            id: 'EXAM_STUDENT_VIEW',
+            title: 'Student View',
+            type: 'item',
+            url: '/masters/exams/student',
+            icon: icons.IconFileText,
+            breadcrumbs: false
+        },
+        {
             id: 'TIMETABLE', // Consistent ID for permission check
             title: 'Timetables',
             type: 'item',
@@ -301,7 +317,7 @@ const rawUtilities = {
                     breadcrumbs: false
                 },
                 {
-                    id: 'FEE_MANAGEMENT',
+                    id: 'FEE_STUDENT_VIEW',
                     title: 'My Fees',
                     type: 'item',
                     url: '/masters/student/fees',

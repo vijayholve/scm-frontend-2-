@@ -1,20 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// =======
-// import React, { useEffect, useState } from 'react';
 import { Grid, Box, Typography } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-// import MainCard from 'ui-component/cards/MainCard';
-import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
-import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
-// <<<<<<< HEAD
-// import { userDetails } from '../../../utils/apiService';
-// import api from '../../../utils/apiService';
 import api, { userDetails } from '../../../utils/apiService';
 import MainCard from 'ui-component/cards/MainCard';
-// import { Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-// import { gridSpacing } from 'store/constant';
+import { gridSpacing } from 'store/constant';
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -62,7 +51,6 @@ const RolesList = () => {
       </Box>
     );
 
-// <<<<<<< HEAD
     return (
       <MainCard>
         <Grid container spacing={gridSpacing}>
@@ -87,7 +75,6 @@ const RolesList = () => {
           </Grid>
         </Grid>
       </MainCard>
-
     );
 };
 

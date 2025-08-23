@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Grid, FormControl, InputLabel, Select, MenuItem, Box, Typography, Chip, IconButton, Tooltip } from '@mui/material';
+import { Grid, FormControl, InputLabel, Select, MenuItem, Box, Typography, Chip, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { Clear as ClearIcon } from '@mui/icons-material';
 import api from 'utils/apiService';
 import { userDetails } from 'utils/apiService';
@@ -9,7 +9,9 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
   const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
   const [divisions, setDivisions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [loadingDivisions, setLoadingDivisions] = useState(false);
   const accountId = userDetails.getAccountId();
 
   // Use state to track selected filters locally
@@ -17,118 +19,105 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
   const [selectedClass, setSelectedClass] = useState(filters.classId || '');
   const [selectedDivision, setSelectedDivision] = useState(filters.divisionId || '');
 
-  // Sync internal state with props if they change
+  // Effect to sync local state with props on initial load or change
   useEffect(() => {
     setSelectedSchool(filters.schoolId || '');
     setSelectedClass(filters.classId || '');
     setSelectedDivision(filters.divisionId || '');
   }, [filters]);
 
+  // Effect to fetch schools on initial load
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchSchools = async () => {
+      setLoadingSchools(true);
       try {
-        // Fetch schools
-        if (showSchool) {
-          const schoolPayload = {
-            page: 0,
-            size: 1000,
-            sortBy: 'id',
-            sortDir: 'asc'
-          };
-          try {
-            const schoolResponse = await api.post(`/api/schoolBranches/getAll/${accountId}`, schoolPayload);
-            setSchools(schoolResponse.data.content || []);
-          } catch (schoolError) {
-            try {
-              const altResponse = await api.get(`/api/schoolBranches/${accountId}`);
-              setSchools(altResponse.data || []);
-            } catch (altError) {
-              setSchools([]);
-            }
-          }
-        }
-
-        // Fetch classes (filtered by school if selected)
-        if (showClass) {
-          const classPayload = {
-            page: 0,
-            size: 1000,
-            sortBy: 'id',
-            sortDir: 'asc'
-          };
-          if (selectedSchool) {
-            classPayload.schoolId = selectedSchool;
-          }
-          try {
-            const classResponse = await api.post(`/api/schoolClasses/getAll/${accountId}`, classPayload);
-            setClasses(classResponse.data.content || []);
-          } catch (classError) {
-            try {
-              const altResponse = await api.get(`/api/schoolClasses/${accountId}`);
-              setClasses(altResponse.data || []);
-            } catch (altError) {
-              setClasses([]);
-            }
-          }
-        }
-
-        // Fetch divisions (filtered by class if selected)
-        if (showDivision) {
-          const divisionPayload = {
-            page: 0,
-            size: 1000,
-            sortBy: 'id',
-            sortDir: 'asc'
-          };
-          if (selectedClass) {
-            divisionPayload.classId = selectedClass;
-          }
-          try {
-            const divisionResponse = await api.post(`/api/divisions/getAll/${accountId}`, divisionPayload);
-            setDivisions(divisionResponse.data.content || []);
-          } catch (divisionError) {
-            try {
-              const altResponse = await api.get(`/api/divisions/${accountId}`);
-              setDivisions(altResponse.data || []);
-            } catch (altError) {
-              setDivisions([]);
-            }
-          }
-        }
+        const payload = { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' };
+        const response = await api.post(`/api/schoolBranches/getAll/${accountId}`, payload);
+        setSchools(response.data.content || []);
       } catch (error) {
-        console.error('Failed to fetch filter data:', error);
+        console.error(`Failed to fetch schools:`, error);
+        setSchools([]);
       } finally {
-        setLoading(false);
+        setLoadingSchools(false);
       }
     };
-    fetchData();
-  }, [accountId, showSchool, showClass, showDivision, selectedSchool, selectedClass]);
+    if (showSchool) {
+      fetchSchools();
+    }
+  }, [accountId, showSchool]);
 
-  // Pass filter changes up to the parent component (ReusableDataGrid)
+  // Effect to fetch classes when a school is selected
   useEffect(() => {
-    onFiltersChange({
-      schoolId: selectedSchool,
-      classId: selectedClass,
-      divisionId: selectedDivision
-    });
-  }, [selectedSchool, selectedClass, selectedDivision, onFiltersChange]);
+    const fetchClasses = async () => {
+      setLoadingClasses(true);
+      if (selectedSchool) {
+        try {
+          const payload = { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc', schoolId: selectedSchool };
+          const response = await api.post(`/api/schoolClasses/getAll/${accountId}`, payload);
+          setClasses(response.data.content || []);
+        } catch (error) {
+          console.error(`Failed to fetch classes for school ${selectedSchool}:`, error);
+          setClasses([]);
+        }
+      } else {
+        setClasses([]);
+      }
+      setLoadingClasses(false);
+    };
+    if (showClass) {
+      fetchClasses();
+    }
+  }, [accountId, showClass, selectedSchool]);
+
+  // Effect to fetch divisions when a class is selected
+  useEffect(() => {
+    const fetchDivisions = async () => {
+      setLoadingDivisions(true);
+      if (selectedClass) {
+        try {
+          const payload = { 
+            page: 0, 
+            size: 1000, 
+            sortBy: 'id', 
+            sortDir: 'asc', 
+            schoolId: selectedSchool, // Pass schoolId
+            classId: selectedClass    // Pass classId
+          };
+          const response = await api.post(`/api/divisions/getAll/${accountId}`, payload);
+          setDivisions(response.data.content || []);
+        } catch (error) {
+          console.error(`Failed to fetch divisions for class ${selectedClass}:`, error);
+          setDivisions([]);
+        }
+      } else {
+        setDivisions([]);
+      }
+      setLoadingDivisions(false);
+    };
+    if (showDivision) {
+      fetchDivisions();
+    }
+  }, [accountId, showDivision, selectedSchool, selectedClass]);
 
   const handleSchoolChange = (e) => {
     const newSchool = e.target.value;
     setSelectedSchool(newSchool);
     setSelectedClass('');
     setSelectedDivision('');
+    onFiltersChange({ schoolId: newSchool, classId: '', divisionId: '' });
   };
 
   const handleClassChange = (e) => {
     const newClass = e.target.value;
     setSelectedClass(newClass);
     setSelectedDivision('');
+    onFiltersChange({ schoolId: selectedSchool, classId: newClass, divisionId: '' });
   };
 
   const handleDivisionChange = (e) => {
-    setSelectedDivision(e.target.value);
+    const newDivision = e.target.value;
+    setSelectedDivision(newDivision);
+    onFiltersChange({ schoolId: selectedSchool, classId: selectedClass, divisionId: newDivision });
   };
 
   const clearAllFilters = () => {
@@ -168,7 +157,7 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
                 value={selectedSchool}
                 label="School"
                 onChange={handleSchoolChange}
-                disabled={loading}
+                disabled={loadingSchools}
               >
                 <MenuItem value="">
                   <em>All Schools</em>
@@ -185,7 +174,7 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
 
         {showClass && (
           <Grid item xs={12} sm={4} md={3}>
-            <FormControl fullWidth size="small" disabled={loading || !selectedSchool}>
+            <FormControl fullWidth size="small" disabled={loadingClasses || !selectedSchool}>
               <InputLabel>Class</InputLabel>
               <Select
                 value={selectedClass}
@@ -207,7 +196,7 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
 
         {showDivision && (
           <Grid item xs={12} sm={4} md={3}>
-            <FormControl fullWidth size="small" disabled={loading || !selectedClass}>
+            <FormControl fullWidth size="small" disabled={loadingDivisions || !selectedClass}>
               <InputLabel>Division</InputLabel>
               <Select
                 value={selectedDivision}

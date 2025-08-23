@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // material-ui
@@ -60,7 +60,7 @@ const ReusableDataGrid = ({
   addActionUrl,
   viewUrl,
   filters = {},
-  data = [], // New prop for client-side data
+  data: clientSideData = [],
   isPostRequest = true,
   entityName,
   customActions = [],
@@ -81,39 +81,59 @@ const ReusableDataGrid = ({
   customToolbar = null,
   loadingOverlay = null,
   errorOverlay = null,
-  // New filter props
   showSchoolFilter = false,
   showClassFilter = false,
   showDivisionFilter = false,
-  enableFilters = false,
-  onFiltersChange = () => {} // New prop for client-side filter changes
+  enableFilters = false
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
 
-  // State for internal pagination and search for server-side mode
   const [loading, setLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
   const [rowCount, setRowCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [gridFilters, setGridFilters] = useState({
-    schoolId: '',
-    classId: '',
-    divisionId: '',
-    ...filters
-  });
+  const [gridFilters, setGridFilters] = useState(filters);
+  const [gridData, setGridData] = useState([]);
+  
+  // Use a ref to store the latest filters without triggering a re-render
+  const latestFilters = useRef(gridFilters);
+  useEffect(() => {
+    latestFilters.current = gridFilters;
+  }, [gridFilters]);
 
-  // Memoized function to fetch data (only used in server-side mode)
+  // Memoized function to fetch data, preventing infinite loops
   const fetchData = useCallback(async () => {
-    if (!fetchUrl) return;
+    // Return early if no fetch URL is provided
+    if (!fetchUrl) {
+      // Client-side filtering fallback
+      const filteredData = clientSideData.filter(item => {
+        let isMatch = true;
+        if (latestFilters.current.schoolId) {
+          isMatch = isMatch && item.schoolId == latestFilters.current.schoolId;
+        }
+        if (latestFilters.current.classId) {
+          isMatch = isMatch && item.classId == latestFilters.current.classId;
+        }
+        if (latestFilters.current.divisionId) {
+          isMatch = isMatch && item.divisionId == latestFilters.current.divisionId;
+        }
+        if (searchTerm) {
+          isMatch = isMatch && JSON.stringify(item).toLowerCase().includes(searchTerm.toLowerCase());
+        }
+        return isMatch;
+      });
+      const transformedData = transformData ? filteredData.map(transformData) : filteredData;
+      setGridData(transformedData);
+      setRowCount(transformedData.length);
+      return;
+    }
 
     setLoading(true);
     try {
       let response;
-      const combinedFilters = { ...gridFilters };
-
       if (isPostRequest) {
         const payload = {
           page: paginationModel.page,
@@ -121,7 +141,7 @@ const ReusableDataGrid = ({
           sortBy: 'id',
           sortDir: 'asc',
           search: searchTerm,
-          ...combinedFilters
+          ...latestFilters.current
         };
         response = await api.post(fetchUrl, payload);
       } else {
@@ -129,7 +149,7 @@ const ReusableDataGrid = ({
           page: paginationModel.page,
           size: paginationModel.pageSize,
           search: searchTerm,
-          ...combinedFilters
+          ...latestFilters.current
         });
         response = await api.get(`${fetchUrl}?${queryParams}`);
       }
@@ -137,35 +157,39 @@ const ReusableDataGrid = ({
       const responseData = response.data.content || response.data || [];
       const transformedData = transformData ? responseData.map(transformData) : responseData;
       
-      // Update local state with the fetched data
+      setGridData(transformedData);
       setRowCount(response.data.totalElements || response.data.length || 0);
     } catch (err) {
       console.error(`Failed to fetch data from ${fetchUrl}:`, err);
       toast.error('Could not fetch data.');
+      setGridData([]);
       setRowCount(0);
     } finally {
       setLoading(false);
     }
-  }, [fetchUrl, paginationModel, JSON.stringify(gridFilters), isPostRequest, searchTerm, transformData]);
+  }, [fetchUrl, isPostRequest, searchTerm, transformData, clientSideData, paginationModel]);
 
-  // Trigger fetch only in server-side mode
+  // Handle filter changes from ListGridFilters
+  const handleFiltersChange = useCallback((newFilters) => {
+    setGridFilters(newFilters);
+    setPaginationModel(prev => ({ ...prev, page: 0 }));
+  }, []);
+
+  // Effect to trigger data fetch on component mount or when dependencies change
+  // We use a debounce here to prevent a flood of API calls
   useEffect(() => {
-    if (fetchUrl) {
+    const handler = setTimeout(() => {
       fetchData();
-    }
-  }, [fetchData]);
-
+    }, 1000); // 300ms debounce
+    return () => clearTimeout(handler);
+  }, [fetchData, paginationModel.page, paginationModel.pageSize, searchTerm, gridFilters]);
+  
   const handleOnClickDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         await api.delete(`${deleteUrl}?id=${id}`);
         toast.success('Item deleted successfully!');
-        if (fetchUrl) {
-          fetchData(); // For server-side mode
-        } else {
-          // For client-side mode, trigger a re-filter or re-fetch of all data
-          onFiltersChange(gridFilters);
-        }
+        fetchData();
       } catch (err) {
         console.error(err);
         toast.error('Failed to delete item.');
@@ -173,26 +197,19 @@ const ReusableDataGrid = ({
     }
   };
 
-  const handleOnClickView = async (id) => {
+  const handleOnClickView = (id) => {
     navigate(`${viewUrl}/${id}`);
   };
 
   const handleSearch = (event) => {
     const newSearchTerm = event.target.value;
     setSearchTerm(newSearchTerm);
-    if (!fetchUrl) {
-      onFiltersChange({ ...gridFilters, searchTerm: newSearchTerm });
-    }
-    setPaginationModel({ ...paginationModel, page: 0 });
   };
 
   const handleRefresh = () => {
-    if (fetchUrl) {
-      fetchData();
-    } else {
-      // For client-side mode, re-fetch all data or re-run filters
-      onFiltersChange(gridFilters);
-    }
+    setSearchTerm('');
+    setGridFilters(filters);
+    setPaginationModel({ page: 0, pageSize: defaultPageSize });
   };
 
   const handleRowClick = (params) => {
@@ -201,20 +218,6 @@ const ReusableDataGrid = ({
     }
     setSelectedRow(params.row);
   };
-
-  // Handle filter changes (memoized with useCallback)
-  const handleFiltersChange = useCallback((newFilters) => {
-    setGridFilters(newFilters);
-    if (!fetchUrl) {
-      onFiltersChange({ ...newFilters, searchTerm });
-    }
-    setPaginationModel(prev => ({ ...prev, page: 0 }));
-  }, [fetchUrl, onFiltersChange, searchTerm]);
-
-  // Determine which data to use based on mode
-  const displayedData = fetchUrl ? data : data;
-  const displayedRowCount = fetchUrl ? rowCount : data.length;
-  const paginationMode = fetchUrl ? 'server' : 'client';
 
   const hasActions = editUrl || deleteUrl || viewUrl || customActions.length > 0;
 
@@ -381,14 +384,14 @@ const ReusableDataGrid = ({
         <Grid item xs={12}>
           <Box sx={{ height, width: '100%' }}>
             <DataGrid
-              rows={displayedData}
+              rows={gridData}
               columns={columns}
               loading={loading}
-              rowCount={displayedRowCount}
+              rowCount={rowCount}
               pageSizeOptions={pageSizeOptions}
               paginationModel={paginationModel}
               onPaginationModelChange={setPaginationModel}
-              paginationMode={paginationMode}
+              paginationMode={fetchUrl ? 'server' : 'client'}
               getRowId={(row) => row.id}
               onRowClick={onRowClick || handleRowClick}
               selectionModel={selectionModel}

@@ -33,48 +33,12 @@ const Assignments = () => {
   const user = useSelector((state) => state.user);
   const permissions = user?.permissions || [];
   
-  const [allAssignments, setAllAssignments] = useState([]);
-  const [filteredAssignments, setFilteredAssignments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Note: These states are no longer needed for filtering on the frontend
+  // const [allAssignments, setAllAssignments] = useState([]);
+  // const [filteredAssignments, setFilteredAssignments] = useState([]);
+  
+  const [loading, setLoading] = useState(false); // Let the data grid handle this
   const [filters, setFilters] = useState({});
-
-  useEffect(() => {
-    const fetchAllAssignments = async () => {
-      setLoading(true);
-      try {
-        const response = await api.post(`/api/assignments/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
-        setAllAssignments(response.data.content || []);
-        console.log("assignment")
-        console.log(allAssignments)
-        setFilteredAssignments(response.data.content || []);
-      } catch (error) {
-        console.error('Failed to fetch assignments:', error);
-        setAllAssignments([]);
-        setFilteredAssignments([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllAssignments();
-  }, [accountId]);
-
-  const handleFilterChange = useCallback((newFilters) => {
-    setFilters(newFilters);
-    let tempFiltered = allAssignments;
-    if (newFilters.schoolId) {
-      tempFiltered = tempFiltered.filter(assignment => assignment.schoolId == newFilters.schoolId);
-    }
-    if (newFilters.classId) {
-      tempFiltered = tempFiltered.filter(assignment => assignment.classId == newFilters.classId);
-    }
-    if (newFilters.divisionId) {
-      tempFiltered = tempFiltered.filter(assignment => assignment.divisionId == newFilters.divisionId);
-    }
-    if (newFilters.subjectId) {
-      tempFiltered = tempFiltered.filter(assignment => assignment.subjectId == newFilters.subjectId);
-    }
-    setFilteredAssignments(tempFiltered);
-  }, [allAssignments]);
 
   return (
     <MainCard
@@ -84,27 +48,24 @@ const Assignments = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            data={filteredAssignments}
-            loading={loading}
-            onFiltersChange={handleFilterChange}
-            fetchUrl={null}
-            isPostRequest={false}
+            fetchUrl={`/api/assignments/getAll/${accountId}`}
+            isPostRequest={true}
             columns={columns}
             editUrl="/masters/assignment/edit"
             deleteUrl="/api/assignments/delete"
             entityName="ASSIGNMENT"
             searchPlaceholder="Search assignments by name, type, or year..."
             showSearch={true}
-            showRefresh={false}
+            showRefresh={true} // Re-enable refresh button
             showFilters={true}
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}
             height={600}
+            // Enable backend-driven filtering for school, class, and division
             enableFilters={true}
             showSchoolFilter={true}
             showClassFilter={true}
             showDivisionFilter={true}
-            showSubjectFilter={true}
           />
         </Grid>
       </Grid>

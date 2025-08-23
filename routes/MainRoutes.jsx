@@ -66,8 +66,6 @@ const Profiles = Loadable(lazy(() => import('views/masters/profile/index')));
 // ID Card routing
 const IdCardManagement = Loadable(lazy(() => import('views/masters/idcards/index')));
 
-// const ExamList = Loadable(lazy(() => import('views/masters/exam/index')));
-// const ExamEdit = Loadable(lazy(() => import('views/masters/exam/edit')));
 
 const StudentParentList = Loadable(lazy(() => import('views/masters/StudentParent/index')));
 const StudentParentEdit = Loadable(lazy(() => import('views/masters/StudentParent/edit')));
@@ -90,6 +88,7 @@ const ExamEdit = Loadable(lazy(() => import('views/masters/exam/CreateExam')));
 const StudentExamList = Loadable(lazy(() => import('views/masters/exam/StudentExamList')));
 const TeacherExamView = Loadable(lazy(() => import('views/masters/exam/TeacherExamView')));
 const ExamList = Loadable(lazy(() => import('views/masters/exam/index')));
+const StudentExamResult = Loadable(lazy(() => import('views/masters/exam/StudentExamResult')));
 // Fee routing
 const FeeDashboard = Loadable(lazy(() => import('views/masters/fee/index')));
 const StudentFeeView = Loadable(lazy(() => import('views/masters/fee/StudentFeeView')));
@@ -305,6 +304,10 @@ const getMainRoutes = (permissions = []) => ({
       {
           path: 'exams/student',
           element: <StudentExamList />
+      },
+      {
+          path: 'exams/student/result/:examId',
+          element: <StudentExamResult />
       },
       {
           path: 'exams/teacher',
