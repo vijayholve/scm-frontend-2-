@@ -18,7 +18,7 @@ const columns = [
     field: 'attendanceDate',
     headerName: 'Attendance Date',
     width: 160,
-    valueFormatter: (params) => (params.value ? dayjs(params.value).format('YYYY-MM-DD') : '')
+    // valueFormatter: (params) => (params.value ? dayjs(params.value).format('YYYY-MM-DD') : '')
   },
   {
     field: 'schoolName',
@@ -39,7 +39,7 @@ const AttendanceList = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            entityName="ATTENDANCE List"
+            entityName="ATTENDANCE"
             fetchUrl={`/api/attendance/getAll/${accountId}`}
             isPostRequest={true}
             columns={columns}
@@ -49,6 +49,7 @@ const AttendanceList = () => {
             showSchoolFilter={true}
             showClassFilter={true}
             showDivisionFilter={true}
+
           />
         </Grid>
       </Grid>

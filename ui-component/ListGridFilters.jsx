@@ -135,10 +135,7 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
 
   return (
     <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" color="primary">
-          Filters
-        </Typography>
+      {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         {showClearAll && hasActiveFilters && (
           <Tooltip title="Clear all filters">
             <IconButton size="small" onClick={clearAllFilters} color="error">
@@ -146,7 +143,7 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
             </IconButton>
           </Tooltip>
         )}
-      </Box>
+      </Box> */}
 
       <Grid container spacing={2}>
         {showSchool && (

@@ -78,7 +78,7 @@ const Exams = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
             title="Exams Management"
-            fetchUrl={`/api/exams/getAll/${accountId}`}
+            fetchUrl={`/api/exams/getAllBy/${accountId}`}
             isPostRequest={true}
             columns={columnsConfig}
             editUrl="/masters/exam/edit"

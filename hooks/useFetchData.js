@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
-import apiClient from '../utils/apiService'; // Correctly import the default export
+import apiClient from '../api';
 
 /**
  * A generic hook to fetch data using a POST request with a payload.

@@ -292,6 +292,8 @@ const IdCardManagement = () => {
             
             setClasses(classResponse.data || []);
             setDivisions(divisionResponse.data || []);
+            console.log(classResponse.data);
+            console.log(divisionResponse.data);
         } catch (error) {
             console.error('Error fetching classes and divisions:', error);
         }

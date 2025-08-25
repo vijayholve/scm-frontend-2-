@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid, Box, Typography } from '@mui/material';
+import { Grid, Box, Typography, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
@@ -19,6 +19,7 @@ const columnsConfig = [
   { field: 'email', headerName: 'Email', width: 110, flex: 1 },
   { field: 'mobile', headerName: 'Mobile', width: 110, flex: 1 },
   { field: 'address', headerName: 'Address', width: 110, flex: 1 },
+  { field: 'schoolName', headerName: 'School', width: 110, flex: 1 },
   { field: 'className', headerName: 'Class', width: 110, flex: 1 },
   { field: 'divisionName', headerName: 'Division', width: 110, flex: 1 }
 ];
@@ -26,19 +27,28 @@ const columnsConfig = [
 const Students = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
+  const [schoolNames, setSchoolNames] = useState({});
   const [classNames, setClassNames] = useState({});
   const [divisionNames, setDivisionNames] = useState({});
+  const [loading, setLoading] = useState(true);
 
   // This hook is now responsible for fetching and managing all data
   // for the dropdowns. The main grid data is handled by ReusableDataGrid.
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [classResponse, divisionResponse] = await Promise.all([
+        const [schoolResponse, classResponse, divisionResponse] = await Promise.all([
+          api.post(`/api/schoolBranches/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
           api.post(`/api/schoolClasses/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
           api.post(`/api/divisions/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' })
         ]);
         
+        const schoolMap = {};
+        (schoolResponse.data.content || []).forEach((sch) => {
+          schoolMap[sch.id] = sch.name;
+        });
+        setSchoolNames(schoolMap);
+
         const classMap = {};
         (classResponse.data.content || []).forEach((cls) => {
           classMap[cls.id] = cls.name;
@@ -52,6 +62,8 @@ const Students = () => {
         setDivisionNames(divisionMap);
       } catch (error) {
         console.error('Failed to fetch dropdown data:', error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchDropdownData();
@@ -62,9 +74,20 @@ const Students = () => {
     ...student,
     rollno: student.rollNo || student.id,
     name: `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.userName,
+    schoolName: schoolNames[student.schoolId] || 'N/A',
     className: classNames[student.classId] || 'N/A',
     divisionName: divisionNames[student.divisionId] || 'N/A'
-  }), [classNames, divisionNames]);
+  }), [schoolNames, classNames, divisionNames]);
+
+  if (loading) {
+      return (
+          <MainCard title="Students Management">
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+                  <CircularProgress />
+              </Box>
+          </MainCard>
+      );
+  }
 
   return (
     <MainCard
@@ -74,9 +97,9 @@ const Students = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-            data={[]} // We pass an empty array because data is now fetched by the grid
+            data={[]}
             fetchUrl={`/api/users/getAll/${accountId}?type=STUDENT`}
-            isPostRequest={true} // Set to true to use a POST request with payload
+            isPostRequest={true}
             columns={columnsConfig}
             editUrl="/masters/student/edit"
             deleteUrl="/api/users/delete"
@@ -90,6 +113,7 @@ const Students = () => {
             pageSizeOptions={[5, 10, 25, 50]}
             defaultPageSize={10}
             height={600}
+            transformData={transformStudentData}
             enableFilters={true}
             showSchoolFilter={true}
             showClassFilter={true}

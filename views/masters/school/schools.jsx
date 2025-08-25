@@ -30,6 +30,7 @@ const Schools = () => {
             try {
                 const response = await api.post(`/api/schoolBranches/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' });
                 setSchools(response.data.content || []);
+                console.log(response.data.content);
             } catch (error) {
                 console.error('Failed to fetch schools:', error);
                 setSchools([]);

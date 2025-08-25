@@ -27,7 +27,7 @@ import { Formik } from 'formik';
 
 // project imports
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import api from '../../../../utils/apiService'
+import api, { endpoints } from '../../../../api'
 import { setLogin } from 'store/userSlice';
 
 // assets
@@ -63,7 +63,7 @@ const AuthLogin = ({ ...others }) => {
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
-      const response = await api.post(`api/users/login`, values);
+      const response = await api.post(endpoints.auth.login, values);
       if (response.data.statusCode === 200 && response.data.accessToken) {
         localStorage.setItem("SCM-AUTH", JSON.stringify(response.data));
         dispatch(setLogin(response.data));

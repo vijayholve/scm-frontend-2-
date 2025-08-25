@@ -94,7 +94,7 @@ const EditTimetable = ({ ...others }) => {
       fetchData('api/schoolClasses/getAll', setClasses);
       fetchData('api/divisions/getAll', setDivisions);
       fetchData('api/subjects/getAll', setSubjects);
-      fetchData('api/users/getAll', setTeachers, 'TEACHER');
+      fetchData('api/users/getAllBy', setTeachers, 'TEACHER');
     }
   }, [loggedInUserData?.accountId]);
 
@@ -109,7 +109,7 @@ const EditTimetable = ({ ...others }) => {
         search: ''
       };
       
-      let url = `${endpoint}/${accountId}`;
+      let url = `${endpoint}/${accountId}?type=${typeFilter}`;
       if (typeFilter) {
         payload.type = typeFilter;
       }
@@ -121,6 +121,7 @@ const EditTimetable = ({ ...others }) => {
     }
   };
 
+  
   useEffect(() => {
     if (timetableId) {
       fetchTimetableData(timetableId);

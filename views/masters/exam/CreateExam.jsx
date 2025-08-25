@@ -90,6 +90,8 @@ const CreateExam = () => {
                 setSubjects(subjectRes.data || []);
             } catch (err) {
                 toast.error("Failed to load dropdown data.");
+            } finally {
+                setLoading(false);
             }
         };
         fetchDropdowns();
