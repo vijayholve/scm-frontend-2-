@@ -35,8 +35,9 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
   const handleDownloadSample = async () => {
     try {
       setLoading(true);
+      
       // Make a GET request to the backend API to download the file
-      const response = await api.get('/api/students/download-sample-excel', {
+      const response = await api.get('/api/users/upload/template', {
         responseType: 'blob', // Important: Set responseType to 'blob' to handle binary data
       });
 
@@ -72,7 +73,7 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
     formData.append('file', file);
 
     try {
-      await api.post('/api/students/bulk-upload', formData, {
+      await api.post('/api/users/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

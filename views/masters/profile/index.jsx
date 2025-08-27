@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { toast } from 'react-hot-toast';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -12,6 +13,14 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 
 // assets
 import {
@@ -21,6 +30,9 @@ import {
     IconCalendar,
     IconFile,
     IconBriefcase, // For Tasks/Activity
+    IconLock, // For password change
+    IconEye,
+    IconEyeOff
 } from '@tabler/icons-react';
 
 // project imports
@@ -41,6 +53,15 @@ const UserProfile = () => {
 
     const user = userDetails.getUser();
     const [showIdCard, setShowIdCard] = useState(false); // State to control ID card visibility
+    const [openPasswordModal, setOpenPasswordModal] = useState(false);
+    const [passwords, setPasswords] = useState({
+        username: '',
+        newPassword: '',
+        confirmNewPassword: ''
+    });
+    const [showUsername, setShowUsername] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('SCM-AUTH');
@@ -50,6 +71,22 @@ const UserProfile = () => {
 
     const handleBack = () => {
         navigate(-1);
+    };
+
+    const handlePasswordChange = () => {
+        if (passwords.newPassword !== passwords.confirmNewPassword) {
+            toast.error("New passwords do not match.");
+            return;
+        }
+
+        // TODO: Implement actual API call here
+        console.log('Changing password for user:', user.userName);
+        console.log('Old Password:', passwords.username);
+        console.log('New Password:', passwords.newPassword);
+
+        toast.success("Password changed successfully!");
+        setOpenPasswordModal(false);
+        setPasswords({ username: '', newPassword: '', confirmNewPassword: '' });
     };
 
     return (
@@ -126,16 +163,16 @@ const UserProfile = () => {
                             </ListItemIcon>
                             <ListItemText primary={<Typography variant="body1">ID Card</Typography>} />
                         </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }}>
+                        {/* <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }}>
                             <ListItemIcon>
                                 <IconBriefcase stroke={1.5} size="1.3rem" />
                             </ListItemIcon>
                             <ListItemText primary={<Typography variant="body1">Tasks</Typography>} />
                         </ListItemButton>
                         <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }}>
-                            <ListItemIcon>
+                            <ListItemI~con>
                                 <IconCalendar stroke={1.5} size="1.3rem" />
-                            </ListItemIcon>
+                            </ListItemI~con>
                             <ListItemText primary={<Typography variant="body1">Calendar</Typography>} />
                         </ListItemButton>
                         <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }}>
@@ -143,6 +180,12 @@ const UserProfile = () => {
                                 <IconFile stroke={1.5} size="1.3rem" />
                             </ListItemIcon>
                             <ListItemText primary={<Typography variant="body1">Files</Typography>} />
+                        </ListItemButton> */}
+                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setOpenPasswordModal(true)}>
+                            <ListItemIcon>
+                                <IconLock stroke={1.5} size="1.3rem" />
+                            </ListItemIcon>
+                            <ListItemText primary={<Typography variant="body1">Change Password</Typography>} />
                         </ListItemButton>
                     </List>
 
@@ -201,6 +244,80 @@ const UserProfile = () => {
                     </Paper>
                 </Box>
             </Box>
+
+            {/* Change Password Modal */}
+            <Dialog open={openPasswordModal} onClose={() => setOpenPasswordModal(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    <Typography variant="h4">Change Password for {user.userName}</Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <TextField
+                        fullWidth
+                        label="Old Password"
+                        type={showUsername ? 'text' : 'password'}
+                        value={passwords.username}
+                        onChange={(e) => setPasswords({ ...passwords, username: e.target.value })}
+                        sx={{ mb: 2 }}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        onClick={() => setShowUsername(!showUsername)}
+                                        edge="end"
+                                    >
+                                        {showUsername ? <IconEye /> : <IconEyeOff />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        label="New Password"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={passwords.newPassword}
+                        onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                        sx={{ mb: 2 }}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        edge="end"
+                                    >
+                                        {showNewPassword ? <IconEye /> : <IconEyeOff />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        label="Confirm New Password"
+                        type={showConfirmNewPassword ? 'text' : 'password'}
+                        value={passwords.confirmNewPassword}
+                        onChange={(e) => setPasswords({ ...passwords, confirmNewPassword: e.target.value })}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                                        edge="end"
+                                    >
+                                        {showConfirmNewPassword ? <IconEye /> : <IconEyeOff />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenPasswordModal(false)}>Cancel</Button>
+                    <Button onClick={handlePasswordChange} variant="contained" color="primary">
+                        Save Changes
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

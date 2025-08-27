@@ -10,6 +10,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import api, { userDetails } from '../../../utils/apiService';
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 
 const EditClass = ({ ...others }) => {
   const navigate = useNavigate();
@@ -98,7 +99,7 @@ const EditClass = ({ ...others }) => {
   };
 
   return (
-    <MainCard title={Title} secondary={<BackButton BackUrl="/masters/classes" />}>
+    <MainCard title={Title} >
       <Formik
         enableReinitialize
         initialValues={classData}
@@ -210,12 +211,18 @@ const EditClass = ({ ...others }) => {
 
               {/* Submit Button */}
               <Grid item xs={12}>
-                <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
+                {/* <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
                   <BackButton BackUrl="/masters/classes" />
                   <Button variant="contained" color="primary" type="submit" disabled={isSubmitting}>
                     {isEditMode ? 'Update' : 'Save'}
                   </Button>
-                </Stack>
+                </Stack> */}
+                <BackSaveButton 
+                  title={classId ? "Update":"Save"}
+                  backUrl="/masters/classes"
+                  isSubmitting={isSubmitting}
+                  // onSaveClick={handleSubmit}
+                  ></BackSaveButton>
               </Grid>
             </Grid>
           </form>

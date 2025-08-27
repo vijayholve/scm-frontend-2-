@@ -95,6 +95,9 @@ const StudentFeeView = Loadable(lazy(() => import('views/masters/fee/StudentFeeV
 
 const AuditLogList = Loadable(lazy(() => import('views/masters/profile/AuditLogList')));
 
+const DocumentList = Loadable(lazy(() => import('../views/masters/documentHub/DocumentList')));
+const DocumentUpload = Loadable(lazy(() => import('../views/masters/documentHub/DocumentUpload')));
+
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 
@@ -381,9 +384,18 @@ const getMainRoutes = (permissions = []) => ({
           path: 'quiz/result/:quizId',
           element: <QuizResult />
         },
+        
         {
           path: 'student/quizzes',
           element: <StudentQuizList />
+        },
+         hasPermission(permissions, 'DOCUMENT_HUB', 'view') && {
+            path: 'document-hub',
+            element: <DocumentList />
+        },
+        hasPermission(permissions, 'DOCUMENT_HUB', 'add') && {
+            path: 'document-hub/upload',
+            element: <DocumentUpload />
         },
         // Fee management routes
         hasPermission(permissions, 'FEE_MANAGEMENT', 'view') && {

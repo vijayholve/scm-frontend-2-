@@ -15,6 +15,8 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
+      OutlinedInput,
+
   ListItemText
 } from '@mui/material';
 import { styled } from '@mui/system';
@@ -43,12 +45,18 @@ const ActionWrapper = styled(Box)({
   padding: '4px'
 });
 
-const SearchWrapper = styled(Box)({
+const HeaderSearchWrapper = styled(Box)({
   display: 'flex',
-  gap: '16px',
   alignItems: 'center',
-  marginBottom: '16px',
-  flexWrap: 'wrap'
+  gap: '16px',
+  flexWrap: 'wrap',
+  marginLeft: 'auto',
+  // Add styling to align items correctly in the header
+  '@media (max-width: 600px)': {
+    marginLeft: 0,
+    marginTop: '16px',
+    justifyContent: 'space-between',
+  }
 });
 
 const ReusableDataGrid = ({
@@ -84,15 +92,18 @@ const ReusableDataGrid = ({
   showSchoolFilter = false,
   showClassFilter = false,
   showDivisionFilter = false,
-  enableFilters = false
+  enableFilters = false ,
+
+  
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
+    // const [searchText, setSearchText] = useState(''); // Corrected variable name
 
   const [loading, setLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
   const [rowCount, setRowCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchText , setSearchText ] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [gridFilters, setGridFilters] = useState(filters);
@@ -120,8 +131,8 @@ const ReusableDataGrid = ({
         if (latestFilters.current.divisionId) {
           isMatch = isMatch && item.divisionId == latestFilters.current.divisionId;
         }
-        if (searchTerm) {
-          isMatch = isMatch && JSON.stringify(item).toLowerCase().includes(searchTerm.toLowerCase());
+        if (searchText ) {
+          isMatch = isMatch && JSON.stringify(item).toLowerCase().includes(searchText .toLowerCase());
         }
         return isMatch;
       });
@@ -140,7 +151,7 @@ const ReusableDataGrid = ({
           size: paginationModel.pageSize,
           sortBy: 'id',
           sortDir: 'asc',
-          search: searchTerm,
+          search: searchText ,
           ...latestFilters.current
         };
         response = await api.post(fetchUrl, payload);
@@ -148,7 +159,7 @@ const ReusableDataGrid = ({
         const queryParams = new URLSearchParams({
           page: paginationModel.page,
           size: paginationModel.pageSize,
-          search: searchTerm,
+          search: searchText ,
           ...latestFilters.current
         });
         response = await api.get(`${fetchUrl}?${queryParams}`);
@@ -167,7 +178,7 @@ const ReusableDataGrid = ({
     } finally {
       setLoading(false);
     }
-  }, [fetchUrl, isPostRequest, searchTerm, transformData, clientSideData, paginationModel, JSON.stringify(gridFilters)]);
+  }, [fetchUrl, isPostRequest, searchText , transformData, clientSideData, paginationModel, JSON.stringify(gridFilters)]);
 
   // Handle filter changes from ListGridFilters
   const handleFiltersChange = useCallback((newFilters) => {
@@ -177,7 +188,11 @@ const ReusableDataGrid = ({
 
   useEffect(() => {
     fetchData();
-  }, [paginationModel.page, paginationModel.pageSize, searchTerm, gridFilters]);
+  }, [paginationModel.page, paginationModel.pageSize, searchText , gridFilters]);
+const handleSearchChange = (event) => {
+        const newSearchText = event.target.value;
+        setSearchText(newSearchText);
+    };
 
   const handleOnClickDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
@@ -197,12 +212,12 @@ const ReusableDataGrid = ({
   };
 
   const handleSearch = (event) => {
-    const newSearchTerm = event.target.value;
-    setSearchTerm(newSearchTerm);
+    const newSearchText  = event.target.value;
+    setSearchText (newSearchText );
   };
 
   const handleRefresh = () => {
-    setSearchTerm('');
+    setSearchText ('');
     setGridFilters(filters);
     setPaginationModel({ page: 0, pageSize: defaultPageSize });
   };
@@ -324,9 +339,64 @@ const ReusableDataGrid = ({
     : null;
 
   const columns = hasActions ? [...propColumns, actionsColumn] : propColumns;
+ const secondaryHeader = (
+        <Grid container spacing={2} alignItems="" padding={2} justifyContent="flex-end">
+
+          
+          {customActions && (
+              <Grid item>{customActions}</Grid>
+          )}
+        </Grid>
+    );
+  // Header content to be passed to MainCard's secondary prop
+  const headerSearchControls = (
+    <HeaderSearchWrapper>
+      {showSearch && (
+        <TextField
+          size="small"
+          placeholder={searchPlaceholder}
+          value={searchText }
+          onChange={handleSearch}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            )
+          }}
+          sx={{ minWidth: 250 }}
+        />
+      )}
+      {showRefresh && (
+        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
+          Refresh
+        </Button>
+      )}
+      {showFilters && Object.keys(gridFilters).length > 0 && (
+        <Chip
+          icon={<FilterListIcon />}
+          label={`${Object.keys(gridFilters).length} filters active`}
+          variant="outlined"
+          color="primary"
+        />
+      )}
+      {addActionUrl && (
+        <SecondaryAction icon={<AddIcon />} link={addActionUrl} />
+      )}
+    </HeaderSearchWrapper>
+  );
 
   return (
-    <MainCard title={title} secondary={<SecondaryAction icon={<AddIcon />} link={addActionUrl} />}>
+    <MainCard
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              <Typography variant="h3" sx={{ flexGrow: 1 }}>{title}</Typography>
+              {headerSearchControls}
+          </Box>
+        }
+        secondary={secondaryHeader}
+        contentSX={{ p: 1 }} // Small padding to make space for filters
+      >
       {customToolbar && customToolbar()}
 
       {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && (
@@ -337,42 +407,6 @@ const ReusableDataGrid = ({
           showClass={showClassFilter}
           showDivision={showDivisionFilter}
         />
-      )}
-
-      {(showSearch || showRefresh || showFilters) && (
-        <SearchWrapper>
-          {showSearch && (
-            <TextField
-              size="small"
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={handleSearch}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                )
-              }}
-              sx={{ minWidth: 250 }}
-            />
-          )}
-
-          {showRefresh && (
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
-              Refresh
-            </Button>
-          )}
-
-          {showFilters && Object.keys(gridFilters).length > 0 && (
-            <Chip
-              icon={<FilterListIcon />}
-              label={`${Object.keys(gridFilters).length} filters active`}
-              variant="outlined"
-              color="primary"
-            />
-          )}
-        </SearchWrapper>
       )}
 
       <Grid container spacing={gridSpacing}>

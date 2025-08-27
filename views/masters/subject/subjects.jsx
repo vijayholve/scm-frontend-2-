@@ -26,17 +26,19 @@ const Subjects = () => {
     );
 
     return (
-        <MainCard
-            title="Manage Subjects"
-            secondary={<SecondaryAction icon={<AddIcon />} link="/masters/subject/add" />}
-        >
+        // <MainCard
+        //     title="Manage Subjects"
+        //     secondary={<SecondaryAction icon={<AddIcon />} link="/masters/subject/add" />}
+        // >
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
+                     title="SUBJECTS"
                         fetchUrl={`/api/subjects/getAll/${accountId}`}
                         isPostRequest={true}
                         columns={columns}
                         editUrl="/masters/subject/edit"
+                        addActionUrl="/masters/subject/add"
                         deleteUrl="/api/subjects/delete"
                         entityName="SUBJECT"
                         enableFilters={true}
@@ -46,7 +48,7 @@ const Subjects = () => {
                     />
                 </Grid>
             </Grid>
-        </MainCard>
+        // </MainCard>
     );
 };
 

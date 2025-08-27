@@ -32,18 +32,19 @@ const AttendanceList = () => {
   const accountId = userDetails.getAccountId();
   
   return (
-    <MainCard
-      title="Attendance List"
-      secondary={<SecondaryAction icon={<AddIcon />} link="/masters/attendance/add" />}
-    >
+   
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
+                      title="ATTENDANCE"
+
             entityName="ATTENDANCE"
             fetchUrl={`/api/attendance/getAll/${accountId}`}
             isPostRequest={true}
             columns={columns}
             editUrl="/masters/attendance/edit"
+                        addActionUrl="/masters/attendance/add"
+
             deleteUrl="/api/attendance/delete"
             enableFilters={true}
             showSchoolFilter={true}
@@ -53,7 +54,7 @@ const AttendanceList = () => {
           />
         </Grid>
       </Grid>
-    </MainCard>
+    // </MainCard>
   );
 };
 

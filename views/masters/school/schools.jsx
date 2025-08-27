@@ -51,16 +51,17 @@ const Schools = () => {
     );
 
     return (
-        <MainCard
-            title="Manage Schools"
-            secondary={<SecondaryAction icon={<AddIcon />} link="/masters/school/add" />}
-        >
+     
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
-                    <ReusableDataGrid
-                        data={schools}
+                    <ReusableDataGrid 
+                        title="SCHOOLS"
+                        fetchUrl={`/api/schoolBranches/getAllBy/${accountId}`}
+                        // data={schools}
                         loading={loading}
-                        fetchUrl={null} // Explicitly set to null to indicate client-side mode
+
+                        addActionUrl={"/masters/school/add"}
+                        // fetchUrl={null} // Explicitly set to null to indicate client-side mode
                         isPostRequest={false}
                         columns={columns}
                         editUrl="/masters/school/edit"
@@ -70,7 +71,6 @@ const Schools = () => {
                     />
                 </Grid>
             </Grid>
-        </MainCard>
     );
 };
 

@@ -16,10 +16,10 @@ const columns = [
 const AuditLogList = () => {
   const accountId = userDetails.getAccountId();
   return (
-    <MainCard title="Audit Log">
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <ReusableDataGrid
+            title="AUDIT LOGS"
             fetchUrl={`/api/auditlogs/getAll/${accountId}`}
             columns={columns}
             entityName="AUDIT_LOG"
@@ -34,7 +34,6 @@ const AuditLogList = () => {
           />
         </Grid>
       </Grid>
-    </MainCard>
   );
 };
 

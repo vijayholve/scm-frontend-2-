@@ -73,7 +73,6 @@ const Exams = () => {
   });
 
   return (
-    <MainCard>
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
@@ -102,7 +101,7 @@ const Exams = () => {
           />
         </Grid>
       </Grid>
-    </MainCard>
+    // </MainCard>
   );
 };
 

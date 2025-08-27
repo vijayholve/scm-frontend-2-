@@ -75,13 +75,12 @@ const Classes = () => {
     );
 
     return (
-        <MainCard
-            title="Manage Classes"
-            secondary={<SecondaryAction icon={<AddIcon />} link="/masters/class/add" />}
-        >
+      
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
+                                            title="CLASS"
+
                         entityName="CLASS"
                         fetchUrl={`/api/schoolClasses/getAll/${accountId}`}
                         isPostRequest={true}
@@ -98,7 +97,7 @@ const Classes = () => {
                     />
                 </Grid>
             </Grid>
-        </MainCard>
+        // </MainCard>
     );
 };
 

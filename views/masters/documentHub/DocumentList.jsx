@@ -117,15 +117,11 @@ const DocumentList = () => {
     ];
 
     return (
-        <MainCard
-            title="Document Hub"
-            secondary={
-                <SecondaryAction icon={<AddIcon />} link="/masters/document-hub/upload" />
-            }
-        >
+      
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
+                    title="Document Hub"
                         data={filteredDocuments}
                         loading={false}
                         fetchUrl={null}
@@ -150,7 +146,7 @@ const DocumentList = () => {
                     />
                 </Grid>
             </Grid>
-        </MainCard>
+        // </MainCard>
     );
 };
 

@@ -41,23 +41,12 @@ const Teachers = () => {
     }
   ];
 
-  const customToolbar = () => (
-    <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-      <Typography variant="h6">Teachers Overview</Typography>
-      <Typography variant="body2" color="textSecondary">
-        This grid shows all teachers, with filtering capabilities.
-      </Typography>
-    </Box>
-  );
-
   return (
-    <MainCard
-      title="Teachers Management"
-      secondary={<SecondaryAction icon={<AddIcon />} link="/masters/teacher/add" />}
-    >
+   
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
+          title={"Teachers"}
             fetchUrl={`/api/users/getAll/${accountId}?type=TEACHER`}
             isPostRequest={true}
             columns={columnsConfig}
@@ -80,7 +69,7 @@ const Teachers = () => {
           />
         </Grid>
       </Grid>
-    </MainCard>
+    // </MainCard>
   );
 };
 

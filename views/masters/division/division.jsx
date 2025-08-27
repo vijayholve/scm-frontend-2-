@@ -18,18 +18,18 @@ const Devision = () => {
     const accountId = userDetails.getAccountId();
     
     return (
-        <MainCard
-        title="Manage Divisions"
-        secondary={<SecondaryAction icon={<AddIcon />} link="/masters/division/add" />}
-      >
+        
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12}>
             <ReusableDataGrid
+                          title="DIVISION"
               entityName="DIVISION"
               fetchUrl={`/api/divisions/getAll/${accountId}`}
               isPostRequest={true}
               columns={columns}
               editUrl="/masters/division/edit"
+                            addActionUrl="/masters/division/edit"
+
               deleteUrl="/api/devisions/delete"
               enableFilters={true}
               showSchoolFilter={true}
@@ -38,7 +38,7 @@ const Devision = () => {
             />
           </Grid>
         </Grid>
-      </MainCard>
+      // </MainCard>
     );
 };
 

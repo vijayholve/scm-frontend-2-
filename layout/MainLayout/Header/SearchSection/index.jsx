@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
-import { useState, forwardRef, useRef } from 'react';
+import { useState, forwardRef, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -17,57 +18,17 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import ListSubheader from '@mui/material/ListSubheader';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 
 // third-party
 import PopupState, { bindPopper, bindToggle } from 'material-ui-popup-state';
 
 // project imports
 import Transitions from 'ui-component/extended/Transitions';
+import api, { userDetails } from 'utils/apiService';
 
 // assets
 import { IconAdjustmentsHorizontal, IconSearch, IconX } from '@tabler/icons-react';
-
-// Structured dummy data for global search
-const dummyData = [
-  {
-    entityName: 'Masters',
-    path: '/masters',
-    items: [
-      { id: 'master-student', name: 'Student Master', subPath: '/student' },
-      { id: 'master-teacher', name: 'Teacher Master', subPath: '/teacher' },
-      { id: 'master-class', name: 'Class Master', subPath: '/class' },
-      { id: 'master-subject', name: 'Subject Master', subPath: '/subject' },
-      { id: 'master-timetable', name: 'Timetable Master', subPath: '/timetable' },
-      { id: 'master-exam', name: 'Exam Master', subPath: '/exam' },
-      { id: 'master-fee', name: 'Fee Master', subPath: '/fee' },
-      { id: 'master-assignment', name: 'Assignment Master', subPath: '/assignment' },
-      { id: 'master-attendance', name: 'Attendance Master', subPath: '/attendance' }
-    ]
-  },
-  {
-    entityName: 'People',
-    path: '/people',
-    items: [
-      { id: 101, name: 'John Doe', type: 'student', subPath: '/students/view/' },
-      { id: 102, name: 'Jane Smith', type: 'student', subPath: '/students/view/' },
-      { id: 103, name: 'Mark Johnson', type: 'teacher', subPath: '/teachers/view/' },
-      { id: 104, name: 'Emily White', type: 'teacher', subPath: '/teachers/view/' },
-      { id: 105, name: 'Michael Brown', type: 'student', subPath: '/students/view/' },
-      { id: 106, name: 'Jessica Davis', type: 'teacher', subPath: '/teachers/view/' },
-      { id: 107, name: 'David Wilson', type: 'student', subPath: '/students/view/' },
-      { id: 108, name: 'Sarah Miller', type: 'teacher', subPath: '/teachers/view/' }
-    ]
-  },
-  {
-    entityName: 'Courses & LMS',
-    path: '/lms',
-    items: [
-      { id: 'lms-algebra1', name: 'Algebra I Course', subPath: '/courses/algebra1' },
-      { id: 'lms-history2', name: 'World History II Course', subPath: '/courses/history2' },
-      { id: 'lms-lesson1', name: 'Lesson: Introduction to Equations', type: 'lesson', subPath: '/courses/algebra1/lesson1' }
-    ]
-  }
-];
 
 const HeaderAvatar = forwardRef(({ children, ...others }, ref) => {
   const theme = useTheme();
@@ -99,15 +60,24 @@ HeaderAvatar.propTypes = {
 
 // ==============================|| SEARCH INPUT - MOBILE||============================== //
 
-const MobileSearch = ({ value, setValue, popupState, filteredResults, showAll, setShowAll }) => {
+const MobileSearch = ({ value, setValue, popupState, filteredResults, showAll, setShowAll, loading }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
-  const handleItemClick = (entityName, itemName, path, itemId) => {
-    const finalPath = `${path}${itemId || ''}`;
-    console.log(`Navigating to tab: ${entityName} -> ${itemName} (Path: ${finalPath})`);
+  const handleItemClick = (item) => {
+    let finalPath = '';
+    // The provided API response has a generic type 'user'. We will have to determine the actual type from somewhere else, or assume based on the search context.
+    // For now, let's assume if the item's name contains "teacher", it's a teacher, otherwise, it's a student.
+    // A more robust solution would involve the API returning the actual user type.
+    if (item.name.toLowerCase().includes('teacher')) {
+      finalPath = `/masters/teachers/view/${item.id}`;
+    } else {
+      finalPath = `/masters/students/view/${item.id}`;
+    }
+    navigate(finalPath);
     popupState.close();
-    setValue(''); // Clear the search bar after navigation
-    setShowAll(false); // Reset "Show more" state
+    setValue('');
+    setShowAll(false);
   };
 
   const resultsToShow = showAll ? filteredResults : filteredResults.slice(0, 5);
@@ -119,9 +89,9 @@ const MobileSearch = ({ value, setValue, popupState, filteredResults, showAll, s
         value={value}
         onChange={(e) => {
           setValue(e.target.value);
-          setShowAll(false); // Reset "Show more" when typing
+          setShowAll(false);
         }}
-        placeholder="Search anything...1"
+        placeholder="Search anything..."
         startAdornment={
           <InputAdornment position="start">
             <IconSearch stroke={1.5} size="16px" />
@@ -174,33 +144,28 @@ const MobileSearch = ({ value, setValue, popupState, filteredResults, showAll, s
             component="nav"
             aria-labelledby="nested-list-subheader"
             subheader={
-              filteredResults.length > 0 ? (
+              loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : filteredResults.length > 0 ? (
                 <ListSubheader component="div" id="nested-list-subheader">
                   Search Results
                 </ListSubheader>
-              ) : null
+              ) : (
+                <Box sx={{ p: 2 }}>
+                  <Typography>No results found.</Typography>
+                </Box>
+              )
             }
           >
-            {resultsToShow.length > 0 ? (
-              resultsToShow.map((entity) => (
-                <Box key={entity.entityName}>
-                  <ListSubheader>{entity.entityName}</ListSubheader>
-                  {entity.items.map((item) => (
-                    <ListItemButton
-                      key={item.id}
-                      onClick={() => handleItemClick(entity.entityName, item.name, entity.path, item.id)}
-                    >
-                      <ListItemText primary={item.name} secondary={item.type ? `Type: ${item.type}` : ''} />
-                    </ListItemButton>
-                  ))}
-                </Box>
-              ))
-            ) : (
-              <Box sx={{ p: 2 }}>
-                <Typography>No results found.</Typography>
-              </Box>
-            )}
-            {filteredResults.length > 5 && !showAll && (
+            {!loading &&
+              resultsToShow.map((item) => (
+                <ListItemButton key={item.id} onClick={() => handleItemClick(item)}>
+                  <ListItemText primary={item.name.split(':')[0]} secondary={`Type: ${item.type}`} />
+                </ListItemButton>
+              ))}
+            {!loading && filteredResults.length > 5 && !showAll && (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 1 }}>
                 <Button onClick={() => setShowAll(true)}>Show more ({filteredResults.length - 5})</Button>
               </Box>
@@ -215,39 +180,77 @@ const MobileSearch = ({ value, setValue, popupState, filteredResults, showAll, s
 MobileSearch.propTypes = {
   value: PropTypes.string,
   setValue: PropTypes.func,
-  popupState: PopupState,
+  popupState: PropTypes.object,
   filteredResults: PropTypes.array,
   showAll: PropTypes.bool,
-  setShowAll: PropTypes.func
+  setShowAll: PropTypes.func,
+  loading: PropTypes.bool
 };
 
 // ==============================|| SEARCH INPUT ||============================== //
 
 const SearchSection = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [value, setValue] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
   const [showAllResults, setShowAllResults] = useState(false);
   const anchorRef = useRef(null);
 
-  const filteredResults = dummyData.map(entity => {
-    const matchedItems = entity.items.filter(item =>
-      item.name.toLowerCase().includes(value.toLowerCase()) ||
-      (item.type && item.type.toLowerCase().includes(value.toLowerCase()))
-    );
-    return {
-      ...entity,
-      items: matchedItems
-    };
-  }).filter(entity => entity.items.length > 0);
+  const accountId = userDetails.getAccountId();
 
-  const handleItemClick = (entityName, itemName, path, itemId) => {
-    const finalPath = `${path}${itemId || ''}`;
-    console.log(`Navigating to tab: ${entityName} -> ${itemName} (Path: ${finalPath})`);
-    setValue(''); // Clear the search bar after navigation
-    setShowAllResults(false); // Reset "Show more" state
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (value.length > 1) {
+        setLoading(true);
+        try {
+          const payload = {
+            page: 0,
+            size: 100,
+            sortBy: 'id',
+            sortDir: 'asc',
+            search: value,
+            accountId: accountId,
+            fromDate: '2025-08-25T14:10:10.860Z',
+            toDate: '2025-08-25T14:10:10.860Z'
+          };
+          const response = await api.post(`/api/users/search?type=teacher`, payload);
+          setSearchResults(response?.data?.items || []);
+        } catch (error) {
+          console.error('Failed to fetch search results:', error);
+          setSearchResults([]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchResults();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [value, accountId]);
+
+  const handleItemClick = (item) => {
+    let finalPath = '';
+    // The provided API response has a generic type 'user'. We will have to determine the actual type from somewhere else, or assume based on the search context.
+    // For now, let's assume if the item's name contains "teacher", it's a teacher, otherwise, it's a student.
+    // A more robust solution would involve the API returning the actual user type.
+    if (item.name.toLowerCase().includes('teacher')) {
+      finalPath = `/masters/teachers/view/${item.id}`;
+    } else {
+      finalPath = `/masters/students/view/${item.id}`;
+    }
+    navigate(finalPath);
+    setValue('');
+    setShowAllResults(false);
   };
 
-  const resultsToShow = showAllResults ? filteredResults : filteredResults.slice(0, 5);
+  const resultsToShow = showAllResults ? searchResults : searchResults.slice(0, 5);
 
   return (
     <>
@@ -276,9 +279,10 @@ const SearchSection = () => {
                               value={value}
                               setValue={setValue}
                               popupState={popupState}
-                              filteredResults={filteredResults}
+                              filteredResults={searchResults}
                               showAll={showAllResults}
                               setShowAll={setShowAllResults}
+                              loading={loading}
                             />
                           </Grid>
                         </Grid>
@@ -341,35 +345,30 @@ const SearchSection = () => {
                     component="nav"
                     aria-labelledby="nested-list-subheader"
                     subheader={
-                      filteredResults.length > 0 ? (
+                      loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                          <CircularProgress size={24} />
+                        </Box>
+                      ) : searchResults.length > 0 ? (
                         <ListSubheader component="div" id="nested-list-subheader">
                           Search Results
                         </ListSubheader>
-                      ) : null
+                      ) : (
+                        <Box sx={{ p: 2 }}>
+                          <Typography>No results found.</Typography>
+                        </Box>
+                      )
                     }
                   >
-                    {resultsToShow.length > 0 ? (
-                      resultsToShow.map((entity) => (
-                        <Box key={entity.entityName}>
-                          <ListSubheader>{entity.entityName}</ListSubheader>
-                          {entity.items.map((item) => (
-                            <ListItemButton
-                              key={item.id}
-                              onClick={() => handleItemClick(entity.entityName, item.name, entity.path, item.id)}
-                            >
-                              <ListItemText primary={item.name} secondary={item.type ? `Type: ${item.type}` : ''} />
-                            </ListItemButton>
-                          ))}
-                        </Box>
-                      ))
-                    ) : (
-                      <Box sx={{ p: 2 }}>
-                        <Typography>No results found.</Typography>
-                      </Box>
-                    )}
-                    {filteredResults.length > 5 && !showAllResults && (
+                    {!loading &&
+                      resultsToShow.map((item) => (
+                        <ListItemButton key={item.id} onClick={() => handleItemClick(item)}>
+                          <ListItemText primary={item.name.split(':')[0]} secondary={`Type: ${item.type}`} />
+                        </ListItemButton>
+                      ))}
+                    {!loading && searchResults.length > 5 && !showAllResults && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', p: 1 }}>
-                        <Button onClick={() => setShowAllResults(true)}>Show more ({filteredResults.length - 5})</Button>
+                        <Button onClick={() => setShowAllResults(true)}>Show more ({searchResults.length - 5})</Button>
                       </Box>
                     )}
                   </List>

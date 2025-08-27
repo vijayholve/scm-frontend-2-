@@ -34,16 +34,15 @@ const Assignments = () => {
   const permissions = user?.permissions || [];
   
   return (
-    <MainCard
-      title="Assignments"
-      secondary={hasPermission(permissions, 'ASSIGNMENT', 'add') ? <SecondaryAction icon={<AddIcon onClick={() => navigate(`/masters/assignment/add`)} />} /> : null}
-    >
+ 
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
+          title={"ASSIGNMENTS"}
             fetchUrl={`/api/assignments/getAll/${accountId}`}
             isPostRequest={true}
             columns={columns}
+            addActionUrl="/masters/assignment/add"
             editUrl="/masters/assignment/edit"
             deleteUrl="/api/assignments/delete"
             entityName="ASSIGNMENT"
@@ -61,7 +60,7 @@ const Assignments = () => {
           />
         </Grid>
       </Grid>
-    </MainCard>
+    // </MainCard>
   );
 };
 

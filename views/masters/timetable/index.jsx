@@ -48,20 +48,16 @@ const Timetables = () => {
   const permissions = user?.role?.permissions;
   
   return (
-    <MainCard
-      title="📅 Timetables"
-      secondary={
-        hasPermission(permissions, 'TIMETABLE', 'add') ? (
-          <SecondaryAction icon={<AddIcon onClick={() => navigate(`/masters/timetable/add`)} />} />
-        ) : null
-      }
-    >
+
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
-          <ReusableDataGrid
+          <ReusableDataGrid 
+             title="TIMETABLES"
             fetchUrl={`/api/timetable/getAllBy/${accountId}`}
             isPostRequest={true}
             columns={columns}
+
+            addActionUrl="/masters/timetable/add" 
             editUrl="/masters/timetable/edit"
             deleteUrl="/api/timetable/delete"
             viewUrl="/masters/timetable/view"
@@ -73,7 +69,7 @@ const Timetables = () => {
           />
         </Grid>
       </Grid>
-    </MainCard>
+    // </MainCard>
   );
 };
 

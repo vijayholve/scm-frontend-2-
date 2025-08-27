@@ -508,6 +508,7 @@ const IdCardManagement = () => {
                     <TabPanel value={tabValue} index={1}>
                         <ReusableDataGrid
                             title="Teachers"
+                            
                             fetchUrl={getCurrentFetchUrl()}
                             columns={getCurrentColumns()}
                             filters={getFilters()}

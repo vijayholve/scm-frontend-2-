@@ -16,7 +16,6 @@ const RolesList = () => {
     const accountId = userDetails.getAccountId();
     
     return (
-      <MainCard>
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12}>
             <ReusableDataGrid
@@ -35,7 +34,6 @@ const RolesList = () => {
             />
           </Grid>
         </Grid>
-      </MainCard>
     );
 };
 

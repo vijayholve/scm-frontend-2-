@@ -28,13 +28,14 @@ const StudentParents = () => {
     const accountId = userDetails.getAccountId();
 
     return (
-        <MainCard
-            title="Manage Student Parents"
-            secondary={<SecondaryAction icon={<AddIcon />} link="/masters/studentParents/add" />}
-        >
+        // <MainCard
+        //     title="Manage Student Parents"
+        //     secondary={<SecondaryAction icon={<AddIcon />} link="/masters/studentParents/add" />}
+        // >
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
+                        title="STUDENT PARENTS"
                         fetchUrl={`/api/users/getAll/${accountId}?type=STUDENTPARENT`}
                         columns={columns}
                         editUrl="/masters/studentParents/edit"
@@ -42,7 +43,6 @@ const StudentParents = () => {
                     />
                 </Grid>
             </Grid>
-        </MainCard>
     );
 };
 

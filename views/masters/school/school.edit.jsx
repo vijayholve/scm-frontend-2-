@@ -12,6 +12,7 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 import api, { userDetails } from "../../../utils/apiService";
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import SaveButton from 'layout/MainLayout/Button/SaveButton';
 
 // ==============================|| SCHOOL EDIT/ADD PAGE ||============================== //
 
@@ -67,7 +68,7 @@ const EditSchool = ({ ...others }) => {
     if (schoolId) {
       const fetchSchoolData = async (id) => {
         try {
-          const response = await api.get(`/api/schools/getById?id=${id}`);
+          const response = await api.get(`/api/schoolBranches/getById?id=${id}`);
           if (response.data) {
             setSchoolData(response.data);
           }
@@ -93,8 +94,8 @@ const EditSchool = ({ ...others }) => {
 
     try {
       const apiCall = schoolId
-        ? api.put(`/api/schools/update`, schoolPayload)
-        : api.post(`/api/schools/create`, schoolPayload);
+        ? api.put(`/api/schoolBranches/update`, schoolPayload)
+        : api.post(`/api/schoolBranches/create`, schoolPayload);
 
       await apiCall;
 
@@ -111,7 +112,7 @@ const EditSchool = ({ ...others }) => {
   };
 
   return (
-    <MainCard title={Title} secondary={<BackButton BackUrl='/masters/schools' />}>
+    <MainCard title={Title}>
       <Formik
         key={schoolData.id || 'new-school'} // Ensures form re-initializes when data loads
         enableReinitialize
@@ -330,14 +331,15 @@ const EditSchool = ({ ...others }) => {
               <Grid item xs={12}>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                   <AnimateButton>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      type="submit"
-                      disabled={isSubmitting}
-                    >
-                      Save School
-                    </Button>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                      <BackButton backUrl="/masters/institutes" />
+                      <SaveButton
+                        title={schoolId ? "Update":"Save"}
+                        isSubmitting={isSubmitting}
+                        // onClick={handleSubmit} // Pass Formik's handleSubmit
+                        disabled={isSubmitting} // Disable if no file selected
+                      />
+                    </Box>
                   </AnimateButton>
                 </Box>
               </Grid>

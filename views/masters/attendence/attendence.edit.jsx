@@ -21,6 +21,7 @@ import api, { userDetails } from '../../../utils/apiService';
 import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 
 // Styled component for items
 const Item = styled(Paper)(({ theme }) => ({
@@ -348,10 +349,13 @@ const AttendenceEdit = () => {
         </SubCard>
       </Grid>
       {/* Submit Button */}
-      <Grid item xs={12}>
-        <Button variant="contained" sx={{ float: 'right', mt: 1, bgcolor: '#673ab7' }} onClick={onHandleClickSubmit}>
-          Submit
-        </Button>
+      <Grid item xs={12}> 
+                  <BackSaveButton 
+                    title={id?  "Update":"Save"}
+                    backUrl="/masters/attendances"
+                    isSubmitting={false} 
+                    onSaveClick={onHandleClickSubmit}
+                    ></BackSaveButton>
       </Grid>
     </Grid>
   </MainCard>

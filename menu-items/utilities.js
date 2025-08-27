@@ -44,7 +44,8 @@ import {
     IconAward,  // for Quiz & Tests 
         // ... other icons
         IconListDetails, 
-        IconDeviceGamepad, 
+        IconDeviceGamepad,     IconFileDescription // New icon for Document Hub
+
 } from '@tabler/icons-react'; // Moved imports here for better organization
 
 // constant
@@ -72,7 +73,8 @@ const icons = {
     IconAward,  // for Quiz & Tests 
         // ... other icons
         IconListDetails, 
-        IconDeviceGamepad, 
+        IconDeviceGamepad,     IconFileDescription // New icon for Document Hub
+
 };
 
 // ==============================|| UTILITIES MENU ITEMS ||============================== //
@@ -325,6 +327,14 @@ const rawUtilities = {
                     breadcrumbs: false
                 }
             ]
+        },
+         {
+            id: 'DOCUMENT_HUB', // New entity for permissions
+            title: 'Document Hub',
+            type: 'item',
+            url: '/masters/document-hub',
+            icon: icons.IconFileDescription,
+            breadcrumbs: false
         },
         // IconBook2, // for LMS
         // IconAward,  // for Quiz & Tests

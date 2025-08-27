@@ -96,13 +96,11 @@ const QuizList = () => {
     );
 
     return (
-        <MainCard
-            title="Quizzes"
-            secondary={<SecondaryAction icon={<AddIcon />} link="/masters/quiz/add" />}
-        >
+       
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
+                title="QUIZZES"
                         fetchUrl={`/api/quizzes/getAll/${accountId}`}
                         isPostRequest={true}
                         columns={columns}
@@ -118,7 +116,7 @@ const QuizList = () => {
                     />
                 </Grid>
             </Grid>
-        </MainCard>
+        // </MainCard>
     );
 };
 

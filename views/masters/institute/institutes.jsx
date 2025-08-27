@@ -29,17 +29,17 @@ const Institutes = () => {
     );
 
     return (
-        <MainCard
-            title="Manage Institutes"
-            secondary={<SecondaryAction icon={<AddIcon />} link="/masters/institute/add" />}
-        >
+       
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
+                    title="INSTITUTES"
                         fetchUrl={`/api/institutes/getAll/${accountId}`}
                         isPostRequest={true}
                         columns={columns}
                         editUrl="/masters/institute/edit"
+                                                addActionUrl="/masters/institute/add"
+
                         deleteUrl="/api/institutes/delete"
                         entityName="INSTITUTE"
                         enableFilters={true}
@@ -49,7 +49,7 @@ const Institutes = () => {
                     />
                 </Grid>
             </Grid>
-        </MainCard>
+        // </MainCard>
     );
 };
 

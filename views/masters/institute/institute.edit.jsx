@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import {
-  Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput
-} from '@mui/material';
+import { Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput } from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import api, { userDetails } from "../../../utils/apiService";
+import api, { userDetails } from '../../../utils/apiService';
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import SaveButton from 'layout/MainLayout/Button/SaveButton';
+import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 
 // ==============================|| EDIT INSTITUTE PAGE ||============================== //
 
@@ -65,22 +65,6 @@ const EditInstitute = ({ ...others }) => {
    * This is an async function that communicates with the API.
    * @param {string} name - The name of the institute to check.
    */
-  const checkNameUniqueness = async (name) => {
-    if (!name) return; // Don't check if the name is empty
-
-    try {
-      const response = await api.post(`api/institutes/checkName`, {
-        name: name,
-        accountId: userDetails.getAccountId(),
-        id: instituteId || 0 // Pass current institute ID to exclude it from the check
-      });
-      setIsNameUnique(response.data.isUnique);
-    } catch (error) {
-      toast.error('Error checking name uniqueness.');
-      console.error('Failed to check institute name uniqueness:', error);
-    }
-  };
-
 
   /**
    * Handles the form submission.
@@ -88,40 +72,46 @@ const EditInstitute = ({ ...others }) => {
    */
   const handleSubmit = async (values, { setSubmitting }) => {
     // Perform a final uniqueness check on submit to be absolutely sure.
-    await checkNameUniqueness(values.name);
+    // await checkNameUniqueness(values.name);
 
     // Re-check the state variable after the await.
     // A slight delay to ensure state has time to update from the async check.
     setTimeout(async () => {
-        if (!isNameUnique) {
-            toast.error("Institute name already exists. Please choose another name.");
-            setSubmitting(false);
-            return;
-        }
+      if (!isNameUnique) {
+        toast.error('Institute name already exists. Please choose another name.');
+        setSubmitting(false);
+        return;
+      }
 
-        const institutePayload = { ...values, id: instituteData?.id, accountId: userDetails?.getAccountId() };
+      const institutePayload = { ...values, id: instituteData?.id, accountId: userDetails?.getAccountId() };
 
-        try {
-            // Use the correct API endpoint for creating or updating
-            const apiCall = api.put(`/api/institutes/save`, institutePayload);
-            const response = await apiCall;
-            
-            setSubmitting(false);
-            toast.success(instituteId ? "Institute updated successfully!" : "Institute created successfully!", {
-                autoClose: 1000,
-                onClose: () => navigate('/masters/institutes')
-            });
-        } catch (error) {
-            toast.error("An error occurred. Please try again.");
-            setSubmitting(false);
-            console.error('Failed to save institute data:', error);
-        }
+      try {
+        // Use the correct API endpoint for creating or updating
+        // const apiCall = api.put(`/api/institutes/save`, institutePayload);
+        // const response ;
+        if (instituteId) {
+              await api.put("api/institutes/update", institutePayload);
+                toast.success("institutes updated successfully!");
+              } else {
+               await api.post("api/institutes/save", institutePayload);
+                toast.success("institutes created successfully!");
+              }
+
+        setSubmitting(false);
+        toast.success(instituteId ? 'Institute updated successfully!' : 'Institute created successfully!', {
+          autoClose: 1000,
+          onClose: () => navigate('/masters/institutes')
+        });
+      } catch (error) {
+        toast.error('An error occurred. Please try again.');
+        setSubmitting(false);
+        console.error('Failed to save institute data:', error);
+      }
     }, 100); // 100ms delay
   };
 
-
   return (
-    <MainCard title={Title} secondary={<BackButton BackUrl='/masters/institutes'/>}>
+    <MainCard title={Title}>
       <Formik
         // This key is important to re-initialize the form when instituteData is loaded
         key={instituteData.id || 'new-institute'}
@@ -133,8 +123,12 @@ const EditInstitute = ({ ...others }) => {
           address: Yup.string().required('Address Line 1 is required'),
           city: Yup.string().required('City is required'),
           state: Yup.string().required('State is required'),
-          zipCode: Yup.string().matches(/^[0-9]{5,6}$/, 'Must be a valid zip code').required('Zip Code is required'),
-          mobileNumber: Yup.string().matches(/^[0-9]{10}$/, 'Mobile number must be 10 digits').required('Mobile Number is required'),
+          zipCode: Yup.string()
+            .matches(/^[0-9]{5,6}$/, 'Must be a valid zip code')
+            .required('Zip Code is required'),
+          mobileNumber: Yup.string()
+            .matches(/^[0-9]{10}$/, 'Mobile number must be 10 digits')
+            .required('Mobile Number is required'),
           email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
           faxNumber: Yup.string().required('Fax Number is required'),
           code: Yup.string().max(255).required('Code is required')
@@ -159,12 +153,8 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="Name"
                   />
-                  {touched.name && errors.name && (
-                    <FormHelperText error>{errors.name}</FormHelperText>
-                  )}
-                  {!isNameUnique && (
-                    <FormHelperText error>This institute name already exists.</FormHelperText>
-                  )}
+                  {touched.name && errors.name && <FormHelperText error>{errors.name}</FormHelperText>}
+                  {!isNameUnique && <FormHelperText error>This institute name already exists.</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -181,9 +171,7 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="Address Line 1"
                   />
-                  {touched.address && errors.address && (
-                    <FormHelperText error>{errors.address}</FormHelperText>
-                  )}
+                  {touched.address && errors.address && <FormHelperText error>{errors.address}</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -216,9 +204,7 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="City"
                   />
-                  {touched.city && errors.city && (
-                    <FormHelperText error>{errors.city}</FormHelperText>
-                  )}
+                  {touched.city && errors.city && <FormHelperText error>{errors.city}</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -235,9 +221,7 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="State"
                   />
-                  {touched.state && errors.state && (
-                    <FormHelperText error>{errors.state}</FormHelperText>
-                  )}
+                  {touched.state && errors.state && <FormHelperText error>{errors.state}</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -254,9 +238,7 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="Zip Code"
                   />
-                  {touched.zipCode && errors.zipCode && (
-                    <FormHelperText error>{errors.zipCode}</FormHelperText>
-                  )}
+                  {touched.zipCode && errors.zipCode && <FormHelperText error>{errors.zipCode}</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -272,9 +254,7 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="Mobile Number"
                   />
-                  {touched.mobileNumber && errors.mobileNumber && (
-                    <FormHelperText error>{errors.mobileNumber}</FormHelperText>
-                  )}
+                  {touched.mobileNumber && errors.mobileNumber && <FormHelperText error>{errors.mobileNumber}</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -290,9 +270,7 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="Email"
                   />
-                  {touched.email && errors.email && (
-                    <FormHelperText error>{errors.email}</FormHelperText>
-                  )}
+                  {touched.email && errors.email && <FormHelperText error>{errors.email}</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -308,9 +286,7 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="Fax Number"
                   />
-                  {touched.faxNumber && errors.faxNumber && (
-                    <FormHelperText error>{errors.faxNumber}</FormHelperText>
-                  )}
+                  {touched.faxNumber && errors.faxNumber && <FormHelperText error>{errors.faxNumber}</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -326,16 +302,15 @@ const EditInstitute = ({ ...others }) => {
                     onChange={handleChange}
                     label="Code"
                   />
-                  {touched.code && errors.code && (
-                    <FormHelperText error>{errors.code}</FormHelperText>
-                  )}
+                  {touched.code && errors.code && <FormHelperText error>{errors.code}</FormHelperText>}
                 </FormControl>
               </Grid>
 
               {/* Action Buttons */}
               <Grid item xs={12}>
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                {/* <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                   <AnimateButton>
+                    {/* <BackButton BackUrl='/masters/institutes'/>
                     <Button
                       variant="contained"
                       color="secondary"
@@ -343,9 +318,24 @@ const EditInstitute = ({ ...others }) => {
                       disabled={isSubmitting}
                     >
                       Save
-                    </Button>
+                    </Button> */}
+                    {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                      <BackButton backUrl="/masters/institutes" />
+                      <SaveButton
+                        title="Save"
+                        isSubmitting={isSubmitting}
+                        // onClick={handleSubmit} // Pass Formik's handleSubmit
+                        disabled={isSubmitting} // Disable if no file selected
+                      />
+                    </Box>
                   </AnimateButton>
-                </Box>
+                </Box> */} 
+                <BackSaveButton
+                  title={instituteId ? "Update":"Save"}
+                  backUrl="/masters/institutes"
+                  isSubmitting={isSubmitting}
+                  // onSaveClick={handleSubmit}
+                  ></BackSaveButton>
               </Grid>
             </Grid>
           </form>

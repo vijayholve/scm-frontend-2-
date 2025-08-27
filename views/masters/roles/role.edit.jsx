@@ -187,13 +187,13 @@ const RoleEdit = () => {
           </TableContainer>
         </Box>
         <Box mt={3} display="flex" gap={2}>
-          <Button type="submit" variant="contained" color="primary">
+        
+        </Box>  <Button type="submit" variant="contained" color="primary">
             {role.id ? "Update" : "Create"}
           </Button>
           <Grid container spacing={gridSpacing}>
             <BackButton BackUrl={"/masters/roles"}/> 
           </Grid>
-        </Box>
       </form>
     </MainCard>
   );

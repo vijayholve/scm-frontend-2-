@@ -128,14 +128,17 @@ const EditUsers = ({ ...others }) => {
       const apiCall = userId ? api.put(`api/users/update`, userData) : api.post(`api/users/save`, userData);
       const response = await apiCall;
       setTeacherData(response.data);
-      setSubmitting(false);
       toast.success(userId ? 'Teacher updated successfully' : 'Teacher created successfully', {
-        autoClose: '500', onClose: () => {
+        autoClose: '100', onClose: () => {
           navigate('/masters/teachers');
         }
       });
+      // setSubmitting(false);
     } catch (error) {
       console.error('Failed to submit teacher data:', error);
+    }
+    finally{
+      setSubmitting(false);
     }
   };
 

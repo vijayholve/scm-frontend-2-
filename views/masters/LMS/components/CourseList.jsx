@@ -22,13 +22,11 @@ const CourseList = () => {
   const navigate = useNavigate();
   
   return (
-    <MainCard
-      title="Courses Management"
-      secondary={<SecondaryAction icon={<AddIcon />} link="/masters/lms/course/add" />}
-    >
+ 
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
+            title="COURSES"
             fetchUrl={`/api/lms/course/getAll/${accountId}`}
             isPostRequest={true}
             columns={columns}
@@ -44,7 +42,7 @@ const CourseList = () => {
           />
         </Grid>
       </Grid>
-    </MainCard>
+    
   );
 };
 

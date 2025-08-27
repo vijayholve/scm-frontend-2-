@@ -13,6 +13,7 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 import api, { userDetails } from "../../../utils/apiService"
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 
 const EditDivision = ({ ...others }) => {
   const theme = useTheme();
@@ -108,6 +109,7 @@ const EditDivision = ({ ...others }) => {
               {/* Submit Button */}
               <Grid item xs={12}>
                 <AnimateButton>
+                  {/* <BackButton BackUrl='/masters/divisions'/>
                   <Button
                     disableElevation
                     disabled={isSubmitting}
@@ -117,9 +119,13 @@ const EditDivision = ({ ...others }) => {
                     color="secondary"
                   >
                     Save
-                  </Button>
+                  </Button> */}
+                  <BackSaveButton 
+                    title={divisionId ? "Update":"Save"}
+                    backUrl="/masters/divisions"
+                    isSubmitting={isSubmitting}
+                    ></BackSaveButton>
                 </AnimateButton>
-                <BackButton BackUrl='/masters/divisions'/>
 
               </Grid>
             </Grid>
