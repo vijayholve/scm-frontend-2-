@@ -137,7 +137,7 @@ const Students = () => {
                         showSchoolFilter={true}
                         showClassFilter={true}
                         showDivisionFilter={true}
-                        customActions={customHeaderActions} // Pass the custom element here
+                        customActionsHeader={customHeaderActions}
                     />
                 </Grid>
             </Grid>

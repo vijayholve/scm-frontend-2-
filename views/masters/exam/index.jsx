@@ -85,7 +85,7 @@ const Exams = () => {
             addActionUrl="/masters/exam/add"
             viewUrl="/masters/exam/view"
             entityName="EXAM"
-            customActions={customActions}
+            //customActions={customActions}
             searchPlaceholder="Search exams by name, type, or year..."
             showSearch={true}
             showRefresh={true}

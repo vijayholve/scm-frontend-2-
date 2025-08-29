@@ -36,10 +36,9 @@ const Institutes = () => {
                     title="INSTITUTES"
                         fetchUrl={`/api/institutes/getAll/${accountId}`}
                         isPostRequest={true}
-                        columns={columns}
+                        columns={columns} 
                         editUrl="/masters/institute/edit"
                                                 addActionUrl="/masters/institute/add"
-
                         deleteUrl="/api/institutes/delete"
                         entityName="INSTITUTE"
                         enableFilters={true}

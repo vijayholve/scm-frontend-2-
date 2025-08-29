@@ -72,8 +72,11 @@ const EditStudent = () => {
         address: '',
         rollNo: '',
         schoolId: '',
+        schoolName: '',
         classId: '',
+        className: '',
         divisionId: '',
+        divisionName: '',
         role: null,
         status: 'active',
     });
@@ -161,8 +164,11 @@ const EditStudent = () => {
                 address: '',
                 rollNo: '',
                 schoolId: '',
+                schoolName: '',
                 classId: '',
+                className: '',
                 divisionId: '',
+                divisionName: '',
                 role: null,
                 status: 'active',
             });
@@ -390,6 +396,7 @@ const EditStudent = () => {
                                                 value={schools.find((school) => school.id === values.schoolId) || null}
                                                 onChange={(event, newValue) => {
                                                     setFieldValue('schoolId', newValue?.id ? newValue?.id : null);
+                                                    setFieldValue('schoolName', newValue?.name ? newValue?.name : null);
                                                 }}
                                                 isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
                                                 renderInput={(params) => <TextField {...params} label="School" />}
@@ -409,7 +416,7 @@ const EditStudent = () => {
                                                 value={classes.find((cls) => String(cls.id) === String(values.classId)) || null} // Ensure type consistency
                                                 onChange={(event, newValue) => {
                                                     setFieldValue('classId', newValue ? String(newValue.id) : ''); // Store as string
-                                                    setFieldValue('divisionId', ''); // Reset division when class changes
+                                                    setFieldValue('className', newValue?.name ? newValue?.name : null);
                                                 }}
                                                 isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
                                                 renderInput={(params) => <TextField {...params} label="Class" />}
@@ -429,6 +436,7 @@ const EditStudent = () => {
                                                 value={divisions.find((div) => String(div.id) === String(values.divisionId)) || null} // Ensure type consistency
                                                 onChange={(event, newValue) => {
                                                     setFieldValue('divisionId', newValue ? String(newValue.id) : ''); // Store as string
+                                                    setFieldValue('divisionName', newValue?.name ? newValue?.name : null);
                                                 }}
                                                 renderInput={(params) => <TextField {...params} label="Division" />}
                                                 disabled={!values.classId} // Disable if no class is selected

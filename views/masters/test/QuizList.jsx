@@ -108,7 +108,7 @@ const QuizList = () => {
                         editUrl="/masters/quiz/edit"
                         deleteUrl="/api/quiz/delete"
                         entityName="QUIZ"
-                        customActions={customActions}
+                        //customActions={customActions}
                         enableFilters={true}
                         showSchoolFilter={true}
                         showClassFilter={true}

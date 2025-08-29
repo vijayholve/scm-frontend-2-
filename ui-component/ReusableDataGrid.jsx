@@ -26,7 +26,8 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { DataGrid } from '@mui/x-data-grid';
 import { toast } from 'react-hot-toast';
-import { Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon, MoreVert as MoreVertIcon ,  PersonAdd as PersonAddIcon
+ } from '@mui/icons-material';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -66,12 +67,13 @@ const ReusableDataGrid = ({
   editUrl,
   deleteUrl,
   addActionUrl,
+  EnrollActionUrl,
   viewUrl,
   filters = {},
   data: clientSideData = [],
   isPostRequest = true,
   entityName,
-  customActions = [],
+  customActionsHeader = [],
   searchPlaceholder = 'Search...',
   showSearch = true,
   showRefresh = true,
@@ -210,7 +212,9 @@ const handleSearchChange = (event) => {
   const handleOnClickView = (id) => {
     navigate(`${viewUrl}/${id}`);
   };
-
+  const handleOnClickEnrollActionUrl = (id) => {
+    navigate(`${EnrollActionUrl}/${id}`);
+  };
   const handleSearch = (event) => {
     const newSearchText  = event.target.value;
     setSearchText (newSearchText );
@@ -229,7 +233,7 @@ const handleSearchChange = (event) => {
     setSelectedRow(params.row);
   };
 
-  const hasActions = editUrl || deleteUrl || viewUrl || customActions.length > 0;
+  const hasActions = editUrl || deleteUrl || viewUrl || EnrollActionUrl || customActionsHeader.length > 0;
 
   const actionsColumn = hasActions
     ? {
@@ -239,12 +243,12 @@ const handleSearchChange = (event) => {
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-          const hasCustomActions = customActions.length > 0;
+          const hasCustomActionsHeader = customActionsHeader.length > 0;
 
-          if (hasCustomActions) {
+          if (hasCustomActionsHeader) {
             return (
               <ActionWrapper>
-                {customActions.map((action, index) => {
+                {customActionsHeader.map((action, index) => {
                   if (action.permission && !hasPermission(permissions, entityName, action.permission)) {
                     return null;
                   }
@@ -270,10 +274,11 @@ const handleSearchChange = (event) => {
                   );
                 })}
 
-                {(editUrl || deleteUrl || viewUrl) && (
+                {(editUrl || deleteUrl || viewUrl || EnrollActionUrl) && (
                   <IconButton size="small" onClick={(event) => setAnchorEl(event.currentTarget)}>
                     <MoreVertIcon />
                   </IconButton>
+
                 )}
               </ActionWrapper>
             );
@@ -297,6 +302,24 @@ const handleSearchChange = (event) => {
                     <ViewIcon />
                   </IconButton>
                 </Tooltip>
+              )}
+              {EnrollActionUrl && hasPermission(permissions, entityName, 'view') && (
+                <Tooltip title="Enroll">
+                  <IconButton
+                    size="small"
+                    color="secondary"
+                    onClick={() => handleOnClickEnrollActionUrl(params.row.id)}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                        transform: 'scale(1.1)'
+                      }
+                    }}
+
+                  >
+                    <PersonAddIcon />
+                  </IconButton>
+                </Tooltip>  
               )}
               {editUrl && hasPermission(permissions, entityName, 'edit') && (
                 <Tooltip title="Edit">
@@ -343,8 +366,8 @@ const handleSearchChange = (event) => {
         <Grid container spacing={2} alignItems="" padding={2} justifyContent="flex-end">
 
           
-          {customActions && (
-              <Grid item>{customActions}</Grid>
+          {customActionsHeader && (
+              <Grid item>{customActionsHeader}</Grid>
           )}
         </Grid>
     );

@@ -6,7 +6,8 @@ import MainCard from 'ui-component/cards/MainCard';
 import { toast } from 'react-hot-toast';
 import { userDetails } from 'utils/apiService';
 import api from 'utils/apiService';
-
+import QuizResult from "../test/QuizResult";
+import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 
 // --- New Dummy Data for Questions and Answers ---
 const dummyQuestions = {
@@ -30,15 +31,56 @@ const dummyStudentAnswers = {
     }
 };
 
+const QuizResultTab = ({ quizId, studentId }) => {
+    return (
+        <Box sx={{ p: 2 }}>
+            <QuizResult quizId={quizId} studentId={studentId} />
+        </Box>
+    );
+};
+
 
 // Component for the detailed tabbed view
 const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, onBack }) => {
     const [tabValue, setTabValue] = useState(0);
-    console.log("Marks value:", marks);
+    const [paperFile, setPaperFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     // Dynamically get the question and answer from dummy data
     const question = dummyQuestions[subject.id] || "No question found for this subject.";
     const studentAnswer = dummyStudentAnswers[student.studentId]?.[subject.id] || "No answer submitted.";
+
+    const handleFileChange = (event) => {
+      setPaperFile(event.target.files[0]);
+    };
+    
+    const handlePaperUpload = async () => {
+      if (!paperFile) {
+        toast.error("Please select a file to upload.");
+        return;
+      }
+    
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', paperFile);
+      formData.append('examId', subject.examId);
+      formData.append('subjectId', subject.subjectId);
+    
+      try {
+        await api.post(`/api/exams/uploadPaper`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        toast.success("Exam paper uploaded successfully!");
+        setPaperFile(null);
+      } catch (error) {
+        console.error("Failed to upload exam paper:", error);
+        toast.error("Failed to upload exam paper.");
+      } finally {
+        setUploading(false);
+      }
+    };
 
 
     return (
@@ -48,6 +90,8 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
                 <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
                     <Tab label="Enter Marks" />
                     <Tab label="View Paper & Answers" />
+                    <Tab label="View Quiz Result"/>
+                    <Tab label="Upload Paper" />
                 </Tabs>
             </Box>
             {tabValue === 0 && (
@@ -82,6 +126,36 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
                     </Box>
                     <Button variant="outlined" onClick={onBack} sx={{ mt: 3 }}>Back to List</Button>
                 </Box>
+            )}
+            {tabValue === 2 && (
+                <QuizResultTab quizId={subject.quizId} studentId={student.studentId} />
+            )}
+            {tabValue === 3 && (
+              <Box sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>Upload Exam Paper</Typography>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} sm={8}>
+                    <TextField
+                      fullWidth
+                      type="file"
+                      onChange={handleFileChange}
+                      InputLabelProps={{ shrink: true }}
+                      label="Select a file to upload"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handlePaperUpload}
+                      disabled={!paperFile || uploading}
+                      startIcon={<CloudUploadIcon />}
+                    >
+                      {uploading ? 'Uploading...' : 'Upload Paper'}
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
             )}
         </Paper>
     );
@@ -137,7 +211,7 @@ const TeacherExamView = () => {
 
     useEffect(() => {
         const fetchExams = async () => {
-            try {   
+            try {  
                 const examsRes = await api.post(`/api/exams/getAllBy/${userDetails.getAccountId()}`, {
                     page: 0,
                     size: 1000,
@@ -200,11 +274,9 @@ const TeacherExamView = () => {
 
     const handleMarksChange = (studentId, subjectId, value) => {
         setMarks(prev => ({ ...prev, [`${studentId}-${subjectId}`]: value }));
-        console.log("Marks changed for student:", studentId, subjectId, value, marks);
     };
 
     const handleSaveMarks = async (studentId, marks) => {
-        console.log("Saving marks for student:", studentId, marks);
         const marksRes = await api.put(`/api/exams/updateExamStudentMarks/${selectedExamId}`, {
             studentId: studentId,
             marks: marks,
@@ -270,7 +342,6 @@ const TeacherExamView = () => {
     ];
 
     if (currentView) {
-        console.log("Current view:", currentView);
         return (
             <MainCard title="Grade Exam">
                 <StudentGradingView

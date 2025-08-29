@@ -227,7 +227,7 @@ const CourseView = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4 }}>
+    <Box sx={{ maxWidth: 1200}}>
       {/* Header */}
       <Paper
         sx={{

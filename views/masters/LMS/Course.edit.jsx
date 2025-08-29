@@ -8,22 +8,67 @@ import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { MenuItem } from "@mui/material";
-import { useTheme } from "@mui/material/styles";// or however user/accountId is accessed
+import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
-import api from "../../../utils/apiService";
+import api, { userDetails } from "../../../utils/apiService";
 import { useSelector } from "react-redux";
 import { use } from "react";
 import { Autocomplete } from "@mui/material";
 import { gridSpacing } from "store/constant";
+import { toast } from 'react-hot-toast';
 
+// --- DUMMY DATA for Documents and Tests (replace with API calls in production) ---
+window.documentList = [
+  { id: 1, name: "Introduction to Biology.pdf" },
+  { id: 2, name: "Physics Class Notes.docx" },
+  { id: 3, name: "Chemistry Lab Manual.pdf" },
+];
 
 // Modal for adding/editing a lesson
-const LessonModal = ({ open, onClose, onSave, initialData }) => {
-  const [lesson, setLesson] = useState(initialData || { title: "", content: "" });
+const LessonModal = ({ open, onClose, onSave, initialData, schoolId, classId, divisionId }) => {
+  const [lesson, setLesson] = useState(initialData || { title: "", content: "", type: "text" });
+  const [quizzes, setQuizzes] = useState([]);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(false);
+  const user = useSelector(state => state.user);
 
   useEffect(() => {
-    setLesson(initialData || { title: "", content: "" });
+    setLesson(initialData || { title: "", content: "", type: "text" });
   }, [initialData, open]);
+
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      if (schoolId && classId && divisionId && user?.user?.accountId) {
+        setLoadingQuizzes(true);
+        try {
+          const response = await api.post(`/api/quizzes/getAllBy/${user.user.accountId}`, {
+            page: 0,
+            size: 1000,
+            sortBy: 'id',
+            sortDir: 'asc',
+            schoolId: schoolId,
+            classId: classId,
+            divisionId: divisionId
+          });
+          const fetchedQuizzes = response.data.content || [];
+          setQuizzes(fetchedQuizzes);
+          if (fetchedQuizzes.length > 0) {
+            toast.success("Quizzes loaded successfully!");
+          } else {
+            toast.success("No quizzes found for the selected criteria.");
+          }
+        } catch (error) {
+          console.error("Failed to fetch quizzes:", error);
+          toast.error("Failed to load quizzes for selected criteria.");
+          setQuizzes([]);
+        } finally {
+          setLoadingQuizzes(false);
+        }
+      } else {
+        setQuizzes([]);
+      }
+    };
+    fetchQuizzes();
+  }, [schoolId, classId, divisionId, user]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -59,7 +104,7 @@ const LessonModal = ({ open, onClose, onSave, initialData }) => {
           } else if (type === "video") {
             resetFields = { link: "", documentId: null, testId: null };
           } else if (type === "text") {
-            resetFields = {  link: "", documentId: null, testId: null };
+            resetFields = { link: "", documentId: null, testId: null };
           } else if (type === "test") {
             resetFields = { testId: null, documentId: null, link: "" };
           }
@@ -67,7 +112,7 @@ const LessonModal = ({ open, onClose, onSave, initialData }) => {
         }}
         fullWidth
         margin="normal"
-      >
+      > 
         <MenuItem value="">Select Type</MenuItem>
         <MenuItem value="document">Document</MenuItem>
         <MenuItem value="video">Video</MenuItem>
@@ -109,15 +154,22 @@ const LessonModal = ({ open, onClose, onSave, initialData }) => {
       {/* For test, show test selection dropdown */}
       {lesson.type === "test" && (
         <Autocomplete
-          options={window.testList || []}
-          getOptionLabel={option => option.name || ""}
+          options={quizzes || []}
+          getOptionLabel={(option) => option.title || ""}
           value={
-            (window.testList || []).find(test => test.id === lesson.testId) || null
+            (quizzes || []).find((test) => test.id === lesson.testId) || null
           }
-          onChange={(event, value) => setLesson({ ...lesson, testId: value ? value.id : null })}
-          renderInput={params => (
-            <TextField {...params} label="Select Test" margin="normal" fullWidth />
+          onChange={(event, value) => setLesson({ ...lesson, testId: value?.id ?? null })}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={loadingQuizzes ? "Loading Quizzes..." : "Select Test"}
+              margin="normal"
+              fullWidth
+            />
           )}
+          loading={loadingQuizzes}
+          disabled={loadingQuizzes || !schoolId || !classId || !divisionId}
         />
       )}
       </DialogContent>
@@ -137,7 +189,7 @@ const LessonModal = ({ open, onClose, onSave, initialData }) => {
 };
 
 // Modal for adding/editing a module (with lessons)
-const ModuleModal = ({ open, onClose, onSave, initialData }) => {
+const ModuleModal = ({ open, onClose, onSave, initialData, schoolId, classId, divisionId }) => {
   const [module, setModule] = useState(
     initialData || { title: "", description: "", lessons: [] }
   );
@@ -244,6 +296,9 @@ const ModuleModal = ({ open, onClose, onSave, initialData }) => {
         onClose={() => { setLessonModalOpen(false); setEditingLessonIdx(null); }}
         onSave={handleSaveLesson}
         initialData={editingLessonIdx !== null ? module.lessons[editingLessonIdx] : null}
+        schoolId={schoolId}
+        classId={classId}
+        divisionId={divisionId}
       />
     </>
   );
@@ -705,7 +760,7 @@ const CourseEdit = () => {
         open={moduleModalOpen}
         onClose={() => { setModuleModalOpen(false); setEditingModuleIdx(null); }}
         onSave={handleSaveModule}
-        initialData={editingModuleIdx !== null ? course.modules[editingModuleIdx] : null}
+        initialData={editingModuleIdx !== null ? module.lessons[editingLessonIdx] : null}
       />
     </Box>
   );

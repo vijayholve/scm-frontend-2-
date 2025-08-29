@@ -32,75 +32,30 @@ const DocumentUpload = ({ ...others }) => {
     const [schools, setSchools] = useState([]);
     const [classes, setClasses] = useState([]);
     const [divisions, setDivisions] = useState([]);
-    const [selectedSchool, setSelectedSchool] = useState('');
-    const [selectedClass, setSelectedClass] = useState('');
-    // selectedDivision is not directly used for fetching, but kept for consistency if needed later
-    const [selectedDivision, setSelectedDivision] = useState(''); 
+    
 
+    // Load all schools, classes, and divisions for the given accountId as soon as the page loads
     useEffect(() => {
-        const fetchSchools = async () => {
+        const fetchAllData = async () => {
             try {
-                const response = await api.post(`/api/schoolBranches/getAll/${accountId}`, {
-                    "page": 0,
-                    "size": 110,
-                    "sortBy": "id",
-                    "sortDir": "asc",
-                    "search": ""
-                });
-                setSchools(response.data.content || []);
+                // Fetch schools
+                const schoolsRes = await api.get(`/api/schoolBranches/getAllBy/${accountId}`);
+                setSchools(schoolsRes.data || []);
+
+                // Fetch classes
+                const classesRes = await api.get(`/api/schoolClasses/getAllBy/${accountId}`);
+                setClasses(classesRes.data || []);
+
+                // Fetch divisions
+                const divisionsRes = await api.get(`/api/divisions/getAllBy/${accountId}`);
+                setDivisions(divisionsRes.data || []);
             } catch (error) {
-                console.error('Failed to fetch schools:', error);
-                toast.error('Failed to load school data.');
+                console.error('Failed to fetch school/class/division data:', error);
+                toast.error('Failed to load school/class/division data.');
             }
         };
-        fetchSchools();
+        fetchAllData();
     }, [accountId]);
-
-    useEffect(() => {
-        const fetchClasses = async () => {
-            if (selectedSchool) {
-                try {
-                    const response = await api.post(`/api/schoolClasses/getAll/${accountId}`, {
-                        "page": 0,
-                        "size": 110,
-                        "sortBy": "id",
-                        "sortDir": "asc",
-                        "search": ""
-                    });
-                    setClasses(response.data.content || []);
-                } catch (error) {
-                    console.error('Failed to fetch classes:', error);
-                    setClasses([]);
-                }
-            } else {
-                setClasses([]);
-            }
-        };
-        fetchClasses();
-    }, [accountId, selectedSchool]);
-
-    useEffect(() => {
-        const fetchDivisions = async () => {
-            if (selectedClass) {
-                try {
-                    const response = await api.post(`/api/divisions/getAll/${accountId}`, {
-                        "page": 0,
-                        "size": 110,
-                        "sortBy": "id",
-                        "sortDir": "asc",
-                        "search": ""
-                    });
-                    setDivisions(response.data.content || []);
-                } catch (error) {
-                    console.error('Failed to fetch divisions:', error);
-                    setDivisions([]);
-                }
-            } else {
-                setDivisions([]);
-            }
-        };
-        fetchDivisions();
-    }, [accountId, selectedClass]);
 
     const handleSubmit = async (values, { setSubmitting, resetForm }) => {
         setSubmitting(true);
@@ -138,6 +93,9 @@ const DocumentUpload = ({ ...others }) => {
                     schoolId: '',
                     classId: '',
                     divisionId: '',
+                    schoolName: '',
+                    className: '',
+                    divisionName: '',
                 }}
                 validationSchema={Yup.object().shape({
                     file: Yup.mixed().required('A file is required'),
@@ -166,7 +124,7 @@ const DocumentUpload = ({ ...others }) => {
                                         value={values.schoolId}
                                         onChange={(e) => {
                                             handleChange(e);
-                                            setSelectedSchool(e.target.value);
+                                            setFieldValue('schoolName', e.target.value);
                                             setFieldValue('classId', '');
                                             setFieldValue('divisionId', '');
                                         }}
@@ -219,13 +177,13 @@ const DocumentUpload = ({ ...others }) => {
                                         value={values.classId}
                                         onChange={(e) => {
                                             handleChange(e);
-                                            setSelectedClass(e.target.value);
+                                            setFieldValue('className', e.target.value);
                                             setFieldValue('divisionId', '');
                                         }}
                                         onBlur={handleBlur}
                                         name="classId"
                                         label="Class"
-                                        disabled={!values.schoolId || values.userType !== 'STUDENT'} // Only enable if school selected AND userType is STUDENT
+                                       // disabled={!values.schoolId || values.userType !== 'STUDENT'} // Only enable if school selected AND userType is STUDENT
                                     >
                                         <MenuItem value="">
                                             <em>Select a Class</em>
@@ -244,11 +202,14 @@ const DocumentUpload = ({ ...others }) => {
                                     <InputLabel>Division</InputLabel>
                                     <Select
                                         value={values.divisionId}
-                                        onChange={handleChange}
+                                        onChange={(e) => {
+                                            handleChange(e);
+                                            setFieldValue('divisionName', e.target.value);
+                                        }}
                                         onBlur={handleBlur}
                                         name="divisionId"
                                         label="Division"
-                                        disabled={!values.classId || values.userType !== 'STUDENT'} // Only enable if class selected AND userType is STUDENT
+                                       // disabled={!values.classId || values.userType !== 'STUDENT'} // Only enable if class selected AND userType is STUDENT
                                     >
                                         <MenuItem value="">
                                             <em>Select a Division</em>
