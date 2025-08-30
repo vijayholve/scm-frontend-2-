@@ -2,488 +2,785 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import {
-    Autocomplete,
-    Box,
-    Button,
-    FormControl,
-    FormHelperText,
-    Grid,
-    InputLabel,
-    OutlinedInput,
-    TextField,
-    Tabs,
-    Tab,
-    Typography,
-    AppBar
+  Autocomplete,
+  Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput,
+  TextField, Tabs, Tab, Typography, AppBar, Stack, Card, CardContent, IconButton, Modal
 } from '@mui/material';
-import { Formik } from 'formik';
+import { Formik, FieldArray } from 'formik';
 import * as Yup from 'yup';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-toastify';
+import { CloudUpload as UploadIcon, Close as CloseIcon, Download as DownloadIcon } from '@mui/icons-material';
 
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import api, { userDetails } from '../../../utils/apiService';
+import api, { userDetails } from 'utils/apiService';
 import { gridSpacing } from 'store/constant';
-import NavingateToOtherPage from 'ui-component/button/NavingateToOtherPage';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import SaveButton from 'layout/MainLayout/Button/SaveButton';
 import { useSelector } from 'react-redux';
+import ReusableDataGrid from 'ui-component/ReusableDataGrid';
+
 
 // Helper component for Tab Panel content
 function TabPanel(props) {
-    const { children, value, index, ...other } = props;
+  const { children, value, index, ...other } = props;
 
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`simple-tabpanel-${index}`}
-            aria-labelledby={`simple-tab-${index}`}
-            {...other}
-        >
-            {value === index && (
-                <Box sx={{ p: 3 }}>
-                    <Typography component="div">{children}</Typography>
-                </Box>
-            )}
-        </div>
-    );
+  return (
+    <div role="tabpanel" hidden={value !== index} id={`simple-tabpanel-${index}`} aria-labelledby={`simple-tab-${index}`} {...other}>
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography component="div">{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
 }
 
 // Function to generate accessibility props for tabs
 function a11yProps(index) {
-    return {
-        id: `simple-tab-${index}`,
-        'aria-controls': `simple-tabpanel-${index}`,
-    };
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`
+  };
 }
 
-const EditStudent = () => {
-    const theme = useTheme();
-    const navigate = useNavigate();
-    const { id: userId } = useParams();
+// Dummy Data for demonstration
+const dummyDocuments = [
+    { id: 1, fileName: 'Class 10 Syllabus.pdf', schoolName: 'Greenwood High', className: 'Class 10', divisionName: 'A', userType: 'TEACHER', uploadedBy: 'Admin', createdDate: '2024-08-20T10:00:00Z', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', teacherId: 1, studentId: null },
+    { id: 2, fileName: 'Teacher Handbook.docx', schoolName: 'Greenwood High', className: 'N/A', divisionName: 'N/A', userType: 'TEACHER', uploadedBy: 'Principal', createdDate: '2024-08-21T11:30:00Z', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', teacherId: 1, studentId: null },
+    { id: 3, fileName: 'Exam Guidelines.xlsx', schoolName: 'Oakwood Academy', className: 'Class 9', divisionName: 'B', userType: 'TEACHER', uploadedBy: 'Admin', createdDate: '2024-08-19T14:45:00Z', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', teacherId: 2, studentId: null },
+    { id: 4, fileName: 'Lesson Plan Template.pdf', schoolName: 'Greenwood High', className: 'N/A', divisionName: 'N/A', userType: 'TEACHER', uploadedBy: 'Admin', createdDate: '2024-08-18T09:15:00Z', fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', teacherId: 3, studentId: null },
+];
 
-    const [studentData, setStudentData] = useState({
-        userName: '',
-        password: '',
-        firstName: '',
-        lastName: '',
-        mobile: '',
-        email: '',
-        address: '',
-        rollNo: '',
-        schoolId: '',
-        schoolName: '',
-        classId: '',
-        className: '',
-        divisionId: '',
-        divisionName: '',
-        role: null,
-        status: 'active',
-    });
+const documentColumns = [
+    { field: 'id', headerName: 'Doc ID', width: 90 },
+    { field: 'fileName', headerName: 'File Name', flex: 1 },
+    { field: 'schoolName', headerName: 'School', width: 150 },
+    { field: 'className', headerName: 'Class', width: 120 },
+    { field: 'divisionName', headerName: 'Division', width: 120 },
+    { field: 'userType', headerName: 'Visible To', width: 120 },
+    { field: 'uploadedBy', headerName: 'Uploaded By', width: 150 },
+    { field: 'createdDate', headerName: 'Upload Date', width: 150, valueFormatter: (params) => new Date(params.value).toLocaleDateString() },
+];
 
-    const [classes, setClasses] = useState([]);
-    const [divisions, setDivisions] = useState([]);
-    const [roles, setRoles] = useState([]);
-    const [schools, setSchools] = useState([]);
-    const user = useSelector(state => state.user);
-    const [value, setValue] = useState(0);
 
-    const handleTabChange = (event, newValue) => {
-        setValue(newValue);
-    };
+const EditUsers = ({ ...others }) => {
+  const [roles, setRoles] = useState([]);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(100);
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const { id: userId } = useParams();
+  const [teacherData, setTeacherData] = useState({
+    userName: '',
+    password: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    mobile: '',
+    email: '',
+    address: '',
+    role: null,
+    gender: null,
+    schoolId: null,
+    type: null,
+    educations: []
+  });
 
-    // Generic function to fetch dropdown data
-    const fetchData = useCallback(async (endpoint, setter, typeFilter = '') => {
-        const accountId = userDetails.getAccountId();
-        if (!accountId) {
-            console.warn("Account ID not available. Skipping data fetch for:", endpoint);
-            return;
+  const Title = userId ? 'Edit Teacher' : 'Add Teacher';
+
+  const [schools, setSchools] = useState([]);
+  const user = useSelector((state) => state.user);
+  const [tabValue, setTabValue] = useState(0);
+  const [openUploadModal, setOpenUploadModal] = useState(false);
+  
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  useEffect(() => {
+    fetchData(`api/schoolBranches/getAll/${user?.user?.accountId}`, setSchools);
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchTeacherData(userId);
+    }
+  }, [userId]);
+
+  const fetchData = async (endpoint, setter) => {
+    try {
+      const pagination = {
+        page: page,
+        size: pageSize,
+        sortBy: "id",
+        sortDir: "asc",
+        search: ""
+      }
+      const response = await api.post(endpoint, pagination);
+      setter(response.data.content || []);
+    }
+    catch (error) {
+      console.error(`Failed to fetch ${endpoint}:`, error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(`api/roles/getAll/${userDetails.getAccountId()}`, setRoles);
+  }, []);
+
+  const fetchTeacherData = async (id) => {
+    try {
+      const response = await api.get(`api/users/getById?id=${id}`);
+      const data = response.data || {};
+      const normalizedEducations = Array.isArray(data.educations)
+        ? data.educations
+        : (data.educations ? [data.educations] : []);
+      setTeacherData({ ...data, educations: normalizedEducations });
+    } catch (error) {
+      console.error('Failed to fetch teacher data:', error);
+    }
+  };
+
+  const handleSubmit = async (values, { setSubmitting }) => {
+    const userData = { ...values, id: teacherData.id, accountId: userDetails.getAccountId() };
+    try {
+      const apiCall = userId ? api.put(`api/users/update`, userData) : api.post(`api/users/save`, userData);
+      const response = await apiCall;
+      setTeacherData(response.data);
+      toast.success(userId ? 'Teacher updated successfully' : 'Teacher created successfully', {
+        autoClose: '100', onClose: () => {
+          navigate('/masters/teachers');
         }
-        let url = `${endpoint}/${accountId}`;
-        if (typeFilter) {
-            url += `?type=${typeFilter}`;
-        }
+      });
+    } catch (error) {
+      console.error('Failed to submit teacher data:', error);
+    }
+    finally{
+      setSubmitting(false);
+    }
+  };
 
-        try {
-            const response = await api.post(url, {
-                page: 0,
-                size: 1000,
-                sortBy: "id",
-                sortDir: "asc",
-                search: ""
-            });
-            setter(response.data.content || []);
-            console.log(`Fetched data from ${endpoint}:`, response.data.content); // Log fetched data
-        } catch (error) {
-            console.error(`Failed to fetch ${endpoint}:`, error);
-            toast.error(`Failed to load data from ${endpoint.split('/')[1]}.`);
-        }
-    }, []);
+  const higherQualificationOptions = ['10th','12th', 'Graduation', 'PhD', 'Master'];
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => (1900 + i).toString());
 
-    // Fetch specific student data for editing
-    const fetchStudentData = useCallback(async (id) => {
-        try {
-            const response = await api.get(`api/users/getById?id=${id}`);
-            const fetchedData = {
-                ...response.data,
-                // Ensure classId and divisionId are treated consistently (e.g., as strings)
-                classId: response.data.classId ? String(response.data.classId) : '',
-                divisionId: response.data.divisionId ? String(response.data.divisionId) : '',
-                rollNo: response.data.rollNo ? String(response.data.rollNo) : '',
-                schoolId: response.data.schoolId ? response.data.schoolId : '',
-                role: response.data.role ? (roles.find(r => String(r.id) === String(response.data.role.id)) || { id: response.data.role.id, name: response.data.role.name }) : null
-            };
-            setStudentData(fetchedData);
-            console.log("Fetched Student Data:", fetchedData); // Log fetched student data
-        } catch (error) {
-            console.error('Failed to fetch student data:', error);
-            toast.error("Failed to load student data.");
-        }
-    }, [roles]);
+  const DocumentsSection = ({ userId }) => {
+    const [documents, setDocuments] = useState([]);
+    const [openUploadModal, setOpenUploadModal] = useState(false);
 
-    // Fetch initial data (classes, divisions, roles) on component mount
     useEffect(() => {
-        fetchData('api/schoolClasses/getAll', setClasses);
-        fetchData('api/divisions/getAll', setDivisions);
-        fetchData('api/roles/getAll', setRoles);
-        fetchData(`api/schoolBranches/getAll`, setSchools);
-    }, [fetchData]);
+      const userDocuments = dummyDocuments.filter(doc => doc.teacherId === userId);
+      setDocuments(userDocuments);
+    }, [userId]);
 
-    // Fetch student data if userId is present (for edit mode)
-    useEffect(() => {
-        if (userId && roles.length > 0) { // Ensure roles are loaded before fetching student data to map role object
-            fetchStudentData(userId);
-        } else if (!userId) {
-            setStudentData({
-                userName: '',
-                password: '',
-                firstName: '',
-                lastName: '',
-                mobile: '',
-                email: '',
-                address: '',
-                rollNo: '',
-                schoolId: '',
-                schoolName: '',
-                classId: '',
-                className: '',
-                divisionId: '',
-                divisionName: '',
-                role: null,
-                status: 'active',
-            });
-        }
-    }, [userId, roles, fetchStudentData]);
-
-    const handleSubmit = async (values, { setSubmitting }) => {
-        const userData = {
-            ...values,
-            id: userId || null,
-            type: 'STUDENT',
-            accountId: userDetails.getAccountId(),
-            status: 'active',
-            // Normalize role payload to expected shape
-            role: values.role ? { id: values.role.id, name: values.role.name } : null
-        };
-
-        try {
-            const apiCall = userId ? api.put(`api/users/update`, userData) : api.post(`api/users/save`, userData);
-            const response = await apiCall;
-
-            if (!response || (response.data?.status !== 200 && response.data?.status !== 201)) {
-                const backendMessage = response?.data?.message || 'Unexpected server response.';
-                toast.error(backendMessage);
-                return;
+    const docActions = [
+        {
+            icon: <DownloadIcon />,
+            label: 'Download',
+            tooltip: 'Download Document',
+            color: 'primary',
+            onClick: (row) => {
+                window.open(row.fileUrl, '_blank');
             }
-
-            toast.success(`Student ${userId ? 'updated' : 'added'} successfully`, {
-                autoClose: 200,
-                onClose: () => {
-                    navigate('/masters/students');
-                }
-            });
-        } catch (error) {
-            const backendMessage = error?.response?.data?.message || error?.message || `Failed to ${userId ? 'update' : 'add'} student.`;
-            console.error('Failed to save student data:', error);
-            toast.error(backendMessage);
-        } finally {
-            setSubmitting(false);
         }
-    };
-
-    const Title = userId ? 'Edit Student' : 'Add Student';
+    ];
 
     return (
-        <MainCard title={Title}>
-            <Toaster position="top-right" reverseOrder={false} />
-            <Box sx={{ width: '100%' }}>
-                <AppBar position="static" color="default" elevation={0}>
-                    <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1 }}>
-                        <Tabs value={value} onChange={handleTabChange} aria-label="student form tabs">
-                            <Tab label="Student Details" {...a11yProps(0)} />
-                        </Tabs>
-                        <NavingateToOtherPage title="Back" PageUrl="/masters/students" />
+        <MainCard
+            title="Uploaded Documents"
+            secondary={
+                <Button variant="contained" startIcon={<UploadIcon />} onClick={() => setOpenUploadModal(true)}>
+                    Upload Document
+                </Button>
+            }
+        >
+            <ReusableDataGrid
+                title="Uploaded Documents"
+                data={documents}
+                fetchUrl={null}
+                isPostRequest={false}
+                columns={documentColumns}
+                entityName="DOCUMENT_HUB"
+                customActions={docActions}
+                showSearch={false}
+                showRefresh={false}
+                showFilters={false}
+                height={300}
+            />
+            <Modal
+                open={openUploadModal}
+                onClose={() => setOpenUploadModal(false)}
+            >
+                <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <IconButton onClick={() => setOpenUploadModal(false)}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
-                </AppBar>
+                    <DocumentUploadForm onClose={() => setOpenUploadModal(false)} onSuccess={() => setOpenUploadModal(false)} userId={userId} />
+                </Box>
+            </Modal>
+        </MainCard>
+    );
+  };
 
-                <TabPanel value={value} index={0}>
-                    <Formik
-                        enableReinitialize
-                        initialValues={studentData}
-                        validateOnMount
-                        validationSchema={Yup.object().shape({
-                            email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-                            password: userId
-                                ? Yup.string().max(255).notRequired()
-                                : Yup.string().max(255).required('Password is required'),
-                            userName: Yup.string().max(255).required('User Name is required'),
-                            firstName: Yup.string().max(255).required('First Name is required'),
-                            lastName: Yup.string().max(255).required('Last Name is required'),
-                            mobile: Yup.string().matches(/^[0-9]+$/, "Mobile number must be digits only").min(10, "Mobile number must be at least 10 digits").max(15, "Mobile number cannot exceed 15 digits").required('Mobile number is required'),
-                            rollNo: Yup.string().required('Roll No is required'),
-                            classId: Yup.string().required('Class is required'),
-                            divisionId: Yup.string().required('Division is required'),
-                            role: Yup.object().nullable().required('Role is required'),
-                        })}
-                        onSubmit={handleSubmit}
+  const DocumentUploadForm = ({ onClose, onSuccess, userId }) => {
+    const [file, setFile] = useState(null);
+    const [documentName, setDocumentName] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!file || !documentName) {
+            toast.error('Please select a file and provide a document name.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('documentName', documentName);
+
+        try {
+            // This is a placeholder. You would replace this with your actual API call.
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            toast.success('Document uploaded successfully!');
+            onSuccess();
+        } catch (error) {
+            console.error('Failed to upload document:', error);
+            toast.error('Failed to upload document.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Card>
+            <CardContent>
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            label="Document Name"
+                            value={documentName}
+                            onChange={(e) => setDocumentName(e.target.value)}
+                            required
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <input
+                            type="file"
+                            onChange={(e) => setFile(e.target.files[0])}
+                            style={{ display: 'none' }}
+                            id="file-upload-input"
+                        />
+                        <label htmlFor="file-upload-input">
+                            <Button variant="contained" component="span" startIcon={<UploadIcon />}>
+                                {file ? file.name : 'Select File'}
+                            </Button>
+                        </label>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || !file || !documentName}
+                        >
+                            Upload
+                        </Button>
+                        <Button onClick={onClose} sx={{ ml: 2 }}>
+                            Cancel
+                        </Button>
+                    </Grid>
+                </Grid>
+            </CardContent>
+        </Card>
+    );
+  };
+
+
+  return (
+    <MainCard title={Title}>
+      <Box sx={{ width: '100%', mb: 2 }}>
+        <AppBar position="static" color="default" elevation={0}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="teacher form tabs"
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab label="Basic Details" {...a11yProps(0)} />
+            <Tab label="Education" {...a11yProps(1)} />
+            {userId && <Tab label="Documents" {...a11yProps(2)} />}
+          </Tabs>
+        </AppBar>
+      </Box>
+
+      <Formik
+        enableReinitialize
+        initialValues={teacherData}
+        validationSchema={Yup.object().shape({
+          email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
+          password: Yup.string().max(255).required('Password is required'),
+          educations: Yup.array().of(
+            Yup.object().shape({
+              higherQualification: Yup.string().required('Higher Qualification is required'),
+              institutionName: Yup.string().required('School/College Name is required'),
+              boardOrUniversity: Yup.string().required('Board/University Name is required'),
+              passOutYear: Yup.number()
+                .typeError('Pass Out Year is required')
+                .required('Pass Out Year is required')
+                .min(1900)
+                .max(currentYear),
+              percentage: Yup.number()
+                .typeError('Percentage is required')
+                .required('Percentage is required')
+                .min(0)
+                .max(100)
+            })
+          )
+        })}
+        onSubmit={handleSubmit}
+      >
+        {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values, setFieldValue }) => (
+          <form noValidate onSubmit={handleSubmit} {...others}>
+            <TabPanel value={tabValue} index={0}>
+              <Grid container spacing={gridSpacing}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-user-name">User Name</InputLabel>
+                    <OutlinedInput
+                      id="teacher-user-name"
+                      name="userName"
+                      value={values.userName}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="User Name"
+                    />
+                    {touched.userName && errors.userName && <FormHelperText error>{errors.userName}</FormHelperText>}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-password">Password</InputLabel>
+                    <OutlinedInput
+                      id="teacher-password"
+                      name="password"
+                      type="text"
+                      value={values.password}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="Password"
+                    />
+                    {touched.password && errors.password && <FormHelperText error>{errors.password}</FormHelperText>}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-first-name">First Name</InputLabel>
+                    <OutlinedInput
+                      id="teacher-first-name"
+                      name="firstName"
+                      value={values.firstName}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="First Name"
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-middle-name">Middle Name</InputLabel>
+                    <OutlinedInput
+                      id="teacher-middle-name"
+                      name="middleName"
+                      value={values.middleName}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="Middle Name"
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-last-name">Last Name</InputLabel>
+                    <OutlinedInput
+                      id="teacher-last-name"
+                      name="lastName"
+                      value={values.lastName}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="Last Name"
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-mobile-no">Mobile No</InputLabel>
+                    <OutlinedInput
+                      id="teacher-mobile-no"
+                      name="mobile"
+                      value={values.mobile}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="Mobile No"
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-email">Email</InputLabel>
+                    <OutlinedInput
+                      id="teacher-email"
+                      name="email"
+                      value={values.email}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="Email"
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel htmlFor="teacher-address">Address</InputLabel>
+                    <OutlinedInput
+                      id="teacher-address"
+                      name="address"
+                      value={values.address}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      label="Address"
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    disablePortal
+                    value={roles.find((role) => role.id === values.role?.id) || null}
+                    options={roles}
+                    getOptionLabel={(option) => option.name}
+                    onChange={(event, newValue) => {
+                      setFieldValue('role', newValue ? newValue : null);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Role" />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    disablePortal
+                    value={values.gender}
+                    options={['MALE', 'FEMALE']}
+                    onChange={(event, newValue) => {
+                      setFieldValue('gender', newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Gender" />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    disablePortal
+                    value={schools.find((school) => school.id === values.schoolId) || null}
+                    options={schools}
+                    getOptionLabel={(option) => option.name}
+                    onChange={(event, newValue) => {
+                      setFieldValue('schoolId', newValue?.id ? newValue?.id : null);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="School" />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    disablePortal
+                    value={values.type}
+                    options={['TEACHER', 'ADMIN', 'STAFF']}
+                    onChange={(event, newValue) => {
+                      setFieldValue('type', newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Type" />}
+                  />
+                </Grid>
+              </Grid>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={1}>
+              <FieldArray name="educations">
+                {({ push, remove }) => (
+                  <Box>
+                    {values.educations && values.educations.length > 0 ? (
+                      values.educations.map((edu, index) => (
+                        <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                            <Typography variant="subtitle1">Education {index + 1}</Typography>
+                            <Button color="error" size="small" onClick={() => remove(index)} disabled={values.educations.length === 1}>
+                              Remove
+                            </Button>
+                          </Stack>
+                          <Grid container spacing={gridSpacing}>
+                            <Grid item xs={12} sm={6}>
+                              <Autocomplete
+                                disablePortal
+                                options={higherQualificationOptions}
+                                value={edu.higherQualification || null}
+                                onBlur={handleBlur}
+                                onChange={(event, newValue) => {
+                                  setFieldValue(`educations[${index}].higherQualification`, newValue);
+                                }}
+                                renderInput={(params) => <TextField {...params} label="Higher Qualification" />}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel htmlFor={`school-college-name-${index}`}>School/College Name</InputLabel>
+                                <OutlinedInput
+                                  id={`school-college-name-${index}`}
+                                  name={`educations[${index}].institutionName`}
+                                  value={edu.institutionName || ''}
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  label="School/College Name"
+                                />
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel htmlFor={`university-name-${index}`}>Board/University Name</InputLabel>
+                                <OutlinedInput
+                                  id={`university-name-${index}`}
+                                  name={`educations[${index}].boardOrUniversity`}
+                                  value={edu.boardOrUniversity || ''}
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  label="Board/University Name"
+                                />
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <Autocomplete
+                                disablePortal
+                                options={years}
+                                value={edu.passOutYear ? edu.passOutYear.toString() : null}
+                                onBlur={handleBlur}
+                                onChange={(event, newValue) => {
+                                  setFieldValue(`educations[${index}].passOutYear`, newValue ? parseInt(newValue, 10) : null);
+                                }}
+                                renderInput={(params) => <TextField {...params} label="Pass Out Year" />}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel htmlFor={`education-percentage-${index}`}>Percentage</InputLabel>
+                                <OutlinedInput
+                                  id={`education-percentage-${index}`}
+                                  name={`educations[${index}].percentage`}
+                                  type="number"
+                                  value={edu.percentage || ''}
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  label="Percentage"
+                                />
+                              </FormControl>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      ))
+                    ) : (
+                      <Typography color="text.secondary" sx={{ mb: 2 }}>No education records. Add one below.</Typography>
+                    )}
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() =>
+                        push({
+                          higherQualification: null,
+                          institutionName: '',
+                          boardOrUniversity: '',
+                          passOutYear: null,
+                          percentage: ''
+                        })
+                      }
                     >
-                        {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values, setFieldValue }) => (
-                            <form noValidate onSubmit={handleSubmit}>
-                                <Grid container spacing={gridSpacing}>
-                                    {/* User Name */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.userName && errors.userName)}>
-                                            <InputLabel htmlFor="student-user-name">User Name</InputLabel>
-                                            <OutlinedInput
-                                                id="student-user-name"
-                                                name="userName"
-                                                value={values.userName}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="User Name"
-                                            />
-                                            {touched.userName && errors.userName && <FormHelperText>{errors.userName}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
+                      Add Education
+                    </Button>
+                  </Box>
+                )}
+              </FieldArray>
+            </TabPanel>
 
-                                    {/* Password (conditionally rendered/validated for add/edit) */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.password && errors.password)}>
-                                            <InputLabel htmlFor="student-password">Password</InputLabel>
-                                            <OutlinedInput
-                                                id="student-password"
-                                                name="password"
-                                                type="text"
-                                                value={values.password}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="Password"
-                                            />
-                                            {touched.password && errors.password && <FormHelperText>{errors.password}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* First Name */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.firstName && errors.firstName)}>
-                                            <InputLabel htmlFor="student-name">First Name</InputLabel>
-                                            <OutlinedInput
-                                                id="student-name"
-                                                name="firstName"
-                                                value={values.firstName}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="First Name"
-                                            />
-                                            {touched.firstName && errors.firstName && <FormHelperText>{errors.firstName}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Last Name */}
-
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.lastName && errors.lastName)}>
-                                            <InputLabel htmlFor="student-name">Last Name</InputLabel>
-                                            <OutlinedInput
-                                                id="student-name"
-                                                name="lastName"
-                                                value={values.lastName}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="Last Name"
-                                            />
-                                            {touched.lastName && errors.lastName && <FormHelperText>{errors.lastName}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Mobile No */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.mobile && errors.mobile)}>
-                                            <InputLabel htmlFor="student-mobile-no">Mobile No</InputLabel>
-                                            <OutlinedInput
-                                                id="student-mobile-no"
-                                                type="tel"
-                                                name="mobile"
-                                                value={values.mobile}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="Mobile No"
-                                            />
-                                            {touched.mobile && errors.mobile && <FormHelperText>{errors.mobile}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Email */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.email && errors.email)}>
-                                            <InputLabel htmlFor="student-email">Email</InputLabel>
-                                            <OutlinedInput
-                                                id="student-email"
-                                                name="email"
-                                                value={values.email}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="Email"
-                                            />
-                                            {touched.email && errors.email && <FormHelperText>{errors.email}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Address */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.address && errors.address)}>
-                                            <InputLabel htmlFor="student-address">Address</InputLabel>
-                                            <OutlinedInput
-                                                id="student-address"
-                                                name="address"
-                                                value={values.address}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="Address"
-                                                multiline
-                                                rows={2}
-                                            />
-                                            {touched.address && errors.address && <FormHelperText>{errors.address}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Roll No */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.rollNo && errors.rollNo)}>
-                                            <InputLabel htmlFor="student-roll-number">Roll No</InputLabel>
-                                            <OutlinedInput
-                                                id="student-roll-number"
-                                                type="number"
-                                                name="rollNo"
-                                                value={values.rollNo}
-                                                onBlur={handleBlur}
-                                                onChange={handleChange}
-                                                label="Roll No"
-                                            />
-                                            {touched.rollNo && errors.rollNo && <FormHelperText>{errors.rollNo}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* School Selection */}
-
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.schoolId && errors.schoolId)}>
-                                            <Autocomplete
-                                                disablePortal
-                                                id="school-autocomplete"
-                                                options={schools}
-                                                getOptionLabel={(option) => option.name || ''}
-                                                value={schools.find((school) => school.id === values.schoolId) || null}
-                                                onChange={(event, newValue) => {
-                                                    setFieldValue('schoolId', newValue?.id ? newValue?.id : null);
-                                                    setFieldValue('schoolName', newValue?.name ? newValue?.name : null);
-                                                }}
-                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                                                renderInput={(params) => <TextField {...params} label="School" />}
-                                            />
-                                            {touched.schoolId && errors.schoolId && <FormHelperText>{errors.schoolId}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Class Selection */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.classId && errors.classId)}>
-                                            <Autocomplete
-                                                disablePortal
-                                                id="class-autocomplete"
-                                                options={classes}
-                                                getOptionLabel={(option) => option.name || ''}
-                                                value={classes.find((cls) => String(cls.id) === String(values.classId)) || null} // Ensure type consistency
-                                                onChange={(event, newValue) => {
-                                                    setFieldValue('classId', newValue ? String(newValue.id) : ''); // Store as string
-                                                    setFieldValue('className', newValue?.name ? newValue?.name : null);
-                                                }}
-                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                                                renderInput={(params) => <TextField {...params} label="Class" />}
-                                            />
-                                            {touched.classId && errors.classId && <FormHelperText>{errors.classId}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Division Selection */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.divisionId && errors.divisionId)}>
-                                            <Autocomplete
-                                                disablePortal
-                                                id="division-autocomplete"
-                                                options={divisions} // Filter divisions by selected class, ensure type consistency
-                                                getOptionLabel={(option) => option.name || ''}
-                                                value={divisions.find((div) => String(div.id) === String(values.divisionId)) || null} // Ensure type consistency
-                                                onChange={(event, newValue) => {
-                                                    setFieldValue('divisionId', newValue ? String(newValue.id) : ''); // Store as string
-                                                    setFieldValue('divisionName', newValue?.name ? newValue?.name : null);
-                                                }}
-                                                renderInput={(params) => <TextField {...params} label="Division" />}
-                                                disabled={!values.classId} // Disable if no class is selected
-                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                                            />
-                                            {touched.divisionId && errors.divisionId && <FormHelperText>{errors.divisionId}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Role Selection */}
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth error={Boolean(touched.role && errors.role)}>
-                                            <Autocomplete
-                                                disablePortal
-                                                id="role-autocomplete"
-                                                options={roles}
-                                                getOptionLabel={(option) => option.name || ''}
-                                                value={values.role || null}
-                                                onChange={(event, newValue) => {
-                                                    setFieldValue('role', newValue);
-                                                }}
-                                                isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                                                renderInput={(params) => <TextField {...params} label="Role" />}
-                                            />
-                                            {touched.role && errors.role && <FormHelperText>{errors.role}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Action Buttons */}
-                                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                                        <NavingateToOtherPage title="Cancel" PageUrl="/masters/students" />
-                                        <AnimateButton>
-                                            <Button disableElevation disabled={isSubmitting} type="submit" variant="contained" color="secondary">
-                                                Save
-                                            </Button>
-                                        </AnimateButton>
-                                        {/* <BackButton/> */}
-
-                                    </Grid>
-                                </Grid>
-                            </form>
-                        )}
-                    </Formik>
+            {userId && (
+                <TabPanel value={tabValue} index={2}>
+                    <DocumentsSection userId={userId} />
                 </TabPanel>
-            </Box>
+            )}
+
+            <Grid item xs={12}>
+              <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
+                <BackButton BackUrl="/masters/teachers" />
+                <SaveButton
+                  onClick={handleSubmit}
+                  isSubmitting={isSubmitting}
+                  title={userId ? 'Update' : 'Save'}
+                  color="secondary"
+                />
+              </Stack>
+            </Grid>
+          </form>
+        )}
+      </Formik>
+      <Modal
+          open={openUploadModal}
+          onClose={() => setOpenUploadModal(false)}
+      >
+          <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <IconButton onClick={() => setOpenUploadModal(false)}>
+                      <CloseIcon />
+                  </IconButton>
+              </Box>
+              <DocumentUploadForm onClose={() => setOpenUploadModal(false)} onSuccess={() => setOpenUploadModal(false)} userId={userId} />
+          </Box>
+      </Modal>
+    </MainCard>
+  );
+};
+
+export default EditUsers;
+
+
+// New Document Sections and Upload Form (for both files)
+
+const DocumentsSection = ({ userId }) => {
+    const [documents, setDocuments] = useState([]);
+    const [openUploadModal, setOpenUploadModal] = useState(false);
+
+    // Filter dummy data by userId
+    useEffect(() => {
+        const userDocuments = dummyDocuments.filter(doc => doc.teacherId === userId);
+        setDocuments(userDocuments);
+    }, [userId]);
+
+    const docActions = [
+        {
+            icon: <DownloadIcon />,
+            label: 'Download',
+            tooltip: 'Download Document',
+            color: 'primary',
+            onClick: (row) => {
+                window.open(row.fileUrl, '_blank');
+            }
+        }
+    ];
+
+    return (
+        <MainCard
+            title="Uploaded Documents"
+            secondary={
+                <Button variant="contained" startIcon={<UploadIcon />} onClick={() => setOpenUploadModal(true)}>
+                    Upload Document
+                </Button>
+            }
+        >
+            <ReusableDataGrid
+                title="Uploaded Documents"
+                data={documents}
+                fetchUrl={null}
+                isPostRequest={false}
+                columns={documentColumns}
+                entityName="DOCUMENT_HUB"
+                customActions={docActions}
+                showSearch={false}
+                showRefresh={false}
+                showFilters={false}
+                height={300}
+            />
+            <Modal
+                open={openUploadModal}
+                onClose={() => setOpenUploadModal(false)}
+            >
+                <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <IconButton onClick={() => setOpenUploadModal(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+                    <DocumentUploadForm onClose={() => setOpenUploadModal(false)} onSuccess={() => setOpenUploadModal(false)} userId={userId} />
+                </Box>
+            </Modal>
         </MainCard>
     );
 };
 
-export default EditStudent;
+const DocumentUploadForm = ({ onClose, onSuccess, userId }) => {
+    const [file, setFile] = useState(null);
+    const [documentName, setDocumentName] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!file || !documentName) {
+            toast.error('Please select a file and provide a document name.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('documentName', documentName);
+
+        try {
+            // This is a placeholder. You would replace this with your actual API call.
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            toast.success('Document uploaded successfully!');
+            onSuccess();
+        } catch (error) {
+            console.error('Failed to upload document:', error);
+            toast.error('Failed to upload document.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Card>
+            <CardContent>
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            label="Document Name"
+                            value={documentName}
+                            onChange={(e) => setDocumentName(e.target.value)}
+                            required
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <input
+                            type="file"
+                            onChange={(e) => setFile(e.target.files[0])}
+                            style={{ display: 'none' }}
+                            id="file-upload-input"
+                        />
+                        <label htmlFor="file-upload-input">
+                            <Button variant="contained" component="span" startIcon={<UploadIcon />}>
+                                {file ? file.name : 'Select File'}
+                            </Button>
+                        </label>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || !file || !documentName}
+                        >
+                            Upload
+                        </Button>
+                        <Button onClick={onClose} sx={{ ml: 2 }}>
+                            Cancel
+                        </Button>
+                    </Grid>
+                </Grid>
+            </CardContent>
+        </Card>
+    );
+  };

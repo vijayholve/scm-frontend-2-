@@ -46,19 +46,21 @@ const ActionWrapper = styled(Box)({
   padding: '4px'
 });
 
-const HeaderSearchWrapper = styled(Box)({
+// [CHANGE START]
+// Redefine HeaderSearchWrapper to control the layout of header components.
+// The main change is the `ml: 'auto'` on larger screens to push controls to the right.
+const HeaderSearchWrapper = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '16px',
   flexWrap: 'wrap',
-  marginLeft: 'auto',
-  // Add styling to align items correctly in the header
-  '@media (max-width: 600px)': {
-    marginLeft: 0,
-    marginTop: '16px',
-    justifyContent: 'space-between',
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: '8px'
   }
-});
+}));
+// [CHANGE END]
 
 const ReusableDataGrid = ({
   title,
@@ -95,7 +97,7 @@ const ReusableDataGrid = ({
   showClassFilter = false,
   showDivisionFilter = false,
   enableFilters = false ,
-
+customActions =[]
   
 }) => {
   const navigate = useNavigate();
@@ -233,8 +235,15 @@ const handleSearchChange = (event) => {
     setSelectedRow(params.row);
   };
 
-  const hasActions = editUrl || deleteUrl || viewUrl || EnrollActionUrl || customActionsHeader.length > 0;
+  const hasActions = editUrl || deleteUrl || viewUrl || EnrollActionUrl || customActions.length> 0;
+// [CHANGE START]
+  // This is the main change. We are creating a unified header component to pass to MainCard's `title` prop.
+  // This ensures all header elements are logically grouped and responsive.
+ 
 
+  // The `secondaryHeader` variable is no longer needed as the logic has been merged above.
+  // The `customActionsHeader` prop is also now handled differently inside the main header.
+  // [CHANGE END]
   const actionsColumn = hasActions
     ? {
         field: 'actions',
@@ -243,12 +252,12 @@ const handleSearchChange = (event) => {
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-          const hasCustomActionsHeader = customActionsHeader.length > 0;
+          const hasCustomActions = customActions.length > 0;
 
-          if (hasCustomActionsHeader) {
+          if (hasCustomActions) {
             return (
               <ActionWrapper>
-                {customActionsHeader.map((action, index) => {
+                {customActions.map((action, index) => {
                   if (action.permission && !hasPermission(permissions, entityName, action.permission)) {
                     return null;
                   }
@@ -362,6 +371,90 @@ const handleSearchChange = (event) => {
     : null;
 
   const columns = hasActions ? [...propColumns, actionsColumn] : propColumns;
+   const header = (
+    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      <Typography variant="h3" sx={{ flexGrow: 1 }}>{title}</Typography>
+      <HeaderSearchWrapper sx={{ ml: 'auto', mt: { xs: 2, sm: 0 } }}>
+        {showSearch && (
+          <TextField
+            size="small"
+            placeholder={searchPlaceholder}
+            value={searchText}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+            sx={{ minWidth: 200 }}
+          />
+        )}
+        {showRefresh && (
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
+            Refresh
+          </Button>
+        )}
+        {showFilters && Object.keys(gridFilters).some(key => gridFilters[key]) && (
+          <Chip
+            icon={<FilterListIcon />}
+            label="Filters Applied"
+            variant="outlined"
+            color="primary"
+          />
+        )}
+        {/* The 'Add' button is now rendered as part of this header element. */}
+        {/* It also correctly checks for the 'add' permission for the specified entityName. */}
+        {addActionUrl && hasPermission(permissions, entityName, 'add') && (
+          <SecondaryAction icon={<AddIcon />} link={addActionUrl} />
+        )}
+      </HeaderSearchWrapper>
+    </Box>
+  );
+  // [CHANGE END]
+  const headerControls = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+      <Typography variant="h3" sx={{ flexShrink: 0 }}>
+        {title}
+      </Typography>
+      <HeaderSearchWrapper sx={{ ml: 'auto', mt: { xs: 2, sm: 0 } }}>
+        {showSearch && (
+          <TextField
+            size="small"
+            placeholder={searchPlaceholder}
+            value={searchText}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+            sx={{ minWidth: 200 }}
+          />
+        )}
+        {showRefresh && (
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
+            Refresh
+          </Button>
+        )}
+        {showFilters && Object.keys(gridFilters).some(key => gridFilters[key]) && (
+          <Chip
+            icon={<FilterListIcon />}
+            label="Filters Applied"
+            variant="outlined"
+            color="primary"
+          />
+        )}
+        {addActionUrl && (
+          <SecondaryAction icon={<AddIcon />} link={addActionUrl} />
+        )}
+      </HeaderSearchWrapper>
+    </Box>
+  );
+
  const secondaryHeader = (
         <Grid container spacing={2} alignItems="" padding={2} justifyContent="flex-end">
 
@@ -410,14 +503,16 @@ const handleSearchChange = (event) => {
   );
 
   return (
-    <MainCard
-        title={
-          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <Typography variant="h3" sx={{ flexGrow: 1 }}>{title}</Typography>
-              {headerSearchControls}
-          </Box>
-        }
-        secondary={secondaryHeader}
+    <MainCard 
+          title={header}
+
+        // title={
+        //   <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        //       <Typography variant="h3" sx={{ flexGrow: 1 }}>{title}</Typography>
+        //       {headerSearchControls}
+        //   </Box>
+        // }
+        // secondary={secondaryHeader}
         contentSX={{ p: 1 }} // Small padding to make space for filters
       >
       {customToolbar && customToolbar()}

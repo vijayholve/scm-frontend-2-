@@ -1,8 +1,10 @@
+// src/views/dashboard/studentDashboard/StudentDashboardV1.jsx
+
 import React, { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography, List, ListItem, ListItemText, Divider } from '@mui/material';
-// import api, { userDetails } from 'utils/apiService';
-import api from 'utils/apiService'; // Assuming you have a centralized API handler
+import api from 'utils/apiService';
 import { useSelector } from 'react-redux';
+import StudentAttendanceChart from './StudentAttendanceChart'; // Import the new component
 
 const StudentDashboardV1 = () => {
   const { user } = useSelector((state) => state.user);
@@ -35,6 +37,11 @@ const StudentDashboardV1 = () => {
 
   return (
     <Grid container spacing={3}>
+      {/* Attendance Chart for the logged-in student */}
+      <Grid item xs={12} md={6}>
+        <StudentAttendanceChart studentId={user?.id} />
+      </Grid>
+      
       {/* Enrolled Courses */}
       <Grid item xs={12} md={6}>
         <Card>

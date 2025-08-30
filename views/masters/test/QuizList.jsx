@@ -29,15 +29,18 @@ const columns = [
         headerName: 'Start Time',
         width: 180,
         editable: false,
-        valueFormatter: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
+        // valueFormatter: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
     },
     {
         field: 'endTime',
         headerName: 'End Time',
         width: 180,
         editable: false,
-        valueFormatter: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
-    },
+        // valueFormatter: (params) => (params.value ? new Date(params.value).toLocaleString() : '-')
+    }, 
+        { field: 'schoolName', headerName: 'School', width: 110, flex: 1 },
+    { field: 'className', headerName: 'Class', width: 110, flex: 1 },
+    { field: 'divisionName', headerName: 'Division', width: 110, flex: 1 },
     {
         field: 'showScoreAfterSubmission',
         headerName: 'Show Score',

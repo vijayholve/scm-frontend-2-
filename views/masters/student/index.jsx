@@ -104,11 +104,7 @@ const Students = () => {
             >
                 Bulk Upload
             </Button>
-            <SecondaryAction
-                title="Add Student"
-                icon={<AddIcon />}
-                onClick={() => navigate('/masters/student/add')}
-            />
+            
         </Stack>
     );
 
@@ -121,6 +117,7 @@ const Students = () => {
                         fetchUrl={`/api/users/getAll/${accountId}?type=STUDENT`}
                         isPostRequest={true}
                         columns={columnsConfig}
+                        addActionUrl={"/masters/student/add"}
                         editUrl="/masters/student/edit"
                         deleteUrl="/api/users/delete"
                         viewUrl="/masters/students/view"

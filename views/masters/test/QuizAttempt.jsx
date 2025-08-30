@@ -33,6 +33,7 @@ import { gridSpacing } from 'store/constant';
 import { toast } from 'react-hot-toast';
 import api, { userDetails } from '../../../utils/apiService';
 import { useSelector } from 'react-redux';
+import dayjs from 'dayjs';
 
 const QuizAttempt = () => {
     const navigate = useNavigate();
@@ -75,12 +76,21 @@ const QuizAttempt = () => {
             const response = await api.get(`api/quizzes/${user?.user?.accountId}/${quizId}`);
             const quizData = response?.data;
             
+            const now = dayjs();
+            const startTime = dayjs(quizData.startTime);
+            const endTime = dayjs(quizData.endTime);
+
+            // Check if the current time is within the allowed quiz window
+            if (now.isBefore(startTime) || now.isAfter(endTime)) {
+                toast.error('This quiz is not available at this time.');
+                navigate('/masters/student/quizzes');
+                return;
+            }
+
             setQuiz(quizData);
             
             // Calculate time remaining
-            const endTime = new Date(quizData.endTime);
-            const now = new Date();
-            const secondsRemaining = Math.max(0, Math.floor((endTime - now) / 1000));
+            const secondsRemaining = Math.max(0, endTime.diff(now, 'second'));
             setTimeRemaining(secondsRemaining);
             
             // Initialize answers if continuing a quiz
@@ -91,7 +101,7 @@ const QuizAttempt = () => {
         } catch (err) {
             console.error(err);
             toast.error('Failed to load quiz');
-           // navigate('/masters/student/quizzes');
+            // navigate('/masters/student/quizzes');
         } finally {
             setLoading(false);
         }
@@ -371,4 +381,4 @@ const QuizAttempt = () => {
     );
 };
 
-export default QuizAttempt; 
+export default QuizAttempt;
