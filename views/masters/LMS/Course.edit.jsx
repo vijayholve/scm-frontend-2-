@@ -70,6 +70,39 @@ const LessonModal = ({ open, onClose, onSave, initialData, schoolId, classId, di
     fetchQuizzes();
   }, [schoolId, classId, divisionId, user]);
 
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (schoolId && classId && divisionId && user?.user?.accountId) {
+        setLoadingDocuments(true);
+        try {
+          const response = await api.post(`/api/documents/getAllBy/${user.user.accountId}`, {
+            page: 0,
+            size: 1000,
+            sortBy: 'id',
+            sortDir: 'asc',
+            schoolId: schoolId,
+            classId: classId,
+            divisionId: divisionId
+          });
+          const fetchedDocuments = response.data.content || [];
+          setDocuments(fetchedDocuments);
+        } catch (error) {
+          console.error("Failed to fetch documents:", error);
+          toast.error("Failed to load documents for selected criteria.");
+          setDocuments([]);
+        } finally {
+          setLoadingDocuments(false);
+        }
+      } else {
+        setDocuments([]);
+      }
+    };
+    fetchDocuments();
+  }, [schoolId, classId, divisionId, user]);
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{initialData ? "Edit Lesson" : "Add Lesson"}</DialogTitle>
@@ -106,7 +139,7 @@ const LessonModal = ({ open, onClose, onSave, initialData, schoolId, classId, di
           } else if (type === "text") {
             resetFields = { link: "", documentId: null, testId: null };
           } else if (type === "test") {
-            resetFields = { testId: null, documentId: null, link: "" };
+            resetFields = { testId: null, documentId: null, link: "" };          
           }
           setLesson({ ...lesson, type, ...resetFields });
         }}
@@ -139,12 +172,12 @@ const LessonModal = ({ open, onClose, onSave, initialData, schoolId, classId, di
       {/* For document, show autocomplete for document selection */}
       {lesson.type === "document" && (
         <Autocomplete
-          options={window.documentList || []}
-          getOptionLabel={option => option.name || ""}
+          options={documents || []}
+          getOptionLabel={option => option.documentName || ""}
           value={
-            (window.documentList || []).find(doc => doc.id === lesson.documentId) || null
+            (documents || []).find(doc => doc.id === lesson.documentId) || null
           }
-          onChange={(event, value) => setLesson({ ...lesson, documentId: value ? value.id : null })}
+          onChange={(event, value) => setLesson({ ...lesson, documentId: value ? value.id : null ,documentName: value?.documentName ?? null })}
           renderInput={params => (
             <TextField {...params} label="Select Document" margin="normal" fullWidth />
           )}
@@ -159,11 +192,11 @@ const LessonModal = ({ open, onClose, onSave, initialData, schoolId, classId, di
           value={
             (quizzes || []).find((test) => test.id === lesson.testId) || null
           }
-          onChange={(event, value) => setLesson({ ...lesson, testId: value?.id ?? null })}
+          onChange={(event, value) => setLesson({ ...lesson, testId: value?.id ?? null ,testName: value?.title ?? null })}
           renderInput={(params) => (
             <TextField
               {...params}
-              label={loadingQuizzes ? "Loading Quizzes..." : "Select Test"}
+              label={loadingQuizzes ? "Loading Tests..." : "Select Test"}
               margin="normal"
               fullWidth
             />
@@ -426,7 +459,7 @@ const CourseEdit = () => {
         const res = await api.post("/api/lms/course/save", course);
         // Optionally redirect to edit page for new course
         if (res.data && res.data.id) {
-          navigate(`/masters/lms/course/${res.data.id}`);
+          navigate(`/masters/lms/`);
         }
       }
       alert("Course saved successfully!");
@@ -760,7 +793,10 @@ const CourseEdit = () => {
         open={moduleModalOpen}
         onClose={() => { setModuleModalOpen(false); setEditingModuleIdx(null); }}
         onSave={handleSaveModule}
-        initialData={editingModuleIdx !== null ? module.lessons[editingLessonIdx] : null}
+        initialData={editingModuleIdx !== null ? course?.modules[editingModuleIdx] : null}
+        schoolId={course.schoolId}
+        classId={course.classId}
+        divisionId={course.divisionId}
       />
     </Box>
   );

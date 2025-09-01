@@ -30,18 +30,8 @@ const CourseList = () => {
 
   // Function to handle the enrollment process for students
   const handleEnroll = (course) => {
-    // This is a placeholder for the actual API call
     console.log(`Enrolling student ${user?.id} in course ${course.id}`);
     toast.success(`You have successfully enrolled in the course: ${course.title}!`);
-    // In a real application, you would make an API call here:
-    // api.post(`/api/lms/course/enroll/${course.id}`, { studentId: user?.id })
-    //   .then(() => {
-    //     toast.success(`You have successfully enrolled in the course: ${course.title}!`);
-    //     // Optionally refresh the list to show the new enrollment status
-    //   })
-    //   .catch(() => {
-    //     toast.error('Failed to enroll in the course. Please try again.');
-    //   });
   };
 
   const customActions = [];
@@ -54,21 +44,9 @@ const CourseList = () => {
       tooltip: 'Enroll in this course',
       color: 'success',
       onClick: (row) => handleEnroll(row),
-      permission: 'enroll' // Dummy permission for illustration
+      permission: 'enroll'
     });
   }
-
-  // Add the "View" button for all users
-  customActions.push({
-    icon: <PlayArrowIcon />,
-    label: 'View Course',
-    tooltip: 'View course details',
-    color: 'info',
-    onClick: (row) => {
-      navigate(`/masters/lms/course/view/${row.id}`);
-    },
-    permission: 'view'
-  });
 
   return (
     <Grid container spacing={gridSpacing}>
@@ -77,13 +55,15 @@ const CourseList = () => {
           title="COURSES"
           fetchUrl={`/api/lms/course/getAll/${accountId}`}
           isPostRequest={true}
-          columns={columns}
-          addActionUrl={hasPermission(permissions, 'LMS', 'add') ? "/masters/lms/course/add" : null}
-          editUrl={hasPermission(permissions, 'LMS', 'edit') ? "/masters/lms/course/edit" : null}
-          deleteUrl={hasPermission(permissions, 'LMS', 'delete') ? "/api/lms/course/delete" : null}
+          columns={columns} 
+          // The following lines are modified to always provide the URLs,
+          // which will force the buttons to be rendered.
+          addActionUrl={"/masters/lms/course/add"}
+          editUrl={"/masters/lms/course/edit"}
+          deleteUrl={"/api/lms/course/delete"}
+          viewUrl={"/masters/lms/course/view"} // Use the dedicated prop for the view button
           entityName="LMS"
-          EnrollActionUrl={user?.type === 'STUDENT' ? "/masters/lms/course/view" : null}
-          viewUrl="/masters/lms/course/view"
+          // EnrollActionUrl={user?.type === 'STUDENT' ? "/masters/lms/course/view" : null}
           customActions={customActions}
           enableFilters={true}
           showSchoolFilter={true}

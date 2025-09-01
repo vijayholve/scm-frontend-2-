@@ -21,9 +21,9 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
 
   // Effect to sync local state with props on initial load or change
   useEffect(() => {
-    setSelectedSchool(filters.schoolId || '');
-    setSelectedClass(filters.classId || '');
-    setSelectedDivision(filters.divisionId || '');
+    setSelectedSchool(filters?.schoolId || '');
+    setSelectedClass(filters?.classId || '');
+    setSelectedDivision(filters?.divisionId || '');
   }, [filters]);
 
   // Effect to fetch schools on initial load

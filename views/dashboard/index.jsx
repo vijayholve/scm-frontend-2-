@@ -12,7 +12,6 @@ const StudentDashboardV1 = Loadable(lazy(() => import('./studentDashboard/Studen
 const DashboardDefault = () => {
   const user = useSelector((state) => state.user.user);
   const userType = user?.type;
-  console.log("User Type:", userType);
 
   switch (userType) {
     case 'STUDENT':

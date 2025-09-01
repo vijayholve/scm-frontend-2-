@@ -103,7 +103,11 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
                         value={marks}
                         onChange={(e) => {
                             const val = e.target.value;
-                            onMarksChange(student.studentId, subject.subjectId, val);
+                            if (val > subject.maxMarksSubject) {
+                                toast.error(`Marks cannot exceed ${subject.maxMarksSubject}.`);
+                            } else {
+                                onMarksChange(student.studentId, subject.subjectId, val);
+                            }
                         }}
                         inputProps={{ max: subject.maxMarksSubject, min: 0 }}
                         sx={{ mt: 2, mb: 2, width: '150px' }}
@@ -249,42 +253,54 @@ const TeacherExamView = () => {
                 classId: selectedClassId,
                 divisionId: selectedDivisionId
                 });
-                setEnrolledStudents(studentsRes.data.content || []);
-            };  
-            fetchStudents();
-        }
-    }, [selectedExamId]);
-
-    useEffect(() => {
-        if (selectedExamId) {
-            const initialMarks = {};
-                enrolledStudents.forEach(student => {
-                    subjects.forEach(subject => {
-                    if (student.marks && student.marks[subject.subjectId] !== undefined) {
-                        initialMarks[`${student.studentId}-${subject.subjectId}`] = student.marks[subject.subjectId];
+                const studentsData = studentsRes.data.content || [];
+                setEnrolledStudents(studentsData);
+                
+                const initialMarks = {};
+                studentsData.forEach(student => {
+                    if (student.marks) {
+                        for (const subjectId in student.marks) {
+                            initialMarks[`${student.studentId}-${subjectId}`] = student.marks[subjectId];
+                        }
                     }
                 });
-            });
-            setMarks(initialMarks);
-            setCurrentView(null);
+                setMarks(initialMarks);
+                setCurrentView(null);
+                
+            };  
+            fetchStudents();
         } else {
             setEnrolledStudents([]);
+            setMarks({});
         }
-    }, [selectedExamId, enrolledStudents]);
+    }, [selectedExamId, selectedSchoolId, selectedClassId, selectedDivisionId]);
 
     const handleMarksChange = (studentId, subjectId, value) => {
-        setMarks(prev => ({ ...prev, [`${studentId}-${subjectId}`]: value }));
+        const subject = subjects.find(sub => sub.subjectId === subjectId);
+        if (value > subject.maxMarksSubject) {
+            toast.error(`Marks cannot exceed ${subject.maxMarksSubject}.`);
+        } else {
+            setMarks(prev => ({ ...prev, [`${studentId}-${subjectId}`]: value }));
+        }
     };
 
     const handleSaveMarks = async (studentId, marks) => {
-        const marksRes = await api.put(`/api/exams/updateExamStudentMarks/${selectedExamId}`, {
-            studentId: studentId,
-            marks: marks,
-            schoolId: selectedSchoolId,
-            classId: selectedClassId,
-            divisionId: selectedDivisionId
-        });
-        toast.success(`(Dummy) Marks saved for student ${studentId}`);
+        try {
+            const marksRes = await api.put(`/api/exams/updateExamStudentMarks/${selectedExamId}`, {
+                studentId: studentId,
+                marks: marks,
+                schoolId: selectedSchoolId,
+                classId: selectedClassId,
+                divisionId: selectedDivisionId
+            });
+            console.log('Marks saved response:', marksRes);
+            const student = enrolledStudents.find(s => s.studentId === studentId);
+            const studentName = student ? student.studentName : 'a student';
+            toast.success(`Marks saved successfully for ${studentName}!`);
+        } catch (error) {
+            console.error('Failed to save marks', error);
+            toast.error('Failed to save marks. Please try again.');
+        }
     };
 
     const columns = [
@@ -364,8 +380,8 @@ const TeacherExamView = () => {
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 {/* School Autocomplete */}
                 <Grid item xs={12} sm={6}>
-                    <Autocomplete
-                        disablePortal
+                    <Autocomplete 
+                        disablePortal 
                         id="timetable-school-autocomplete"
                         options={schools}
                         getOptionLabel={(option) => option.name || ''}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -6,32 +7,27 @@ import {
   Grid,
   Card,
   CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  IconButton,
   Dialog,
   TextField,
   MenuItem,
-  Divider
+  Divider,
+  Chip,
+  Stack,
+  CircularProgress,
+  IconButton
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  Download as DownloadIcon
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import ViewIcon from '@mui/icons-material/Visibility';
+import DownloadIcon from '@mui/icons-material/Download';
 import MainCard from 'ui-component/cards/MainCard';
+import ReusableDataGrid from 'ui-component/ReusableDataGrid';
+import { gridSpacing } from 'store/constant';
 import api from 'utils/apiService';
 import { useSelector } from 'react-redux';
 
 const FeeDashboard = () => {
-  const [fees, setFees] = useState([]);
+  const navigate = useNavigate();
   const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
   const [divisions, setDivisions] = useState([]);
@@ -41,14 +37,17 @@ const FeeDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [openSetupModal, setOpenSetupModal] = useState(false);
   const user = useSelector((state) => state.user);
-  // Fee setup form state
+
   const [feeSetup, setFeeSetup] = useState({
     feeTitle: '',
     amount: '',
     dueDate: '',
     schoolId: '',
+    schoolName: '',
     classId: '',
+    className: '',
     divisionId: '',
+    divisionName: '',
     discount: '',
     lateFinePerDay: '',
     installmentsEnabled: false,
@@ -56,23 +55,13 @@ const FeeDashboard = () => {
   });
 
   const [summaryData, setSummaryData] = useState({
-    totalDue: 0,
-    totalCollected: 0,
-    pendingFees: 0
+    fees: [],
+    totalAmount: 0,
+    totalPaid: 0,
+    totalPending: 0
   });
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  useEffect(() => {
-    if (selectedSchool || selectedClass || selectedDivision) {
-      fetchFees();
-      fetchSummary();
-    }
-  }, [selectedSchool, selectedClass, selectedDivision]);
-
-  const fetchInitialData = async () => {
+  const fetchFeeData = async () => {
     try {
       setLoading(true);
       const [schoolsRes, classesRes, divisionsRes] = await Promise.all([
@@ -85,46 +74,36 @@ const FeeDashboard = () => {
       setClasses(classesRes.data || []);
       setDivisions(divisionsRes.data || []);
       
-      // Fetch all fees initially
-      await fetchFees();
-      await fetchSummary();
+      const params = new URLSearchParams();
+      if (selectedSchool) params.append('schoolId', selectedSchool);
+      if (selectedClass) params.append('classId', selectedClass);
+      if (selectedDivision) params.append('divisionId', selectedDivision);
+
+      const response = await api.get(`/api/admin/fees/summary/${user?.user?.accountId}?${params.toString()}`);
+const feesWithIds = response.data.fees ? response.data.fees.map((fee, index) => ({
+        ...fee,
+        id: index + 1
+      })) : [];
+
+      setSummaryData({
+        ...response.data,
+        fees: feesWithIds
+      });
+            
     } catch (error) {
       console.error('Error fetching initial data:', error);
+      setSummaryData({ fees: [], totalAmount: 0, totalPaid: 0, totalPending: 0 });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchFees = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (selectedSchool) params.append('schoolId', selectedSchool);
-      if (selectedClass) params.append('classId', selectedClass);
-      if (selectedDivision) params.append('divisionId', selectedDivision);
-      
-      const response = await api.get(`/api/admin/fees/summary/${user?.user?.accountId}?${params.toString()}`);
-      setFees(response.data?.fees || []);
-      setSummaryData(response.data || { totalDue: 0, totalCollected: 0, pendingFees: 0 });
-    } catch (error) {
-      console.error('Error fetching fees:', error);
-      setFees([]);
+  useEffect(() => {
+    if (user?.user?.accountId) {
+      fetchFeeData();
     }
-  };
-
-  const fetchSummary = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (selectedSchool) params.append('schoolId', selectedSchool);
-      if (selectedClass) params.append('classId', selectedClass);
-      if (selectedDivision) params.append('divisionId', selectedDivision);
-      
-      const response = await api.get(`/api/admin/fees/?${params.toString()}`);
-      setSummaryData(response.data || { totalDue: 0, totalCollected: 0, pendingFees: 0 });
-    } catch (error) {
-      console.error('Error fetching summary:', error);
-    }
-  };
-
+  }, [user?.user?.accountId, selectedSchool, selectedClass, selectedDivision]);
+  
   const handleSetupFee = async () => {
     try {
       feeSetup.accountId = user?.user?.accountId;
@@ -145,8 +124,7 @@ const FeeDashboard = () => {
         installmentsEnabled: false,
         installmentCount: 1
       });
-      await fetchFees();
-     // await fetchSummary();
+      await fetchFeeData();
     } catch (error) {
       console.error('Error creating fee:', error);
     }
@@ -165,7 +143,7 @@ const FeeDashboard = () => {
       'draft': { color: 'warning', label: 'Draft' },
       'expired': { color: 'error', label: 'Expired' }
     };
-    
+
     const config = statusConfig[status] || { color: 'default', label: status };
     return <Chip label={config.label} color={config.color} size="small" />;
   };
@@ -174,24 +152,71 @@ const FeeDashboard = () => {
     return <Typography>Loading...</Typography>;
   }
 
+  const columns = [
+    { field: 'feeName', headerName: 'Fee Name', flex: 1 },
+    { field: 'schoolName', headerName: 'School', width: 150 },
+    { field: 'className', headerName: 'Class', width: 120 },
+    { field: 'divisionName', headerName: 'Division', width: 120 },
+    { field: 'totalAmount', headerName: 'Total', width: 120, valueFormatter: (params) => `₹${params?.value}` },
+    { field: 'paidAmount', headerName: 'Paid', width: 120, valueFormatter: (params) => `₹${params?.value}` },
+    { field: 'pendingAmount', headerName: 'Pending', width: 120, valueFormatter: (params) => `₹${params?.value}` },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 120,
+      renderCell: (params) => {
+        const statusConfig = {
+          'active': { color: 'success', label: 'Active' },
+          'draft': { color: 'warning', label: 'Draft' },
+          'expired': { color: 'error', label: 'Expired' }
+        };
+        const config = statusConfig[params.value] || { color: 'default', label: params.value };
+        return <Chip label={config.label} color={config.color} size="small" />;
+      },
+    },
+  ];
+
+  const customActions = [
+    {
+      icon: <ViewIcon />,
+      label: 'View',
+      tooltip: 'View Details',
+      color: 'primary',
+      onClick: (row) => navigate(`/masters/fees/view/${row.id}`),
+      permission: 'view'
+    },
+    {
+      icon: <EditIcon />,
+      label: 'Edit',
+      tooltip: 'Edit Fee',
+      color: 'secondary',
+      onClick: (row) => navigate(`/masters/fees/edit/${row.id}`),
+      permission: 'edit'
+    },
+    {
+      icon: <DownloadIcon />,
+      label: 'Download',
+      tooltip: 'Download Report',
+      color: 'success',
+      onClick: (row) => alert(`Downloading report for Fee ID: ${row.id}`),
+      permission: 'download'
+    }
+  ];
+
+  const customActionsHeader = (
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+      <Button
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={() => setOpenSetupModal(true)}
+      >
+        Add New Fee
+      </Button>
+    </Box>
+  );
+
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Fee Management Dashboard
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenSetupModal(true)}
-          sx={{ ml: 'auto' }}
-        >
-          Add New Fee
-        </Button>
-      </Box>
-
-      {/* Filters */}
       <MainCard title="Filters" sx={{ mb: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
@@ -244,8 +269,7 @@ const FeeDashboard = () => {
           </Grid>
         </Grid>
       </MainCard>
-
-      {/* Summary Cards */}
+      
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
@@ -272,65 +296,26 @@ const FeeDashboard = () => {
           </Card>
         </Grid>
       </Grid>
-
-      {/* Fee List */}
-      <MainCard title="Fee Summary">
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Fee Name</TableCell>
-                <TableCell>School</TableCell>
-                <TableCell>Class</TableCell>
-                <TableCell>Division</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Total</TableCell>
-                <TableCell>Paid</TableCell>
-                <TableCell>Pending</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {fees?.map((fee) => (
-                <TableRow key={fee.id}>
-                  <TableCell>{fee.feeName}</TableCell>
-                  <TableCell>{fee.schoolName}</TableCell>
-                  <TableCell>{fee.className}</TableCell>
-                  <TableCell>{fee.divisionName}</TableCell>
-                  <TableCell>{new Date(fee.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{formatCurrency(fee.totalAmount)}</TableCell>
-                  <TableCell>{formatCurrency(fee.paidAmount)}</TableCell>
-                  <TableCell>{formatCurrency(fee.pendingAmount)}</TableCell>
-                  <TableCell>{getStatusChip(fee.status)}</TableCell>
-                  <TableCell>
-                    <IconButton size="small" color="primary">
-                      <ViewIcon />
-                    </IconButton>
-                    <IconButton size="small" color="secondary">
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton size="small" color="success">
-                      <DownloadIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {fees?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={11} sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="body1" color="text.secondary">
-                      No fees found. Click "Add New Fee" to create your first fee structure.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </MainCard>
-
-      {/* Fee Setup Modal */}
+      
+      <ReusableDataGrid
+        title="Fee Summary"
+        data={summaryData.fees}
+        columns={columns}
+        entityName="FEE_MANAGEMENT"
+        customActions={customActions}
+        customActionsHeader={customActionsHeader}
+        fetchUrl={null}
+        isPostRequest={false}
+        getRowId={(row) => row.feeName}
+        enableFilters={true}
+        showSchoolFilter={true}
+        showClassFilter={true}
+        showDivisionFilter={true}
+        showSearch={true}
+        showRefresh={true}
+        filters={{ schoolId: selectedSchool, classId: selectedClass, divisionId: selectedDivision }}
+      />
+      
       <Dialog 
         open={openSetupModal} 
         onClose={() => setOpenSetupModal(false)}
@@ -471,4 +456,4 @@ const FeeDashboard = () => {
   );
 };
 
-export default FeeDashboard; 
+export default FeeDashboard;

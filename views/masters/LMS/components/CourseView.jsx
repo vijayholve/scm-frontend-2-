@@ -15,10 +15,12 @@ import {
   Chip,
   Stack,
   Tooltip,
+  Button,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
 import api from "../../../../utils/apiService";
 import { useSelector } from "react-redux";
+import { toast } from "react-hot-toast";
 
 // VideoRenderer: Simple video player for video lessons
 const VideoRenderer = ({ url }) => {
@@ -89,7 +91,13 @@ const CourseView = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [students, setStudents] = useState([]);
-  const user = useSelector(state => state.user);
+  const user = useSelector(state => state.user.user?.data) || useSelector(state => state.user.user);
+  const accountId = user?.accountId;
+  const studentId = user?.id;
+  const userType = user?.type;
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  const [progressByLessonId, setProgressByLessonId] = useState(new Set());
 
   // Fetch course and enrolled students
   useEffect(() => {
@@ -98,50 +106,141 @@ const CourseView = () => {
       try {
         // Fetch course
         const courseRes = await api.get(
-          `/api/lms/courses/${user?.user?.accountId}/${courseId}`
+          `/api/lms/courses/${accountId}/${courseId}`
         );
         setCourse(courseRes.data);
 
         // Fetch enrolled students (API assumed, fallback to empty)
-        let studentsRes;
         try {
-          studentsRes = await api.get(
-            `/api/lms/courses/${accountId}/${courseId}/enrollments`
+          const studentsRes = await api.post(
+            `/api/lms/courses/${accountId}/${courseId}/enroll/${studentId}/status`,
+            {
+              accountId: accountId,
+              courseId: courseId,
+              studentId: studentId
+            }
           );
-          setStudents(studentsRes.data || []);
+          if( studentsRes.data == null || studentsRes.data == undefined || studentsRes.data == "") {
+            setIsEnrolled(false);
+          }
+          else {
+            setIsEnrolled(true);
+          }
         } catch {
-          setStudents([]);
+          setIsEnrolled(false);
+        }
+
+        // Fetch lesson progress for current student
+        if (studentId) {
+          try {
+            
+            const progRes = await api.get(
+              `/api/lms/courses/${accountId}/${courseId}/progress/${studentId}`,
+              { params: { accountId, courseId, studentId } }
+            );
+            if( progRes.data == null || progRes.data == undefined || progRes.data == "") {
+              setProgressByLessonId(new Set());
+            }
+            else {
+              const entries = Array.isArray(progRes.data) ? progRes.data : [];
+              const completedIds = new Set(entries.filter(e => e.completed).map(e => e.lessonId));
+              setProgressByLessonId(completedIds);
+            }
+          } catch {
+            // fallback: derive from lesson.status in course payload if present
+            const modulesFromCourse = courseRes.data?.modules || [];
+            const allLessonsFromCourse = modulesFromCourse.flatMap(m => m.lessons || []);
+            const completedIds = new Set(
+              allLessonsFromCourse
+                .filter(l => l.status === true || l.status === "true" || l.status === 1 || l.status === "1")
+                .map(l => l.id)
+            );
+            setProgressByLessonId(completedIds);
+          }
+        }
+        if(userType==="TEACHER" || userType==="ADMIN") {
+          const studentsRes = await api.get(`/api/lms/courses/${accountId}/${courseId}/enrollments`);
+          setStudents(studentsRes.data || []);
         }
       } catch {
         setCourse(null);
         setStudents([]);
+        setIsEnrolled(false);
       }
       setLoading(false);
     };
 
-    if (user?.user?.accountId && courseId) fetchData();
-  }, [user?.user?.accountId, courseId]);
+    if (accountId && courseId) fetchData();
+  }, [accountId, courseId, studentId]);
 
   // Calculate total modules, lessons, and completion percentage
   const modules = course?.modules || [];
   const totalModules = modules.length;
   const allLessons = modules.flatMap((mod) => mod.lessons || []);
   const totalLessons = allLessons.length;
-  const completedLessons = allLessons.filter(
-    (l) =>
-      l.status === true ||
-      l.status === "true" ||
-      l.status === 1 ||
-      l.status === "1"
-  ).length;
+  const completedLessons = progressByLessonId.size > 0
+    ? allLessons.filter((l) => progressByLessonId.has(l.id)).length
+    : allLessons.filter(
+        (l) =>
+          l.status === true ||
+          l.status === "true" ||
+          l.status === 1 ||
+          l.status === "1"
+      ).length;
   const completionPercent =
     totalLessons === 0
       ? 0
       : Math.round((completedLessons / totalLessons) * 100);
 
   // Handle lesson click
-  const handleLessonClick = (lesson) => {
+  const handleLessonClick = async (lesson,modId) => {
+    console.log(lesson,modId);
+    // Gate for students: must be enrolled
+    if (userType === 'STUDENT' && !isEnrolled) {
+      toast.error('Please enroll to preview this course.');
+      return;
+    }
     setSelectedLesson(lesson);
+    // Auto mark as completed for current student
+    if (studentId && lesson?.id) {
+      try {
+        await api.post('/api/lms/progress', {
+          accountId,
+          courseId: Number(courseId),
+          moduleId: modId,
+          lessonId: lesson.id,
+          studentId,
+          completed: true
+        });
+        setProgressByLessonId(prev => new Set(prev).add(lesson.id));
+      } catch (e) {
+        // Non-blocking
+      }
+    }
+  };
+
+  const handleEnrollNow = async () => {
+    if (!studentId) return;
+    setEnrollLoading(true);
+    try {
+      await api.post(`/api/lms/courses/${accountId}/${course.id}/enroll/${user.id}`, {
+        accountId: accountId,
+        courseId: course.id,
+        studentId: user.id
+      });
+      setIsEnrolled(true);
+      toast.success('Enrollment successful');
+      // Refresh enrollments list
+      try {
+        const studentsRes = await api.get(`/api/lms/courses/${accountId}/${courseId}/enrollments`);
+        setStudents(studentsRes.data || []);
+      } catch {
+        // ignore
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to enroll');
+    }
+    setEnrollLoading(false);
   };
 
   // Render right panel for selected lesson
@@ -181,14 +280,60 @@ const CourseView = () => {
     }
     if (
       selectedLesson.type === "document" &&
-      (selectedLesson.link || selectedLesson.url)
+      (selectedLesson.documentId || selectedLesson.url)
     ) {
+
+      console.log(selectedLesson);
+
       return (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             {selectedLesson.title}
           </Typography>
-          <DocumentRenderer url={selectedLesson.link || selectedLesson.url} />
+          {selectedLesson.documentName && (
+            <Typography sx={{ mb: 2 }}>{selectedLesson.documentName}</Typography>
+          )}
+          {selectedLesson.documentId && (
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 2 }}>
+              <Typography>{selectedLesson.documentId}</Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={async () => {
+                  try {
+                    // Call the document download API
+                    // Adjust the API endpoint as per your backend
+                    const response = await api.get(
+                      `/api/documents/download/${accountId}/${selectedLesson.documentId}`,
+                      { responseType: "blob" }
+                    );
+                    // Get filename from response headers or fallback
+                    let filename = selectedLesson.documentName || "document";
+                    const disposition = response.headers['content-disposition'];
+                    if (disposition && disposition.indexOf('filename=') !== -1) {
+                      const match = disposition.match(/filename="?([^"]+)"?/);
+                      if (match && match[1]) filename = match[1];
+                    }
+                    // Create a blob and trigger download
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', filename);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.parentNode.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } catch (err) {
+                    // Optionally show error to user
+                    alert("Failed to download document.");
+                  }
+                }}
+              >
+                Download Document
+              </Button>
+            </Box>
+          )}
+          {/* <DocumentRenderer url={selectedLesson.documentId || selectedLesson.url} /> */}
           {selectedLesson.content && (
             <Typography sx={{ mt: 2 }}>{selectedLesson.content}</Typography>
           )}
@@ -250,6 +395,7 @@ const CourseView = () => {
             <Chip label={`Modules: ${totalModules}`} color="primary" />
             <Chip label={`Lessons: ${totalLessons}`} color="secondary" />
             <Chip label={`Status: ${course.status || "N/A"}`} />
+            <Chip label={`Enrolled: ${students.length}`} />
           </Stack>
         </Box>
         <Box sx={{ minWidth: 250, mt: { xs: 3, md: 0 } }}>
@@ -270,6 +416,35 @@ const CourseView = () => {
           </Typography>
         </Box>
       </Paper>
+
+      {userType === 'STUDENT' && !isEnrolled && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Typography variant="h6">Enrollment required</Typography>
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
+            You must enroll to access this course content.
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Chip label={`Current enrollments: ${students.length}`} sx={{ mr: 2 }} />
+            <Chip label={`Course ID: ${courseId}`} />
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <button
+              onClick={handleEnrollNow}
+              disabled={enrollLoading}
+              style={{
+                padding: '8px 16px',
+                background: '#1976d2',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: enrollLoading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {enrollLoading ? 'Enrolling...' : 'Enroll Now'}
+            </button>
+          </Box>
+        </Paper>
+      )}
 
       <Grid container spacing={3}>
         {/* Left: Modules & Lessons */}
@@ -309,19 +484,19 @@ const CourseView = () => {
                         </ListItem>
                       ) : (
                         mod.lessons.map((lesson, lIdx) => {
-                          const isCompleted =
+                          const isCompleted = progressByLessonId.has(lesson.id) ||
                             lesson.status === true ||
                             lesson.status === "true" ||
                             lesson.status === 1 ||
                             lesson.status === "1";
                           return (
                             <ListItem
-                              key={lesson.id || lIdx}
+                              key={lesson.id || lIdx || mod.id || mIdx}
                               button
                               selected={
                                 selectedLesson && selectedLesson.id === lesson.id
                               }
-                              onClick={() => handleLessonClick(lesson)}
+                              onClick={() => handleLessonClick(lesson,mod.id)}
                               sx={{
                                 borderLeft: isCompleted
                                   ? "4px solid #4caf50"
@@ -331,6 +506,8 @@ const CourseView = () => {
                                   selectedLesson.id === lesson.id
                                     ? "action.selected"
                                     : "inherit",
+                                pointerEvents: (userType === 'STUDENT' && !isEnrolled) ? 'none' : 'auto',
+                                opacity: (userType === 'STUDENT' && !isEnrolled) ? 0.6 : 1
                               }}
                             >
                               <ListItemText
@@ -359,6 +536,11 @@ const CourseView = () => {
                                           color="success"
                                           sx={{ ml: 1 }}
                                         />
+                                      </Tooltip>
+                                    )}
+                                    {userType === 'STUDENT' && !isEnrolled && (
+                                      <Tooltip title="Enroll to access">
+                                        <Chip size="small" label="Locked" sx={{ ml: 1 }} />
                                       </Tooltip>
                                     )}
                                   </Box>
@@ -391,12 +573,12 @@ const CourseView = () => {
                   <ListItem key={student.id || idx}>
                     <ListItemAvatar>
                       <Avatar src={student.avatarUrl || undefined}>
-                        {student.name ? student.name[0] : "S"}
+                        {student.studentName ? student.studentName : "S"}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={student.name || student.email || "Student"}
-                      secondary={student.email}
+                      primary={student.studentName || student.studentEmail || "Student"}
+                      secondary={student.studentEmail}
                     />
                   </ListItem>
                 ))}
