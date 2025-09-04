@@ -44,8 +44,8 @@ import {
     IconAward,  // for Quiz & Tests 
         // ... other icons
         IconListDetails, 
-        IconDeviceGamepad,     IconFileDescription // New icon for Document Hub
-
+        IconDeviceGamepad,     IconFileDescription,
+IconBellRinging 
 } from '@tabler/icons-react'; // Moved imports here for better organization
 
 // constant
@@ -73,7 +73,8 @@ const icons = {
     IconAward,  // for Quiz & Tests 
         // ... other icons
         IconListDetails, 
-        IconDeviceGamepad,     IconFileDescription // New icon for Document Hub
+        IconDeviceGamepad,     IconFileDescription,
+        IconBellRinging  // New icon for Document Hub
 
 };
 
@@ -334,6 +335,14 @@ const rawUtilities = {
             type: 'item',
             url: '/masters/document-hub',
             icon: icons.IconFileDescription,
+            breadcrumbs: false
+        },
+        {
+            id: 'FEE_MANAGEMENT',
+            title: 'Notifications',
+            type: 'item',
+            url: '/masters/notifications',
+            icon: icons.IconBellRinging,
             breadcrumbs: false
         },
         // IconBook2, // for LMS

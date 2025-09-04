@@ -1,10 +1,6 @@
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-// --- Helper Function for Local Storage ---
-/**
- * Safely retrieves and parses the authentication data from localStorage.
- */
 const getAuthData = () => {
   try {
     const authDataString = localStorage.getItem('SCM-AUTH');

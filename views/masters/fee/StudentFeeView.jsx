@@ -39,6 +39,7 @@ import FeeCard from './components/FeeCard';
 import PaymentModal from './components/PaymentModal';
 import FeeReceiptModal from './components/FeeReceiptModal';
 import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 
 const StudentFeeView = () => {
   const [studentInfo, setStudentInfo] = useState({});
@@ -51,19 +52,23 @@ const StudentFeeView = () => {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const user = useSelector((state) => state.user);
+  const viewer = useSelector(state => state.user.user?.data) || useSelector(state => state.user.user);
+  const { studentId: paramStudentId } = useParams();
+  const isTeacher = (viewer?.type || '').toUpperCase() === 'TEACHER';
+  const targetStudentId = (isTeacher && paramStudentId) ? paramStudentId : viewer?.id;
+
   useEffect(() => {
     fetchStudentData();
-  }, []);
+  }, [targetStudentId]);
 
   const fetchStudentData = async () => {
     try {
       setLoading(true);
-      // Get student info from current user context
+      // Determine student context based on viewer role/route param
       const [feesRes, historyRes, studentRes] = await Promise.all([
-        api.get(`/api/student/fees/${user?.user?.id}`),
-        api.get(`/api/student/fees/${user?.user?.id}/history`),
-        api.get(`/api/users/getById?id=${user?.user?.id}`)
+        api.get(`/api/student/fees/${targetStudentId}`),
+        api.get(`/api/student/fees/${targetStudentId}/history`),
+        api.get(`/api/users/getById?id=${targetStudentId}`)
       ]);
       
       setFees(feesRes?.data?.feeStatus || []);

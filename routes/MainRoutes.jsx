@@ -92,11 +92,14 @@ const StudentExamResult = Loadable(lazy(() => import('views/masters/exam/Student
 // Fee routing
 const FeeDashboard = Loadable(lazy(() => import('views/masters/fee/index')));
 const StudentFeeView = Loadable(lazy(() => import('views/masters/fee/StudentFeeView')));
+const FeeDetailView = Loadable(lazy(() => import('views/masters/fee/FeeDetailView')));
 
 const AuditLogList = Loadable(lazy(() => import('views/masters/profile/AuditLogList')));
 
 const DocumentList = Loadable(lazy(() => import('../views/masters/documentHub/DocumentList')));
 const DocumentUpload = Loadable(lazy(() => import('../views/masters/documentHub/DocumentUpload')));
+
+const NotificationModule = Loadable(lazy(() => import('../views/masters/notifications/NotificationModule')));
 
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
@@ -402,16 +405,30 @@ const getMainRoutes = (permissions = []) => ({
           path: 'fees',
           element: <FeeDashboard />
         },
+        hasPermission(permissions, 'FEE_MANAGEMENT', 'view') && {
+          path: 'fees/view/:id',
+          element: <FeeDetailView />
+        },
         {
           path: 'student/fees',
           element: <StudentFeeView />
         },
-        // NEW AUDIT LOG ROUTE
+        {
+          path: 'student/fees/:studentId',
+          element: <StudentFeeView />
+        },
+          {
+          path: 'notifications',
+          element: <NotificationModule />
+        },
+        // NE
+        // W AUDIT LOG ROUTE
         hasPermission(permissions, 'AUDIT_LOG', 'view') && 
         {
             path: 'audit-log',
             element: <AuditLogList />
-        }
+        },
+       
 
 
       ]

@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import Loadable from 'ui-component/Loadable';
 
 // project imports
-const AdminDashboard = Loadable(lazy(() => import('./AdminDashboard')));
+const AdminDashboard = Loadable(lazy(() => import('./adminDashboard/index')));
 const TeacherDashboard = Loadable(lazy(() => import('./teacherDashboard/TeacherDashboard')));
 const StudentDashboardV1 = Loadable(lazy(() => import('./studentDashboard/StudentDashboardV1')));
 
@@ -17,8 +17,9 @@ const DashboardDefault = () => {
     case 'STUDENT':
       return <StudentDashboardV1 />;
     case 'TEACHER':
-      return <TeacherDashboard />;
+      return <AdminDashboard />;
     case 'ADMIN':
+      return <AdminDashboard />;
     default:
       return <AdminDashboard />;
   }

@@ -25,8 +25,7 @@ import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { gridSpacing } from 'store/constant';
 import api from 'utils/apiService';
 import { useSelector } from 'react-redux';
-import FeeStructureForm from './components/FeeStructureForm';
-
+import FeeStructureForm from 'views/masters/fee/components/FeeStructureForm';
 const FeeDashboard = () => {
   const navigate = useNavigate(); 
   const [schools, setSchools] = useState([]);
@@ -361,28 +360,7 @@ const FeeDashboard = () => {
           </Card>
         </Grid>
       </Grid>
-      
-      <ReusableDataGrid
-        title="Fee Structures"
-        fetchUrl={`/api/admin/fees/foreach/summary/v1/${user?.user?.accountId}`}
-        columns={columns}
-        entityName="FEE_MANAGEMENT"
-        customActions={customActions}
-        customActionsHeader={customActionsHeader}
-        requestMethod="POST"
-        sendBodyOnGet={false}
-        enableFilters={true}
-        showSchoolFilter={true}
-        showClassFilter={true}
-        showDivisionFilter={true}
-        showSearch={true}
-        showRefresh={true}
-        filters={{ schoolId: selectedSchool, classId: selectedClass, divisionId: selectedDivision, fromYear, toYear }}
-        transformData={(resp) => resp}
-        getRowId={(row) => row.id || row.feeId || row.feeName}
-      />
-      
-      {/* Fee Structure Create/Edit */}
+          {/* Fee Structure Create/Edit */}
       <FeeStructureForm
         open={openSetupModal}
         onClose={() => setOpenSetupModal(false)}
@@ -390,7 +368,7 @@ const FeeDashboard = () => {
         feeStructureId={editFeeId}
       />
     </Box>
-  );
+      );
 };
 
 export default FeeDashboard;

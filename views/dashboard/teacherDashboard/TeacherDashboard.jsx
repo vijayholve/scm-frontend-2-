@@ -1,79 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography, List, ListItem, ListItemText, Button } from '@mui/material';
-// import api from '../../../api'; 
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import api, { userDetails } from 'utils/apiService';
+import TeacherTimetableCard from './TeacherTimetableCard';
+import TeacherAssignmentChart from './TeacherAssignmentChart';
+import TeacherQuickActionsCard from './TeacherQuickActionsCard';
+// import TeacherSummaryCard from './TeacherSummaryCard';
 
 
 const TeacherDashboard = () => {
-  const { user } = useSelector((state) => state.user);
-  const [dashboardData, setDashboardData] = useState({
-    courses: [],
-    recentSubmissions: [],
-  });
+  const { user } = useSelector((state) => state.user);
+  const [dashboardData, setDashboardData] = useState({
+    courses: [],
+    recentSubmissions: [],
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get(`/dashboard/teacher/${user.id}`);
-        setDashboardData(response.data);
-      } catch (error) {
-        console.error("Error fetching teacher dashboard data:", error);
-      }
-    };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get(`/dashboard/teacher/${user.id}`);
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error("Error fetching teacher dashboard data:", error);
+      }
+    };
 
-    if (user && user.id) {
-      fetchData();
-    }
-  }, [user]);
+    if (user && user.id) {
+      fetchData();
+    }
+  }, [user]);
 
-  return (
-    <Grid container spacing={3}>
-      {/* My Courses */}
-      <Grid item xs={12} md={6}>
-        <Card>
-          <CardContent>
-            <Typography variant="h5" component="div" sx={{ mb: 2 }}>
-              My Courses
-            </Typography>
-            <List>
-              {dashboardData.courses.map((course) => (
-                <ListItem key={course.id} secondaryAction={
-                  <Button component={Link} to={`/courses/${course.id}`} variant="outlined">
-                    View
-                  </Button>
-                }>
-                  <ListItemText primary={course.name} secondary={`${course.studentCount} students`} />
-                </ListItem>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
+  return (
+    <Grid container spacing={3}>
+      {/* Top row with three cards */}
+      <Grid item xs={12} sm={12} md={6} >
+        <TeacherTimetableCard />
+      </Grid>
+      <Grid item xs={12} sm={12} md={6} >
+        <TeacherQuickActionsCard />
+      </Grid>
+      <Grid item xs={12} sm={12} md={6} >
+          <TeacherAssignmentChart />
+      </Grid>
+      {/* Bottom section with summary values */}
+      <Grid item xs={12}>
+        {/* <TeacherSummaryCard /> */}
+        
       </Grid>
-
-      {/* Recent Submissions */}
-      <Grid item xs={12} md={6}>
-        <Card>
-          <CardContent>
-            <Typography variant="h5" component="div" sx={{ mb: 2 }}>
-              Recent Submissions
-            </Typography>
-            <List>
-              {dashboardData.recentSubmissions.map((submission) => (
-                <ListItem key={submission.id}>
-                  <ListItemText
-                    primary={`${submission.studentName} - ${submission.assignmentTitle}`}
-                    secondary={`Submitted on: ${new Date(submission.submissionDate).toLocaleDateString()}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
+    </Grid>
+  );
 };
 
 export default TeacherDashboard;

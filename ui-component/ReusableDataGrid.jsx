@@ -72,6 +72,8 @@ const ReusableDataGrid = ({
   filters = {},
   data: clientSideData = [],
   isPostRequest = true,
+  requestMethod = 'POST',
+  sendBodyOnGet = false,
   entityName,
   customActionsHeader = [],
   searchPlaceholder = 'Search...',
@@ -95,7 +97,8 @@ const ReusableDataGrid = ({
   showClassFilter = false,
   showDivisionFilter = false,
   enableFilters = false ,
-customActions =[]
+customActions =[],
+  getRowId: getRowIdProp = (row) => row.id
   
 }) => {
   const navigate = useNavigate();
@@ -147,7 +150,8 @@ customActions =[]
     setLoading(true);
     try {
       let response;
-      if (isPostRequest) {
+      const method = (requestMethod || (isPostRequest ? 'POST' : 'GET')).toUpperCase();
+      if (method === 'POST') {
         const payload = {
           page: paginationModel.page,
           size: paginationModel.pageSize,
@@ -158,13 +162,25 @@ customActions =[]
         };
         response = await api.post(fetchUrl, payload);
       } else {
-        const queryParams = new URLSearchParams({
+        const payload = {
           page: paginationModel.page,
           size: paginationModel.pageSize,
+          sortBy: 'id',
+          sortDir: 'asc',
           search: searchText ,
           ...latestFilters.current
-        });
-        response = await api.get(`${fetchUrl}?${queryParams}`);
+        };
+        if (sendBodyOnGet) {
+          response = await api.get(fetchUrl, { data: payload });
+        } else {
+          const queryParams = new URLSearchParams({
+            page: paginationModel.page,
+            size: paginationModel.pageSize,
+            search: searchText ,
+            ...latestFilters.current
+          });
+          response = await api.get(`${fetchUrl}?${queryParams}`);
+        }
       }
 
       const responseData = response.data.content || response.data || [];
@@ -448,7 +464,7 @@ const handleSearchChange = (event) => {
               paginationModel={paginationModel}
               onPaginationModelChange={setPaginationModel}
               paginationMode={fetchUrl ? 'server' : 'client'}
-              getRowId={(row) => row.id}
+              getRowId={getRowIdProp}
               onRowClick={onRowClick || handleRowClick}
               selectionModel={selectionModel}
               onSelectionModelChange={onSelectionModelChange}
