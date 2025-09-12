@@ -1,271 +1,313 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Box,
-    Button,
-    FormControl,
-    FormHelperText,
-    Grid,
-    InputLabel,
-    Select,
-    MenuItem,
-    TextField,
-    Typography,
-    Autocomplete,
-    Input
+    Box,
+    Button,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Select,
+    TextField,
+    Typography,
+    Autocomplete,
+    Card,
+    CardContent,
+    Chip
 } from '@mui/material';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { toast } from 'react-hot-toast';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MainCard from 'ui-component/cards/MainCard';
-import SaveButton from 'layout/MainLayout/Button/SaveButton';
-import BackButton from 'layout/MainLayout/Button/BackButton';
-import api, { userDetails } from 'utils/apiService';
 import { gridSpacing } from 'store/constant';
+import api, { userDetails } from 'utils/apiService';
+import { toast } from 'react-toastify';
 
-const userTypes = ['ALL', 'ADMIN', 'TEACHER', 'STUDENT'];
+const MAX_FILE_MB = 5;
 
-// Define a maximum file size, for example, 5MB
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const DocumentUpload = () => {
+    const navigate = useNavigate();
+    const accountId = userDetails.getAccountId();
 
-const DocumentUpload = ({ ...others }) => {
-    const navigate = useNavigate();
-    const accountId = userDetails.getAccountId();
-    const [schools, setSchools] = useState([]);
-    const [classes, setClasses] = useState([]);
-    const [divisions, setDivisions] = useState([]);
-    
+    const [loading, setLoading] = useState(false);
+    const [schools, setSchools] = useState([]);
+    const [classes, setClasses] = useState([]);
+    const [divisions, setDivisions] = useState([]);
 
-    useEffect(() => {
-        const fetchAllData = async () => {
-            try {
-                const schoolsRes = await api.get(`/api/schoolBranches/getAllBy/${accountId}`);
-                setSchools(schoolsRes.data || []);
+    const [schoolId, setSchoolId] = useState('');
+    const [classId, setClassId] = useState('');
+    const [divisionId, setDivisionId] = useState('');
+    const [schoolName, setSchoolName] = useState('');
+    const [className, setClassName] = useState('');
+    const [divisionName, setDivisionName] = useState('');
+    const [userType, setUserType] = useState('ALL');
+    const [documentName, setDocumentName] = useState('');
+    const [file, setFile] = useState(null);
+    const [fileNameText, setFileNameText] = useState('');
 
-                const classesRes = await api.get(`/api/schoolClasses/getAllBy/${accountId}`);
-                setClasses(classesRes.data || []);
+    const filteredClasses = useMemo(() => {
+        if (!schoolId) return classes;
+        return classes.filter((c) => String(c.schoolbranchId) === String(schoolId));
+    }, [classes, schoolId]);
 
-                const divisionsRes = await api.get(`/api/divisions/getAllBy/${accountId}`);
-                setDivisions(divisionsRes.data || []);
-            } catch (error) {
-                console.error('Failed to fetch school/class/division data:', error);
-                toast.error('Failed to load school/class/division data.');
-            }
-        };
-        fetchAllData();
-    }, [accountId]);
 
-    const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-        setSubmitting(true);
-        const formData = new FormData();
-        formData.append('file', values.file);
-        formData.append('userType', values.userType);
-        formData.append('schoolId', values.schoolId);
-        if (values.classId) formData.append('classId', values.classId);
-        if (values.divisionId) formData.append('divisionId', values.divisionId);
+    useEffect(() => {
+        const fetchDropdowns = async () => {
+            try {
+                const [schoolsResp, classesResp, divisionsResp] = await Promise.all([
+                    api.get(`/api/schoolBranches/getAllBy/${accountId}`),
+                    api.get(`/api/schoolClasses/getAllBy/${accountId}`),
+                    api.get(`/api/divisions/getAllBy/${accountId}`)
+                ]);
 
-        try {
-            await api.post(`/api/documents/upload/${accountId}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            toast.success('Document uploaded successfully!');
-            resetForm();
-            navigate('/masters/document-hub');
-        } catch (error) {
-            console.error('Failed to upload document:', error);
-            if (error.response && error.response.status === 413) {
-              toast.error('Upload failed: File is too large. Please select a smaller file.');
-            } else {
-              toast.error('Failed to upload document. Please try again.');
-            }
-        } finally {
-            setSubmitting(false);
-        }
-    };
+                setSchools(Array.isArray(schoolsResp.data) ? schoolsResp.data : []);
+                setClasses(Array.isArray(classesResp.data) ? classesResp.data : []);
+                setDivisions(Array.isArray(divisionsResp.data) ? divisionsResp.data : []);
+            } catch (e) {
+                toast.error('Failed to load dropdown data');
+            }
+        };
+        fetchDropdowns();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [accountId]);
 
-    return (
-        <MainCard title="Upload Document">
-            <Formik
-                initialValues={{
-                    file: null,
-                    userType: 'ALL',
-                    schoolId: '',
-                    classId: '',
-                    divisionId: '',
-                    schoolName: '',
-                    className: '',
-                    divisionName: '',
-                }}
-                validationSchema={Yup.object().shape({
-                    file: Yup.mixed()
-                        .test('required', 'A file is required', (value) => value)
-                        .test('fileSize', 'File is too large (max 5MB)', (value) => value && value.size <= MAX_FILE_SIZE)
-                        .required('A file is required'),
-                    userType: Yup.string().required('User type is required'),
-                    schoolId: Yup.string().required('School is required'),
-                    classId: Yup.string().when('userType', {
-                        is: val => val === 'STUDENT',
-                        then: schema => schema.required('Class is required for students'),
-                        otherwise: schema => schema.notRequired().nullable(),
-                    }),
-                    divisionId: Yup.string().when('userType', {
-                        is: val => val === 'STUDENT',
-                        then: schema => schema.required('Division is required for students'),
-                        otherwise: schema => schema.notRequired().nullable(),
-                    }),
-                })}
-                onSubmit={handleSubmit}
-            >
-                {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values, setFieldValue }) => (
-                    <form noValidate onSubmit={handleSubmit} {...others}>
-                        <Grid container spacing={gridSpacing}>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth error={Boolean(touched.schoolId && errors.schoolId)}>
-                                    <InputLabel>School</InputLabel>
-                                    <Select
-                                        value={values.schoolId}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            setFieldValue('schoolName', e.target.value);
-                                            setFieldValue('classId', '');
-                                            setFieldValue('divisionId', '');
-                                        }}
-                                        onBlur={handleBlur}
-                                        name="schoolId"
-                                        label="School"
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select a School</em>
-                                        </MenuItem>
-                                        {schools.map((school) => (
-                                            <MenuItem key={school.id} value={school.id}>
-                                                {school.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {touched.schoolId && errors.schoolId && <FormHelperText>{errors.schoolId}</FormHelperText>}
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth error={Boolean(touched.userType && errors.userType)}>
-                                    <InputLabel>Visible To</InputLabel>
-                                    <Select
-                                        value={values.userType}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            if (e.target.value !== 'STUDENT') {
-                                                setFieldValue('classId', '');
-                                                setFieldValue('divisionId', '');
-                                            }
-                                        }}
-                                        onBlur={handleBlur}
-                                        name="userType"
-                                        label="Visible To"
-                                    >
-                                        {userTypes.map((type) => (
-                                            <MenuItem key={type} value={type}>
-                                                {type}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {touched.userType && errors.userType && <FormHelperText>{errors.userType}</FormHelperText>}
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth error={Boolean(touched.classId && errors.classId)}>
-                                    <InputLabel>Class</InputLabel>
-                                    <Select
-                                        value={values.classId}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            setFieldValue('className', e.target.value);
-                                            setFieldValue('divisionId', '');
-                                        }}
-                                        onBlur={handleBlur}
-                                        name="classId"
-                                        label="Class"
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select a Class</em>
-                                        </MenuItem>
-                                        {classes.map((cls) => (
-                                            <MenuItem key={cls.id} value={cls.id}>
-                                                {cls.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {touched.classId && errors.classId && <FormHelperText>{errors.classId}</FormHelperText>}
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth error={Boolean(touched.divisionId && errors.divisionId)}>
-                                    <InputLabel>Division</InputLabel>
-                                    <Select
-                                        value={values.divisionId}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            setFieldValue('divisionName', e.target.value);
-                                        }}
-                                        onBlur={handleBlur}
-                                        name="divisionId"
-                                        label="Division"
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select a Division</em>
-                                        </MenuItem>
-                                        {divisions.map((division) => (
-                                            <MenuItem key={division.id} value={division.id}>
-                                                {division.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {touched.divisionId && errors.divisionId && <FormHelperText>{errors.divisionId}</FormHelperText>}
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth error={Boolean(touched.file && errors.file)}>
-                                    <InputLabel htmlFor="document-upload-file">Select File</InputLabel>
-                                    <Input
-                                        id="document-upload-file"
-                                        type="file"
-                                        onChange={(event) => {
-                                            setFieldValue('file', event.currentTarget.files[0]);
-                                        }}
-                                        onBlur={handleBlur}
-                                        inputProps={{ accept: "application/pdf, .doc, .docx, .xlsx" }}
-                                        sx={{ display: 'none' }}
-                                    />
-                                    <label htmlFor="document-upload-file">
-                                        <TextField
-                                            fullWidth
-                                            label="Select File"
-                                            value={values.file ? values.file.name : ''}
-                                            InputProps={{ readOnly: true }}
-                                            error={Boolean(touched.file && errors.file)}
-                                            helperText={touched.file && errors.file ? errors.file : 'Select a document to upload (max 5MB)'}
-                                        />
-                                    </label>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-                                    <BackButton backUrl="/masters/document-hub" />
-                                    <SaveButton
-                                        title="Upload"
-                                        isSubmitting={isSubmitting}
-                                        onClick={handleSubmit}
-                                        disabled={isSubmitting || !values.file || !!errors.file}
-                                    />
-                                </Box>
-                        </Grid>
-                    </Grid>
-                    </form>
-                )}
-            </Formik>
-        </MainCard>
-    );
+    useEffect(() => {
+        // Clear dependent fields when parent changes
+        setClassId('');
+        setClassName('');
+        setDivisionId('');
+        setDivisionName('');
+    }, [schoolId]);
+
+
+    const handleFileChange = (event) => {
+        const selected = event.target.files && event.target.files[0];
+        if (!selected) return;
+        const sizeMb = selected.size / (1024 * 1024);
+        if (sizeMb > MAX_FILE_MB) {
+            toast.error(`File too large. Max ${MAX_FILE_MB}MB allowed.`);
+            return;
+        }
+        setFile(selected);
+        setFileNameText(selected.name);
+    };
+
+    const validate = () => {
+        if (!schoolId) {
+            toast.error('Please select a school');
+            return false;
+        }
+        if (!file) {
+            toast.error('Please select a file');
+            return false;
+        }
+        return true;
+    };
+
+    const buildDocumentPayload = () => {
+        return {
+            accountId: Number(accountId),
+            schoolId: schoolId ? Number(schoolId) : null,
+            schoolName: schoolName || null,
+            classId: classId ? Number(classId) : null,
+            className: className || null,
+            divisionId: divisionId ? Number(divisionId) : null,
+            divisionName: divisionName || null,
+            userType: userType || 'ALL',
+            documentName: documentName || (file ? file.name : undefined)
+        };
+    };
+
+    const resetForm = () => {
+        setSchoolId('');
+        setClassId('');
+        setDivisionId('');
+        setUserType('ALL');
+        setDocumentName('');
+        setFile(null);
+        setFileNameText('');
+        setSchoolName('');
+        setClassName('');
+        setDivisionName('');
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!validate()) return;
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const payload = buildDocumentPayload();
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            formData.append('documentRequest', blob);
+
+            await api.post(`/api/documents/v1/upload/${accountId}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            toast.success('Document uploaded successfully');
+            resetForm();
+            navigate('/masters/document-hub');
+        } catch (error) {
+            // Fallback to non-v1 if backend expects requestPart name "document" not "documentRequest"
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                const payload = buildDocumentPayload();
+                const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                formData.append('document', blob);
+                await api.post(`/api/documents/v1/upload/${accountId}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                toast.success('Document uploaded successfully');
+                resetForm();
+                navigate('/masters/document-hub');
+            } catch (err2) {
+                toast.error('Failed to upload document');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <MainCard title="Upload Document">
+            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ p: { xs: 1, sm: 2 } }}>
+                <Grid container spacing={gridSpacing}>
+                    <Grid item xs={12} sm={6}>
+                        <Autocomplete
+                            disablePortal
+                            options={schools}
+                            getOptionLabel={(option) => option?.name || ''}
+                            value={schools.find((s) => String(s.id) === String(schoolId)) || null}
+                            onChange={(event, newValue) => {
+                                setSchoolId(newValue?.id || '');
+                                setSchoolName(newValue?.name || '');
+                            }}
+                            renderInput={(params) => (
+                                <TextField {...params} label="School *" />
+                            )}
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                        <Autocomplete
+                            disablePortal
+                            options={filteredClasses}
+                            getOptionLabel={(option) => option?.name || ''}
+                            value={filteredClasses.find((c) => String(c.id) === String(classId)) || null}
+                            onChange={(event, newValue) => {
+                                setClassId(newValue?.id || '');
+                                setClassName(newValue?.name || '');
+                            }}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Class" />
+                            )}
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                        <Autocomplete
+                            disablePortal
+                            options={divisions}
+                            getOptionLabel={(option) => option?.name || ''}
+                            value={divisions.find((d) => String(d.id) === String(divisionId)) || null}
+                            onChange={(event, newValue) => {
+                                setDivisionId(newValue?.id || '');
+                                setDivisionName(newValue?.name || '');
+                            }}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Division" />
+                            )}
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                        <FormControl fullWidth>
+                            <InputLabel id="usertype-select-label">Visible To</InputLabel>
+                            <Select
+                                labelId="usertype-select-label"
+                                label="Visible To"
+                                value={userType}
+                                onChange={(e) => setUserType(e.target.value)}
+                            >
+                                <MenuItem value="ALL">ALL</MenuItem>
+                                <MenuItem value="TEACHER">TEACHER</MenuItem>
+                                <MenuItem value="STUDENT">STUDENT</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            label="Document Name (optional)"
+                            value={documentName}
+                            onChange={(e) => setDocumentName(e.target.value)}
+                        />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <Card
+                            sx={{
+                                border: '2px dashed #2196F3',
+                                borderRadius: '8px',
+                                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    borderColor: '#1976D2',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 8px rgba(33, 150, 243, 0.2)'
+                                }
+                            }}
+                        >
+                            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                                <input
+                                    type="file"
+                                    name="file"
+                                    id="doc-upload-file"
+                                    onChange={handleFileChange}
+                                    style={{ display: 'none' }}
+                                />
+                                <label htmlFor="doc-upload-file">
+                                    <Box sx={{ cursor: 'pointer' }}>
+                                        <CloudUploadIcon sx={{ fontSize: 48, color: '#2196F3', mb: 1 }} />
+                                        <Typography variant="h6" sx={{ color: '#1976D2', fontWeight: 600 }}>
+                                            📁 Upload Document File
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Click to select file or drag & drop (Max {MAX_FILE_MB}MB)
+                                        </Typography>
+                                        {fileNameText && (
+                                            <Chip
+                                                label={`📎 ${fileNameText}`}
+                                                color="primary"
+                                                variant="outlined"
+                                                sx={{ mt: 2 }}
+                                            />
+                                        )}
+                                    </Box>
+                                </label>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            startIcon={<CloudUploadIcon />}
+                            disabled={loading}
+                        >
+                            {loading ? 'Uploading...' : 'Upload'}
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Box>
+        </MainCard>
+    );
 };
 
 export default DocumentUpload;

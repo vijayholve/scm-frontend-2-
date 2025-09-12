@@ -30,7 +30,7 @@ const NotificationList = ({ notifications, onDelete }) => {
         hasPermission(permissions, 'NOTIFICATION', 'add') && (
           <SecondaryAction
             icon={<AddIcon />}
-            link="/masters/notifications/add"
+            link="/masters/notifications"
             title="Create New Notification"
           />
         )

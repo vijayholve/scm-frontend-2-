@@ -1,3 +1,4 @@
+// src/views/masters/profile/index.jsx
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -21,30 +22,35 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import Grid from '@mui/material/Grid';
 
 // assets
 import {
     IconLogout,
-    IconCreditCard, // For ID Card icon
+    IconCreditCard,
     IconArrowLeft,
-    IconCalendar,
     IconFile,
-    IconBriefcase, // For Tasks/Activity
-    IconLock, // For password change
+    IconLock,
     IconEye,
-    IconEyeOff
+    IconEyeOff,
+    IconFileText,
+    IconAward,
+    IconHome,
+    IconReceipt2
 } from '@tabler/icons-react';
 
 // project imports
-import { userDetails } from 'utils/apiService'; // Using direct alias import
-import ProfileHeader from 'ui-component/UserProfile/ProfileHeader'; // Assuming 'components' is also a root alias or direct path
-import UserDetailsSection from 'ui-component/UserProfile/UserDetailsSection'; // Using direct alias import
-import ActivitySection from 'ui-component/UserProfile/ActivitySection'; // Using direct alias import
-import CollaborationSection from 'ui-component/UserProfile/CollaborationSection'; // Using direct alias import
-import IDCardDisplay from 'ui-component/UserProfile/IDCardDisplay'; // Using direct alias import
+import { userDetails } from 'utils/apiService';
+import ProfileHeader from 'ui-component/UserProfile/ProfileHeader';
+import UserDetailsSection from 'ui-component/UserProfile/UserDetailsSection';
+import ActivitySection from 'ui-component/UserProfile/ActivitySection';
+import CollaborationSection from 'ui-component/UserProfile/CollaborationSection';
+import IDCardDisplay from 'ui-component/UserProfile/IDCardDisplay';
 
-
-// ==============================|| USER PROFILE PAGE ||============================== //
+// New components for student profile
+import StudentFeeDetails from './StudentFeeDetails';
+import StudentExamsList from './StudentExamsList';
+import MyDocuments from './MyDocuments';
 
 const UserProfile = () => {
     const theme = useTheme();
@@ -52,7 +58,9 @@ const UserProfile = () => {
     const navigate = useNavigate();
 
     const user = userDetails.getUser();
-    const [showIdCard, setShowIdCard] = useState(false); // State to control ID card visibility
+    const userRole = user?.type?.toUpperCase();
+
+    const [activeTab, setActiveTab] = useState('profile');
     const [openPasswordModal, setOpenPasswordModal] = useState(false);
     const [passwords, setPasswords] = useState({
         username: '',
@@ -66,7 +74,6 @@ const UserProfile = () => {
     const handleLogout = () => {
         localStorage.removeItem('SCM-AUTH');
         navigate('/login');
-        console.log('User Logged Out');
     };
 
     const handleBack = () => {
@@ -79,7 +86,6 @@ const UserProfile = () => {
             return;
         }
 
-        // TODO: Implement actual API call here
         console.log('Changing password for user:', user.userName);
         console.log('Old Password:', passwords.username);
         console.log('New Password:', passwords.newPassword);
@@ -88,36 +94,35 @@ const UserProfile = () => {
         setOpenPasswordModal(false);
         setPasswords({ username: '', newPassword: '', confirmNewPassword: '' });
     };
+    
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'profile':
+                return (
+                    <>
+                        <UserDetailsSection user={user} />
+                        {userRole === 'STUDENT' && (
+                            <Box sx={{ mt: 4 }}>
+                                <StudentFeeDetails studentId={user.id} />
+                            </Box>
+                        )}
+                        <ActivitySection user={user} />
+                        <CollaborationSection user={user} />
+                    </>
+                );
+            case 'id-card':
+                return <IDCardDisplay user={user} />;
+            case 'my-exams':
+                return <StudentExamsList studentId={user.id} />;
+            case 'my-documents':
+                return <MyDocuments />;
+            default:
+                return <Typography>Content not found.</Typography>;
+        }
+    };
 
     return (
         <>
-            {/* Global Print Styles */}
-            <style>
-                {`
-                @media print {
-                    body > *:not(.id-card-to-print) {
-                        display: none !important;
-                    }
-                    .id-card-to-print {
-                        display: block !important;
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                        height: 100%;
-                        margin: 0;
-                        padding: 0;
-                        box-shadow: none;
-                        border: none;
-                    }
-                    /* Hide the print button when printing */
-                    .id-card-to-print + div button {
-                        display: none !important;
-                    }
-                }
-                `}
-            </style>
-
             <Box
                 sx={{
                     display: 'flex',
@@ -147,40 +152,37 @@ const UserProfile = () => {
                         }
                     }}
                 >
-                    {/* Profile Header (extracted component) */}
                     <ProfileHeader user={user} onBack={handleBack} />
-
                     <Divider sx={{ width: '100%', mb: 3 }} />
-
-                    {/* Navigation Links */}
                     <List component="nav" sx={{ width: '100%' }}>
-                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setShowIdCard(false)}>
+                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('profile')}>
+                            <ListItemIcon>
+                                <IconHome stroke={1.5} size="1.3rem" />
+                            </ListItemIcon>
                             <ListItemText primary={<Typography variant="body1">Profile</Typography>} />
                         </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setShowIdCard(true)}>
+                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('id-card')}>
                             <ListItemIcon>
                                 <IconCreditCard stroke={1.5} size="1.3rem" />
                             </ListItemIcon>
                             <ListItemText primary={<Typography variant="body1">ID Card</Typography>} />
                         </ListItemButton>
-                        {/* <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }}>
-                            <ListItemIcon>
-                                <IconBriefcase stroke={1.5} size="1.3rem" />
-                            </ListItemIcon>
-                            <ListItemText primary={<Typography variant="body1">Tasks</Typography>} />
-                        </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }}>
-                            <ListItemI~con>
-                                <IconCalendar stroke={1.5} size="1.3rem" />
-                            </ListItemI~con>
-                            <ListItemText primary={<Typography variant="body1">Calendar</Typography>} />
-                        </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }}>
-                            <ListItemIcon>
-                                <IconFile stroke={1.5} size="1.3rem" />
-                            </ListItemIcon>
-                            <ListItemText primary={<Typography variant="body1">Files</Typography>} />
-                        </ListItemButton> */}
+                        {userRole === 'STUDENT' && (
+                            <>
+                                <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('my-exams')}>
+                                    <ListItemIcon>
+                                        <IconAward stroke={1.5} size="1.3rem" />
+                                    </ListItemIcon>
+                                    <ListItemText primary={<Typography variant="body1">My Exams</Typography>} />
+                                </ListItemButton>
+                                <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('my-documents')}>
+                                    <ListItemIcon>
+                                        <IconFileText stroke={1.5} size="1.3rem" />
+                                    </ListItemIcon>
+                                    <ListItemText primary={<Typography variant="body1">My Documents</Typography>} />
+                                </ListItemButton>
+                            </>
+                        )}
                         <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setOpenPasswordModal(true)}>
                             <ListItemIcon>
                                 <IconLock stroke={1.5} size="1.3rem" />
@@ -188,10 +190,7 @@ const UserProfile = () => {
                             <ListItemText primary={<Typography variant="body1">Change Password</Typography>} />
                         </ListItemButton>
                     </List>
-
                     <Divider sx={{ width: '100%', my: 3 }} />
-
-                    {/* Logout Button */}
                     <ListItemButton
                         sx={{
                             borderRadius: `${customization.borderRadius}px`,
@@ -225,22 +224,7 @@ const UserProfile = () => {
                             }
                         }}
                     >
-                        {/* Mobile Back Button (only visible on small screens) - now part of ProfileHeader */}
-                        {/* Conditional Rendering of Profile Details or ID Card */}
-                        {showIdCard ? (
-                            <IDCardDisplay user={user} />
-                        ) : (
-                            <>
-                                {/* User Details Section (extracted component) */}
-                                <UserDetailsSection user={user} />
-
-                                {/* "Nora spends most of their time on..." Section (extracted component) */}
-                                <ActivitySection user={user} />
-
-                                {/* "Works most with..." Section (extracted component) */}
-                                <CollaborationSection user={user} />
-                            </>
-                        )}
+                        {renderContent()}
                     </Paper>
                 </Box>
             </Box>
@@ -251,65 +235,62 @@ const UserProfile = () => {
                     <Typography variant="h4">Change Password for {user.userName}</Typography>
                 </DialogTitle>
                 <DialogContent dividers>
-                    <TextField
-                        fullWidth
-                        label="Old Password"
-                        type={showUsername ? 'text' : 'password'}
-                        value={passwords.username}
-                        onChange={(e) => setPasswords({ ...passwords, username: e.target.value })}
-                        sx={{ mb: 2 }}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton
-                                        onClick={() => setShowUsername(!showUsername)}
-                                        edge="end"
-                                    >
-                                        {showUsername ? <IconEye /> : <IconEyeOff />}
-                                    </IconButton>
-                                </InputAdornment>
-                            )
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="New Password"
-                        type={showNewPassword ? 'text' : 'password'}
-                        value={passwords.newPassword}
-                        onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                        sx={{ mb: 2 }}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton
-                                        onClick={() => setShowNewPassword(!showNewPassword)}
-                                        edge="end"
-                                    >
-                                        {showNewPassword ? <IconEye /> : <IconEyeOff />}
-                                    </IconButton>
-                                </InputAdornment>
-                            )
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="Confirm New Password"
-                        type={showConfirmNewPassword ? 'text' : 'password'}
-                        value={passwords.confirmNewPassword}
-                        onChange={(e) => setPasswords({ ...passwords, confirmNewPassword: e.target.value })}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton
-                                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                                        edge="end"
-                                    >
-                                        {showConfirmNewPassword ? <IconEye /> : <IconEyeOff />}
-                                    </IconButton>
-                                </InputAdornment>
-                            )
-                        }}
-                    />
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Old Password"
+                                type={showUsername ? 'text' : 'password'}
+                                value={passwords.username}
+                                onChange={(e) => setPasswords({ ...passwords, username: e.target.value })}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={() => setShowUsername(!showUsername)} edge="end">
+                                                {showUsername ? <IconEye /> : <IconEyeOff />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="New Password"
+                                type={showNewPassword ? 'text' : 'password'}
+                                value={passwords.newPassword}
+                                onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={() => setShowNewPassword(!showNewPassword)} edge="end">
+                                                {showNewPassword ? <IconEye /> : <IconEyeOff />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Confirm New Password"
+                                type={showConfirmNewPassword ? 'text' : 'password'}
+                                value={passwords.confirmNewPassword}
+                                onChange={(e) => setPasswords({ ...passwords, confirmNewPassword: e.target.value })}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)} edge="end">
+                                                {showConfirmNewPassword ? <IconEye /> : <IconEyeOff />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenPasswordModal(false)}>Cancel</Button>

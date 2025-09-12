@@ -7,6 +7,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
+import { useSelector } from 'react-redux';
 
 const columnsConfig = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -40,6 +41,9 @@ const Teachers = () => {
       }
     }
   ];
+    const user = useSelector((state) => state.user.user);
+    const userTypeForApi = user?.type === 'ADMIN' ? 'ADMIN' : 'TEACHER';
+
 
   return (
    
@@ -47,7 +51,7 @@ const Teachers = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
           title={"Teachers"}
-            fetchUrl={`/api/users/getAll/${accountId}?type=TEACHER`}
+            fetchUrl={`/api/users/getAll/${accountId}?type=${userTypeForApi}`}
             isPostRequest={true}
             columns={columnsConfig}
             editUrl="/masters/teacher/edit"

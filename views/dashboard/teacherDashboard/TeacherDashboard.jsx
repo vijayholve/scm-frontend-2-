@@ -10,46 +10,46 @@ import TeacherQuickActionsCard from './TeacherQuickActionsCard';
 
 
 const TeacherDashboard = () => {
-  const { user } = useSelector((state) => state.user);
-  const [dashboardData, setDashboardData] = useState({
-    courses: [],
-    recentSubmissions: [],
-  });
+  const { user } = useSelector((state) => state.user);
+  const [dashboardData, setDashboardData] = useState({
+    courses: [],
+    recentSubmissions: [],
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get(`/dashboard/teacher/${user.id}`);
-        setDashboardData(response.data);
-      } catch (error) {
-        console.error("Error fetching teacher dashboard data:", error);
-      }
-    };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get(`/dashboard/teacher/${user.id}`);
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error("Error fetching teacher dashboard data:", error);
+      }
+    };
 
-    if (user && user.id) {
-      fetchData();
-    }
-  }, [user]);
+    // � � if (user && user.id) {
+    // � � � fetchData();
+    // � � }
+  }, [user]);
 
-  return (
-    <Grid container spacing={3}>
-      {/* Top row with three cards */}
-      <Grid item xs={12} sm={12} md={6} >
-        <TeacherTimetableCard />
-      </Grid>
-      <Grid item xs={12} sm={12} md={6} >
-        <TeacherQuickActionsCard />
-      </Grid>
-      <Grid item xs={12} sm={12} md={6} >
-          <TeacherAssignmentChart />
-      </Grid>
+  return (
+    <Grid container spacing={3}>
+      {/* Top row with three cards */}
+      <Grid item xs={12} sm={12} md={6} >
+        <TeacherTimetableCard />
+      </Grid>
+      <Grid item xs={12} sm={12} md={6} >
+        <TeacherQuickActionsCard />
+      </Grid>
+      <Grid item xs={12} sm={12} md={6} >
+        <TeacherAssignmentChart />
+      </Grid>
       {/* Bottom section with summary values */}
       <Grid item xs={12}>
         {/* <TeacherSummaryCard /> */}
-        
+
       </Grid>
-    </Grid>
-  );
+    </Grid>
+  );
 };
 
 export default TeacherDashboard;

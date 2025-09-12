@@ -22,12 +22,14 @@ import { gridSpacing } from 'store/constant';
 import api, { userDetails } from '../../../utils/apiService';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import { toast } from 'react-hot-toast';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 const defaultActions = ["add", "edit", "view", "delete"];
 
 const RoleEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [loading, setLoading] = useState(false);
   const [role, setRole] = useState({
     id: null,
     name: "",
@@ -43,6 +45,8 @@ const RoleEdit = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+
         const [entitiesRes, schoolsRes] = await Promise.all([
           api.get(`api/features/getAllByAccountId/${accountId}`),
           api.get(`api/schoolBranches/getAllBy/${accountId}`)
@@ -52,12 +56,16 @@ const RoleEdit = () => {
         setSchools(schoolsRes.data || []);
 
         if (id) {
+          
           const roleRes = await api.get(`api/roles/getById?id=${id}`);
           setRole(roleRes.data);
         }
       } catch (err) {
         toast.error("Failed to fetch initial data.");
         console.error(err);
+      }
+      finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -124,6 +132,9 @@ const RoleEdit = () => {
       console.error(err);
     }
   };
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
+  }
 
   return (
     <MainCard title={role.id ? "Edit Role" : "Create Role"}>

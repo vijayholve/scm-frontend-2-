@@ -11,11 +11,13 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 import api, { userDetails } from '../../../utils/apiService';
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 const EditStudent = ({ ...others }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id: userId } = useParams();
+  const [loader, setLoader] = useState(false);
   const [teacherData, setTeacherData] = useState({
     userName: '',
     password: '',
@@ -32,7 +34,7 @@ const EditStudent = ({ ...others }) => {
   const [divisions, setDivisions] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedDivision, setSelectedDivision] = useState(null);
-  
+
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(5);
   const [rowCount, setRowCount] = useState(0);
@@ -49,14 +51,14 @@ const EditStudent = ({ ...others }) => {
   const fetchData = async (endpoint, setter) => {
     try {
       const pagination = {
-      page: page,
-      size: pageSize,
-      sortBy: "id",
-      sortDir: "asc",
-      search: ""
-    }
-      const response = await api.post(endpoint,pagination);
-      setter(response.data.content|| []);
+        page: page,
+        size: pageSize,
+        sortBy: 'id',
+        sortDir: 'asc',
+        search: ''
+      };
+      const response = await api.post(endpoint, pagination);
+      setter(response.data.content || []);
       console.log(`Fetched data from ${endpoint}:`, response.data.content);
       setRowCount(response.totalElements || 0);
       console.log(classes, divisions);
@@ -79,24 +81,33 @@ const EditStudent = ({ ...others }) => {
   }, []);
 
   const fetchStudentData = async (id) => {
+    setLoader(true);
     try {
       const response = await api.get(`api/users/getById?id=${id}`);
       setTeacherData(response.data);
     } catch (error) {
       console.error('Failed to fetch student data:', error);
+    } finally {
+      setLoader(false);
     }
   };
+  if (loader) {
+    return <ReusableLoader message="Loading Student..." />;
+  }
 
   const handleSubmit = async (values, { setSubmitting }) => {
-    const userData = { ...values, id: teacherData.id, type: 'STUDENT',accountId:userDetails.getAccountId(), status: 'active' };
+    const userData = { ...values, id: teacherData.id, type: 'STUDENT', accountId: userDetails.getAccountId(), status: 'active' };
     try {
       const response = await api.put(`api/users/update`, userData);
       setTeacherData(response.data);
       setSubmitting(false);
       console.log('User updated:', response.data);
-      toast.success("Student updated successfully", {autoClose: '500', onClose: () => {
-        navigate('/masters/students');
-      }})
+      toast.success('Student updated successfully', {
+        autoClose: '500',
+        onClose: () => {
+          navigate('/masters/students');
+        }
+      });
     } catch (error) {
       console.error('Failed to update teacher data:', error);
     }
@@ -260,8 +271,7 @@ const EditStudent = ({ ...others }) => {
                     Save
                   </Button>
                 </AnimateButton>
-                <BackButton/>
-
+                <BackButton />
               </Grid>
             </Grid>
           </form>

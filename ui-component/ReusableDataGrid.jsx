@@ -15,8 +15,7 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-      OutlinedInput,
-
+  OutlinedInput,
   ListItemText
 } from '@mui/material';
 import { styled } from '@mui/system';
@@ -26,14 +25,19 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { DataGrid } from '@mui/x-data-grid';
 import { toast } from 'react-hot-toast';
-import { Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon, MoreVert as MoreVertIcon ,  PersonAdd as PersonAddIcon
- } from '@mui/icons-material';
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Visibility as ViewIcon,
+  MoreVert as MoreVertIcon,
+  PersonAdd as PersonAddIcon
+} from '@mui/icons-material';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import api from 'utils/apiService';
+import api, { userDetails } from 'utils/apiService';
 import { hasPermission } from 'utils/permissionUtils';
 import { useSelector } from 'react-redux';
 import ListGridFilters from './ListGridFilters';
@@ -56,7 +60,7 @@ const HeaderSearchWrapper = styled(Box)({
   '@media (max-width: 600px)': {
     marginLeft: 0,
     marginTop: '16px',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   }
 });
 
@@ -96,23 +100,26 @@ const ReusableDataGrid = ({
   showSchoolFilter = false,
   showClassFilter = false,
   showDivisionFilter = false,
-  enableFilters = false ,
-customActions =[],
-  getRowId: getRowIdProp = (row) => row.id
-  
+  enableFilters = false,
+  customActions = [],
+  getRowId: getRowIdProp = (row) => row.id,
+  schoolNameMap = {},
+  classNameMap = {},
+  divisionNameMap = {}
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
-    // const [searchText, setSearchText] = useState(''); // Corrected variable name
+  // const [searchText, setSearchText] = useState(''); // Corrected variable name
 
   const [loading, setLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
   const [rowCount, setRowCount] = useState(0);
-  const [searchText , setSearchText ] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [gridFilters, setGridFilters] = useState(filters);
   const [gridData, setGridData] = useState([]);
+  const accountId = userDetails.getAccountId();
 
   // Use a ref to store the latest filters without triggering a re-render
   const latestFilters = useRef(gridFilters);
@@ -136,8 +143,8 @@ customActions =[],
         if (latestFilters.current.divisionId) {
           isMatch = isMatch && item.divisionId == latestFilters.current.divisionId;
         }
-        if (searchText ) {
-          isMatch = isMatch && JSON.stringify(item).toLowerCase().includes(searchText .toLowerCase());
+        if (searchText) {
+          isMatch = isMatch && JSON.stringify(item).toLowerCase().includes(searchText.toLowerCase());
         }
         return isMatch;
       });
@@ -157,7 +164,7 @@ customActions =[],
           size: paginationModel.pageSize,
           sortBy: 'id',
           sortDir: 'asc',
-          search: searchText ,
+          search: searchText,
           ...latestFilters.current
         };
         response = await api.post(fetchUrl, payload);
@@ -167,7 +174,7 @@ customActions =[],
           size: paginationModel.pageSize,
           sortBy: 'id',
           sortDir: 'asc',
-          search: searchText ,
+          search: searchText,
           ...latestFilters.current
         };
         if (sendBodyOnGet) {
@@ -176,7 +183,7 @@ customActions =[],
           const queryParams = new URLSearchParams({
             page: paginationModel.page,
             size: paginationModel.pageSize,
-            search: searchText ,
+            search: searchText,
             ...latestFilters.current
           });
           response = await api.get(`${fetchUrl}?${queryParams}`);
@@ -196,7 +203,7 @@ customActions =[],
     } finally {
       setLoading(false);
     }
-  }, [fetchUrl, isPostRequest, searchText , transformData, clientSideData, paginationModel, JSON.stringify(gridFilters)]);
+  }, [fetchUrl, isPostRequest, searchText, transformData, clientSideData, paginationModel, JSON.stringify(gridFilters)]);
 
   // Handle filter changes from ListGridFilters
   const handleFiltersChange = useCallback((newFilters) => {
@@ -206,16 +213,16 @@ customActions =[],
 
   useEffect(() => {
     fetchData();
-  }, [paginationModel.page,paginationModel.pageSize,searchText ,  gridFilters]);
-const handleSearchChange = (event) => {
-        const newSearchText = event.target.value;
-        setSearchText(newSearchText);
-    };
+  }, [paginationModel.page, paginationModel.pageSize, searchText, gridFilters]);
+  const handleSearchChange = (event) => {
+    const newSearchText = event.target.value;
+    setSearchText(newSearchText);
+  };
 
   const handleOnClickDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
-        await api.delete(`${deleteUrl}?id=${id}`);
+        await api.delete(`${deleteUrl}/${accountId}/${id}`);
         toast.success('Item deleted successfully!');
         fetchData();
       } catch (err) {
@@ -232,12 +239,12 @@ const handleSearchChange = (event) => {
     navigate(`${EnrollActionUrl}/${id}`);
   };
   const handleSearch = (event) => {
-    const newSearchText  = event.target.value;
-    setSearchText (newSearchText );
+    const newSearchText = event.target.value;
+    setSearchText(newSearchText);
   };
 
   const handleRefresh = () => {
-    setSearchText ('');
+    setSearchText('');
     setGridFilters(filters);
     setPaginationModel({ page: 0, pageSize: defaultPageSize });
   };
@@ -249,7 +256,7 @@ const handleSearchChange = (event) => {
     setSelectedRow(params.row);
   };
 
-  const hasActions = editUrl || deleteUrl || viewUrl || EnrollActionUrl || customActions.length> 0;
+  const hasActions = editUrl || deleteUrl || viewUrl || EnrollActionUrl || customActions.length > 0;
 
   const actionsColumn = hasActions
     ? {
@@ -259,7 +266,7 @@ const handleSearchChange = (event) => {
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-          const hasCustomActions = customActions.length > 0;
+          const hasCustomActions = customActions.length > 0;
 
           if (hasCustomActions) {
             return (
@@ -294,7 +301,6 @@ const handleSearchChange = (event) => {
                   <IconButton size="small" onClick={(event) => setAnchorEl(event.currentTarget)}>
                     <MoreVertIcon />
                   </IconButton>
-
                 )}
               </ActionWrapper>
             );
@@ -331,11 +337,10 @@ const handleSearchChange = (event) => {
                         transform: 'scale(1.1)'
                       }
                     }}
-
                   >
                     <PersonAddIcon />
                   </IconButton>
-                </Tooltip>  
+                </Tooltip>
               )}
               {editUrl && hasPermission(permissions, entityName, 'edit') && (
                 <Tooltip title="Edit">
@@ -376,17 +381,46 @@ const handleSearchChange = (event) => {
         }
       }
     : null;
+  // Function to get the correct name for a given ID
+  const getNameForId = (id, map) => map[id] || 'N/A';
 
-  const columns = hasActions ? [...propColumns, actionsColumn] : propColumns;
- const secondaryHeader = (
-        <Grid container spacing={2} alignItems="" padding={2} justifyContent="flex-end">
+  const processedColumns = propColumns.map((col) => {
+    // If a custom valueFormatter is already defined, don't override it
+    if (col.valueFormatter || col.renderCell) {
+      return col;
+    }
 
-          
-          {customActionsHeader && (
-              <Grid item>{customActionsHeader}</Grid>
-          )}
-        </Grid>
-    );
+    if (col.field === 'schoolId') {
+      return {
+        ...col,
+        valueFormatter: (params) => getNameForId(params.value, schoolNameMap),
+        headerName: col.headerName || 'School'
+      };
+    }
+    if (col.field === 'classId') {
+      return {
+        ...col,
+        valueFormatter: (params) => getNameForId(params.value, classNameMap),
+        headerName: col.headerName || 'Class'
+      };
+    }
+    if (col.field === 'divisionId') {
+      return {
+        ...col,
+        valueFormatter: (params) => getNameForId(params.value, divisionNameMap),
+        headerName: col.headerName || 'Division'
+      };
+    }
+
+    return col;
+  });
+
+  const columns = hasActions ? [...processedColumns, actionsColumn] : processedColumns;
+  const secondaryHeader = (
+    <Grid container spacing={2} alignItems="" padding={2} justifyContent="flex-end">
+      {customActionsHeader && <Grid item>{customActionsHeader}</Grid>}
+    </Grid>
+  );
   // Header content to be passed to MainCard's secondary prop
   const headerSearchControls = (
     <HeaderSearchWrapper>
@@ -394,7 +428,7 @@ const handleSearchChange = (event) => {
         <TextField
           size="small"
           placeholder={searchPlaceholder}
-          value={searchText }
+          value={searchText}
           onChange={handleSearch}
           InputProps={{
             startAdornment: (
@@ -412,34 +446,25 @@ const handleSearchChange = (event) => {
         </Button>
       )}
       {showFilters && Object.keys(gridFilters).length > 0 && (
-        <Chip
-          icon={<FilterListIcon />}
-          label={`${Object.keys(gridFilters).length} filters active`}
-          variant="outlined"
-          color="primary"
-        />
+        <Chip icon={<FilterListIcon />} label={`${Object.keys(gridFilters).length} filters active`} variant="outlined" color="primary" />
       )}
-      {addActionUrl && (
-        hasPermission(permissions, entityName, 'add') && 
-        <SecondaryAction icon={<AddIcon />} link={addActionUrl} />
-      )}
+      {addActionUrl && hasPermission(permissions, entityName, 'add') && <SecondaryAction icon={<AddIcon />} link={addActionUrl} />}
     </HeaderSearchWrapper>
   );
 
   return (
     <MainCard
-        title={
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' ,
-            flexWrap: 'wrap'
-          }}>
-              <Typography variant="h3" sx={{ flexGrow: 1 }}>{title}</Typography>
-              {headerSearchControls}
-          </Box>
-        }
-        secondary={secondaryHeader}
-        contentSX={{ p: 1 }} // Small padding to make space for filters
-      >
+      title={
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', flexWrap: 'wrap' }}>
+          <Typography variant="h3" sx={{ flexGrow: 1 }}>
+            {title}
+          </Typography>
+          {headerSearchControls}
+        </Box>
+      }
+      secondary={secondaryHeader}
+      contentSX={{ p: 1 }} // Small padding to make space for filters
+    >
       {customToolbar && customToolbar()}
 
       {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && (

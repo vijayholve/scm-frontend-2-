@@ -14,11 +14,13 @@ import api, { userDetails } from "../../../utils/apiService"
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 const EditDivision = ({ ...others }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id: divisionId } = useParams();
+  const [loading, setLoading] = useState(false);
   const [divisionData, setDivisionData] = useState({
     id:undefined,
     name: '',
@@ -35,11 +37,13 @@ const EditDivision = ({ ...others }) => {
 
   const fetchDivisionData = async (id) => {
     try {
+      setLoading(true);
       const response = await api.get(`api/divisions/getById?id=${id}`);
       setDivisionData(response.data);
     } catch (error) {
       console.error('Failed to fetch division data:', error);
     }
+    setLoading(false);
   };
 
   const handleSubmit = async (values, { setSubmitting }) => {
@@ -56,6 +60,11 @@ const EditDivision = ({ ...others }) => {
       console.error('Failed to update division data:', error);
     }
   };
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
+    // return <ReusableLoader>
+    //   message={divisionId ? "Loading Division data...":"Loading..."}></ReusableLoader>
+  }
 
   return (
     <MainCard title={Title} >

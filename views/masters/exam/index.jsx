@@ -17,7 +17,7 @@ const columnsConfig = [
   { field: 'schoolName', headerName: 'School', flex: 1 },
   { field: 'className', headerName: 'Class', flex: 1 },
   { field: 'divisionName', headerName: 'Division', flex: 1 },
-  { field: 'maxMarksOverall', headerName: 'Total Marks', width: 130 },
+  { field: 'maxMarksOverall', headerName: 'Total Mark', width: 130 },
   {
     field: 'startDate',
     headerName: 'Start Date',

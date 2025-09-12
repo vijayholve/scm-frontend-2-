@@ -13,6 +13,7 @@ import api, { userDetails } from "../../../utils/apiService";
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import SaveButton from 'layout/MainLayout/Button/SaveButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 // ==============================|| SCHOOL EDIT/ADD PAGE ||============================== //
 
@@ -35,6 +36,7 @@ const EditSchool = ({ ...others }) => {
     email: '',
     code: ''
   });
+  const [loading, setLoading] = useState(false);
 
   // State for the list of institutes to populate the dropdown
   const [institutes, setInstitutes] = useState([]);
@@ -68,6 +70,7 @@ const EditSchool = ({ ...others }) => {
     if (schoolId) {
       const fetchSchoolData = async (id) => {
         try {
+          setLoading(true);
           const response = await api.get(`/api/schoolBranches/getById?id=${id}`);
           if (response.data) {
             setSchoolData(response.data);
@@ -75,6 +78,9 @@ const EditSchool = ({ ...others }) => {
         } catch (error) {
           toast.error('Failed to fetch school data.');
           console.error('Failed to fetch school data:', error);
+        }
+        finally {
+          setLoading(false);
         }
       };
       fetchSchoolData(schoolId);
@@ -110,6 +116,9 @@ const EditSchool = ({ ...others }) => {
       console.error("Failed to save school data:", error);
     }
   };
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
+  }
 
   return (
     <MainCard title={Title}>

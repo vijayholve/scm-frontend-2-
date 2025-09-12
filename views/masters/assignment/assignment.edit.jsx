@@ -27,12 +27,13 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 import api, { userDetails } from "../../../utils/apiService"
 import { gridSpacing } from 'store/constant';
 import { useSelector } from 'react-redux';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 const EditAssignment = ({ ...others }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
-
+  const [loader, setLoader] = useState(false);
   console.log("user", user);
   const { id: assignmentId } = useParams();
   const [assignmentData, setAssignmentData] = useState({
@@ -87,6 +88,7 @@ const EditAssignment = ({ ...others }) => {
     if (assignmentId && user?.id) {
       const fetchSubmissions = async () => {
         try {
+          setLoader(true);
           let response;
           if (user?.type === "STUDENT") {
             response = await api.get(`/api/assignments/submissions/${assignmentId}/student/${user.id}`);
@@ -98,6 +100,9 @@ const EditAssignment = ({ ...others }) => {
           }
         } catch (error) {
           console.error('Failed to fetch submissions:', error);
+        }
+        finally {
+          setLoader(false);
         }
       };
       fetchSubmissions();
@@ -156,7 +161,9 @@ const EditAssignment = ({ ...others }) => {
       setSubmitting(false);
     }
   };
-
+  if (loader) {
+    return <ReusableLoader message="Loading Assignment..." ></ReusableLoader>;
+  } 
 
   return (
     <MainCard title={Title} >

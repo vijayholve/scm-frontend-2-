@@ -104,7 +104,7 @@ const QuizList = () => {
                 <Grid item xs={12}>
                     <ReusableDataGrid
                 title="QUIZZES"
-                        fetchUrl={`/api/quizzes/getAll/${accountId}`}
+                        fetchUrl={`/api/quizzes/getAllBy/${accountId}`}
                         isPostRequest={true}
                         columns={columns}
                         addActionUrl="/masters/quiz/add"

@@ -16,11 +16,16 @@ import {
   Stack,
   Tooltip,
   Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
 import api from "../../../../utils/apiService";
 import { useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
+import { GridExpandMoreIcon } from "@mui/x-data-grid";
+import StudentLmsDashboard from "views/dashboard/studentDashboard/StudentLmsDashboard";
 
 // VideoRenderer: Simple video player for video lessons
 const VideoRenderer = ({ url }) => {
@@ -87,6 +92,8 @@ const DocumentRenderer = ({ url }) => {
 const CourseView = () => {
   // Expecting route: /course/:accountId/:courseId
   const { courseId } = useParams();
+    const [expandedModules, setExpandedModules] = useState([]);
+
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedLesson, setSelectedLesson] = useState(null);
@@ -98,6 +105,9 @@ const CourseView = () => {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollLoading, setEnrollLoading] = useState(false);
   const [progressByLessonId, setProgressByLessonId] = useState(new Set());
+  const handleAccordionChange = (panel) => (event, isExpanded) => {
+    setExpandedModules(isExpanded ? [panel] : []);
+  };
 
   // Fetch course and enrolled students
   useEffect(() => {
@@ -416,8 +426,13 @@ const CourseView = () => {
           </Typography>
         </Box>
       </Paper>
+              {/* <Grid item xs={12}> */}
+                {/* <StudentLmsDashboard /> */}
+            {/* </Grid> */}
+
 
       {userType === 'STUDENT' && !isEnrolled && (
+        <>
         <Paper sx={{ p: 2, mb: 3 }}>
           <Typography variant="h6">Enrollment required</Typography>
           <Typography color="text.secondary" sx={{ mt: 1 }}>
@@ -444,8 +459,11 @@ const CourseView = () => {
             </button>
           </Box>
         </Paper>
-      )}
+              
 
+        </>
+      )}
+ 
       <Grid container spacing={3}>
         {/* Left: Modules & Lessons */}
         <Grid item xs={12} md={4}>
@@ -458,102 +476,117 @@ const CourseView = () => {
                 No modules found for this course.
               </Typography>
             ) : (
-              <List>
+        <List>
                 {modules.map((mod, mIdx) => (
-                  <Box key={mod.id || mIdx}>
-                    <ListItem disablePadding>
-                      <ListItemText
-                        primary={
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            {mod.title}
-                          </Typography>
-                        }
-                        secondary={mod.description}
-                      />
-                    </ListItem>
-                    <List sx={{ pl: 2 }}>
-                      {(mod.lessons || []).length === 0 ? (
-                        <ListItem>
-                          <ListItemText
-                            primary={
-                              <Typography color="text.secondary" fontSize={14}>
-                                No lessons
-                              </Typography>
-                            }
-                          />
-                        </ListItem>
-                      ) : (
-                        mod.lessons.map((lesson, lIdx) => {
-                          const isCompleted = progressByLessonId.has(lesson.id) ||
-                            lesson.status === true ||
-                            lesson.status === "true" ||
-                            lesson.status === 1 ||
-                            lesson.status === "1";
-                          return (
-                            <ListItem
-                              key={lesson.id || lIdx || mod.id || mIdx}
-                              button
-                              selected={
-                                selectedLesson && selectedLesson.id === lesson.id
+                  <Accordion
+                    key={mod.id || mIdx} 
+                    expanded={expandedModules.includes(mod.id)} 
+                    onChange={handleAccordionChange(mod.id)}
+                  >
+                    <AccordionSummary
+                      expandIcon={<GridExpandMoreIcon />}
+                      aria-controls={`panel-${mod.id}-content`}
+                      id={`panel-${mod.id}-header`}
+                      sx={{
+                        borderBottom: '1px solid #e0e0e0',
+                        '&.Mui-expanded': { borderBottom: 'none' },
+                        bgcolor: 'background.paper',
+                        margin: 0
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1 }}>
+                          {mod.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ mr: 2 }}>
+                          {mod.lessons.length} lessons
+                        </Typography>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ p: 0 }}>
+                      <List disablePadding>
+                        {(mod.lessons || []).length === 0 ? (
+                          <ListItem>
+                            <ListItemText
+                              primary={
+                                <Typography color="text.secondary" fontSize={14}>
+                                  No lessons
+                                </Typography>
                               }
-                              onClick={() => handleLessonClick(lesson,mod.id)}
-                              sx={{
-                                borderLeft: isCompleted
-                                  ? "4px solid #4caf50"
-                                  : "4px solid transparent",
-                                bgcolor:
-                                  selectedLesson &&
-                                  selectedLesson.id === lesson.id
-                                    ? "action.selected"
-                                    : "inherit",
-                                pointerEvents: (userType === 'STUDENT' && !isEnrolled) ? 'none' : 'auto',
-                                opacity: (userType === 'STUDENT' && !isEnrolled) ? 0.6 : 1
-                              }}
-                            >
-                              <ListItemText
-                                primary={
-                                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                                    <Typography sx={{ fontWeight: 500, mr: 1 }}>
-                                      {lesson.title}
-                                    </Typography>
-                                    <Chip
-                                      size="small"
-                                      label={lesson.type}
-                                      color={
-                                        lesson.type === "video"
-                                          ? "primary"
-                                          : lesson.type === "document"
-                                          ? "secondary"
-                                          : "default"
-                                      }
-                                      sx={{ ml: 1 }}
-                                    />
-                                    {isCompleted && (
-                                      <Tooltip title="Completed">
-                                        <Chip
-                                          size="small"
-                                          label="✓"
-                                          color="success"
-                                          sx={{ ml: 1 }}
-                                        />
-                                      </Tooltip>
-                                    )}
-                                    {userType === 'STUDENT' && !isEnrolled && (
-                                      <Tooltip title="Enroll to access">
-                                        <Chip size="small" label="Locked" sx={{ ml: 1 }} />
-                                      </Tooltip>
-                                    )}
-                                  </Box>
+                            />
+                          </ListItem>
+                        ) : (
+                          mod.lessons.map((lesson, lIdx) => {
+                            const isCompleted = progressByLessonId.has(lesson.id) ||
+                              lesson.status === true ||
+                              lesson.status === "true" ||
+                              lesson.status === 1 ||
+                              lesson.status === "1";
+                            return (
+                              <ListItem
+                                key={lesson.id || lIdx || mod.id || mIdx}
+                                button
+                                selected={
+                                  selectedLesson && selectedLesson.id === lesson.id
                                 }
-                                secondary={lesson.content}
-                              />
-                            </ListItem>
-                          );
-                        })
-                      )}
-                    </List>
-                    {mIdx < modules.length - 1 && <Divider sx={{ my: 1 }} />}
-                  </Box>
+                                onClick={() => handleLessonClick(lesson,mod.id)}
+                                sx={{
+                                  borderLeft: isCompleted
+                                    ? "4px solid #4caf50"
+                                    : "4px solid transparent",
+                                  bgcolor:
+                                    selectedLesson &&
+                                    selectedLesson.id === lesson.id
+                                      ? "action.selected"
+                                      : "inherit",
+                                  pointerEvents: (userType === 'STUDENT' && !isEnrolled) ? 'none' : 'auto',
+                                  opacity: (userType === 'STUDENT' && !isEnrolled) ? 0.6 : 1
+                                }}
+                              >
+                                <ListItemText
+                                  primary={
+                                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                                      <Typography sx={{ fontWeight: 500, mr: 1 }}>
+                                        {lesson.title}
+                                      </Typography>
+                                      <Chip
+                                        size="small"
+                                        label={lesson.type}
+                                        color={
+                                          lesson.type === "video"
+                                            ? "primary"
+                                            : lesson.type === "document"
+                                            ? "secondary"
+                                            : "default"
+                                        }
+                                        sx={{ ml: 1 }}
+                                      />
+                                      {isCompleted && (
+                                        <Tooltip title="Completed">
+                                          <Chip
+                                            size="small"
+                                            label="✓"
+                                            color="success"
+                                            sx={{ ml: 1 }}
+                                          />
+                                        </Tooltip>
+                                      )}
+                                      {userType === 'STUDENT' && !isEnrolled && (
+                                        <Tooltip title="Enroll to access">
+                                          <Chip size="small" label="Locked" sx={{ ml: 1 }} />
+                                        </Tooltip>
+                                      )}
+                                    </Box>
+                                  }
+                                  secondary={lesson.content}
+                                />
+                              </ListItem>
+                            );
+                          })
+                        )}
+                      </List>
+                    </AccordionDetails>
+                  </Accordion>
                 ))}
               </List>
             )}

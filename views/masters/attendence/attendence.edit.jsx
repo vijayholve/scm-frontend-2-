@@ -22,6 +22,7 @@ import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 // Styled component for items
 const Item = styled(Paper)(({ theme }) => ({
@@ -51,6 +52,7 @@ const AttendenceEdit = () => {
   const [subjects, setSubjects] = useState([]);
   const [students, setStudents] = useState([]);
   const [attendenceData, setAttendenceData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [reqData, setReqData] = useState({
     schoolId: null,
     schooldClassId: null,
@@ -77,6 +79,7 @@ const AttendenceEdit = () => {
 
   // Fetch all required data
   useEffect(() => {
+    
     fetchData(`api/schoolBranches/getAllBy/${userDetails.getAccountId()}`, setSchools);
     fetchData(`api/schoolClasses/getAllBy/${userDetails.getAccountId()}`, setClasses);
     fetchData(`api/divisions/getAllBy/${userDetails.getAccountId()}`, setDivisions);
@@ -116,6 +119,7 @@ const AttendenceEdit = () => {
 
   // Fetch students based on selected class and division
   const fetchAttendance = async (schooldClassId, divisionId, subjectId, date) => {
+    setLoading(true);
     const url = `api/attendance/getAttendanceBy/${userDetails.getAccountId()}?divisionId=${divisionId}&classId=${schooldClassId}&subjectId=${subjectId}&date=${date}`;
     try {
       const response = await api.get(url);
@@ -124,6 +128,7 @@ const AttendenceEdit = () => {
     } catch (error) {
       console.error('Failed to fetch attendance data:', error);
     }
+    setLoading(false);
   }
 
   // Handle attendance toggle for students
@@ -198,7 +203,9 @@ const AttendenceEdit = () => {
       toast.error("Failed to update attendance. Please try again.");
     }
   };
-
+  if(loading){
+    return <ReusableLoader ></ReusableLoader>
+  }
   return (
     <MainCard title="Attendance">
     {/* ... (rest of your component logic) ... */}

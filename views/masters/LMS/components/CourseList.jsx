@@ -31,6 +31,7 @@ const CourseList = () => {
   // Function to handle the enrollment process for students
   const handleEnroll = (course) => {
     console.log(`Enrolling student ${user?.id} in course ${course.id}`);
+    navigate(`/masters/lms/course/view/${course.id}`);
     toast.success(`You have successfully enrolled in the course: ${course.title}!`);
   };
 

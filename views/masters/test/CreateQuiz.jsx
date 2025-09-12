@@ -107,6 +107,7 @@ const CreateQuiz = () => {
 
     useEffect(() => {
         if (isEdit) {
+            
             fetchQuiz();
         }
     }, [id, isEdit]);

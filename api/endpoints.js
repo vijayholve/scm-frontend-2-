@@ -82,6 +82,15 @@ const endpoints = {
     sampleExcel: 'api/students/download-sample-excel',
     bulkUpload: 'api/students/bulk-upload'
   }
+  ,  notifications: { // New endpoints for notifications
+    create: 'api/notifications',
+    search: 'api/notifications/search',
+    getById: 'api/notifications/getById',
+    update: 'api/notifications/update',
+    delete: 'api/notifications/delete',
+    getByUser: 'api/notifications/user',
+    getActive: 'api/notifications/active'
+  }
 };
 
 export default endpoints;

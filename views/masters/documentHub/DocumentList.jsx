@@ -16,10 +16,15 @@ import { Download as DownloadIcon, Edit as EditIcon, Delete as DeleteIcon, Visib
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'fileName', headerName: 'File Name', flex: 1 },
-    { field: 'schoolName', headerName: 'School', width: 150 },
-    { field: 'className', headerName: 'Class', width: 120 },
-    { field: 'divisionName', headerName: 'Division', width: 120 },
+    { field: 'fileId', headerName: 'File Name', flex: 1 },
+  { field: 'classId', headerName: 'Class', width: 150 },
+  { field: 'divisionId', headerName: 'Division', width: 150 },
+  {
+    field: 'schoolId',
+    headerName: 'School Name',
+    width: 150
+  },
+  
     { field: 'userType', headerName: 'Visible To', width: 120 },
     { field: 'uploadedBy', headerName: 'Uploaded By', width: 150 },
     { field: 'createdDate', headerName: 'Upload Date', width: 150, valueFormatter: (params) => new Date(params.value).toLocaleDateString() },

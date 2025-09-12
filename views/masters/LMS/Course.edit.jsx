@@ -1,5 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Box, Button, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Paper, Grid, List, ListItem, ListItemText, Checkbox, Modal, Backdrop, Fade, Collapse } from "@mui/material";
+import React, { useEffect, useState, useRef } from "react";
+import { Box, Button, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Paper, Grid, List, ListItem, ListItemText, Checkbox, Modal, Backdrop, Fade, Collapse, Avatar } from "@mui/material";
+// Utility for image preview
+const getImagePreview = (file, fallback) => {
+  if (!file) {
+    return fallback || null;
+  }
+  if (typeof file === 'string') {
+    return file; // already a URL
+  }
+  return URL.createObjectURL(file);
+};
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -16,6 +26,7 @@ import { use } from "react";
 import { Autocomplete } from "@mui/material";
 import { gridSpacing } from "store/constant";
 import { toast } from 'react-hot-toast';
+import ReusableLoader from "ui-component/loader/ReusableLoader";
 
 // --- DUMMY DATA for Documents and Tests (replace with API calls in production) ---
 window.documentList = [
@@ -209,9 +220,11 @@ const LessonModal = ({ open, onClose, onSave, initialData, schoolId, classId, di
       <DialogActions>
         <Button onClick={onClose} color="inherit">Cancel</Button>
         <Button
-          onClick={() => {
-            if (lesson.title.trim()) onSave(lesson);
-          }}
+            onClick={() => {
+              if (lesson.title.trim()) {
+                onSave(lesson);
+              }
+            }}
           variant="contained"
         >
           Save
@@ -316,7 +329,9 @@ const ModuleModal = ({ open, onClose, onSave, initialData, schoolId, classId, di
           <Button onClick={onClose} color="inherit">Cancel</Button>
           <Button
             onClick={() => {
-              if (module.title.trim()) onSave(module);
+              if (module.title.trim()) {
+                onSave(module);
+              }
             }}
             variant="contained"
           >
@@ -348,8 +363,19 @@ const CourseEdit = () => {
     modules: [],
     schoolId: "",
     classId: "",
-    divisionId: ""
+    divisionId: "",
+    headerBanner: null, // file or url
+    courseBanner: null // file or url
   });
+  const [headerBannerPreview, setHeaderBannerPreview] = useState(null);
+  const [courseBannerPreview, setCourseBannerPreview] = useState(null);
+  const headerBannerInputRef = useRef();
+  const courseBannerInputRef = useRef();
+  // Update previews when course is loaded (edit mode)
+  useEffect(() => {
+    setHeaderBannerPreview(getImagePreview(course.headerBanner));
+    setCourseBannerPreview(getImagePreview(course.courseBanner));
+  }, [course.headerBanner, course.courseBanner]);
   const [loading, setLoading] = useState(false);
   const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [editingModuleIdx, setEditingModuleIdx] = useState(null);
@@ -409,14 +435,18 @@ const CourseEdit = () => {
             accountId: c.accountId || user?.user?.accountId,
             schoolName: c.schoolName || "",
             className: c.className || "",
-            divisionName: c.divisionName || ""
+            divisionName: c.divisionName || "",
+            headerBanner: c.headerBanner || null,
+            courseBanner: c.courseBanner || null
           });
         })
         .catch(() => setCourse({
           title: "",
           description: "",
           status: "Draft",
-          modules: []
+          modules: [],
+          headerBanner: null,
+          courseBanner: null
         }))
         .finally(() => setLoading(false));
     }
@@ -446,18 +476,28 @@ const CourseEdit = () => {
     setCourse({ ...course, modules });
   };
 
-  // Save course (create or update)
+  // Save course (create or update) with image upload
   const handleSaveCourse = async () => {
     setLoading(true);
     try {
+      const formData = new FormData();
+      Object.entries(course).forEach(([key, value]) => {
+        if (key === 'headerBanner' || key === 'courseBanner') {
+          if (value && typeof value !== 'string') {
+            formData.append(key, value);
+          } else if (typeof value === 'string') {
+            formData.append(key, value); // for existing URLs
+          }
+        } else if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value ?? '');
+        }
+      });
       if (id) {
-        // Update
-        await api.put(`/api/lms/course/update/${id}`, course);
-        // Optionally update modules/lessons via separate endpoints if needed
+        await api.put(`/api/lms/course/update/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       } else {
-        // Create
-        const res = await api.post("/api/lms/course/save", course);
-        // Optionally redirect to edit page for new course
+        const res = await api.post("/api/lms/course/save", formData, { headers: { 'Content-Type': 'multipart/form-data' } });
         if (res.data && res.data.id) {
           navigate(`/masters/lms/`);
         }
@@ -468,6 +508,9 @@ const CourseEdit = () => {
     }
     setLoading(false);
   };
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
+  }
 
   // --- Add imports at the top of the file if not already present:
 
@@ -479,7 +522,87 @@ const CourseEdit = () => {
       <Typography variant="h4" sx={{ mb: 2 }}>
         {id ? "Edit Course" : "Create Course"}
       </Typography>
-      <Grid container spacing={gridSpacing}>
+  <Grid container spacing={gridSpacing}>
+        {/* Header Banner Upload */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>Header Banner</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <input
+              accept="image/*"
+              type="file"
+              style={{ display: 'none' }}
+              ref={headerBannerInputRef}
+              onChange={e => {
+                const file = e.target.files[0];
+                if (file) {
+                  setCourse(c => ({ ...c, headerBanner: file }));
+                  setHeaderBannerPreview(URL.createObjectURL(file));
+                }
+              }}
+            />
+            <Avatar
+              variant="rounded"
+              src={headerBannerPreview}
+              sx={{ width: 120, height: 80, border: '1px solid #ccc', bgcolor: '#fafafa' }}
+            >
+              {!headerBannerPreview && 'No Image'}
+            </Avatar>
+            <Box>
+              <Button variant="outlined" size="small" onClick={() => headerBannerInputRef.current.click()}>
+                {headerBannerPreview ? 'Change' : 'Upload'}
+              </Button>
+              {headerBannerPreview && (
+                <Button color="error" size="small" onClick={() => {
+                  setCourse(c => ({ ...c, headerBanner: null }));
+                  setHeaderBannerPreview(null);
+                  if (headerBannerInputRef.current) {
+                    headerBannerInputRef.current.value = '';
+                  }
+                }}>Remove</Button>
+              )}
+            </Box>
+          </Box>
+        </Grid>
+        {/* Course Banner Upload */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>Course Banner</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <input
+              accept="image/*"
+              type="file"
+              style={{ display: 'none' }}
+              ref={courseBannerInputRef}
+              onChange={e => {
+                const file = e.target.files[0];
+                if (file) {
+                  setCourse(c => ({ ...c, courseBanner: file }));
+                  setCourseBannerPreview(URL.createObjectURL(file));
+                }
+              }}
+            />
+            <Avatar
+              variant="rounded"
+              src={courseBannerPreview}
+              sx={{ width: 120, height: 80, border: '1px solid #ccc', bgcolor: '#fafafa' }}
+            >
+              {!courseBannerPreview && 'No Image'}
+            </Avatar>
+            <Box>
+              <Button variant="outlined" size="small" onClick={() => courseBannerInputRef.current.click()}>
+                {courseBannerPreview ? 'Change' : 'Upload'}
+              </Button>
+              {courseBannerPreview && (
+                <Button color="error" size="small" onClick={() => {
+                  setCourse(c => ({ ...c, courseBanner: null }));
+                  setCourseBannerPreview(null);
+                  if (courseBannerInputRef.current) {
+                    courseBannerInputRef.current.value = '';
+                  }
+                }}>Remove</Button>
+              )}
+            </Box>
+          </Box>
+        </Grid>
         {/* School Selection */}
 
         <Grid item xs={3}>

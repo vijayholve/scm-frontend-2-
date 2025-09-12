@@ -11,10 +11,12 @@ import api, { userDetails } from '../../../utils/apiService';
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 const EditClass = ({ ...others }) => {
   const navigate = useNavigate();
   const { id: classId } = useParams();
+  const [loading, setloading] = useState(false);
 
   const [classData, setClassData] = useState({
     id: undefined,
@@ -57,6 +59,7 @@ const EditClass = ({ ...others }) => {
 
   useEffect(() => {
     if (classId) {
+      setloading(true);
       const fetchClassData = async (id) => {
         try {
           const response = await api.get(`api/schoolClasses/getById?id=${id}`);
@@ -64,6 +67,7 @@ const EditClass = ({ ...others }) => {
         } catch (error) {
           console.error('Failed to fetch schoolclass data:', error);
         }
+        setloading(false);
       };
       fetchClassData(classId);
     }
@@ -97,6 +101,11 @@ const EditClass = ({ ...others }) => {
       setSubmitting(false);
     }
   };
+
+
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
+  }
 
   return (
     <MainCard title={Title} >

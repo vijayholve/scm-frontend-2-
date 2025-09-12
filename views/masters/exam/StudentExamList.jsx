@@ -1,45 +1,55 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
-import { Button, Box } from '@mui/material';
+import { Button, Box, Typography, Alert, CircularProgress } from '@mui/material';
 import MainCard from 'ui-component/cards/MainCard';
 import { toast } from 'react-hot-toast';
 import api, { userDetails } from 'utils/apiService';
-import ListGridFilters from 'ui-component/ListGridFilters';
+import { useSelector } from 'react-redux';
 
 const StudentExamList = () => {
     const navigate = useNavigate();
-    const accountId = userDetails.getAccountId();
+    const user = useSelector((state) => state.user.user);
     const [exams, setExams] = useState([]);
     const [loading, setLoading] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-    const [filters, setFilters] = useState({ schoolId: '', classId: '', divisionId: '' });
+    const [error, setError] = useState(null);
 
     const fetchExams = useCallback(async () => {
-        if (!accountId) return;
+        const { id: studentId, accountId, schoolId, classId, divisionId } = user;
+
+        if (!accountId || !studentId || !schoolId || !classId || !divisionId) {
+            setError('User profile details are incomplete. Cannot fetch exams.');
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
+        setError(null);
         try {
             const payload = {
                 page: paginationModel.page,
                 size: paginationModel.pageSize,
                 sortBy: 'id',
                 sortDir: 'asc',
-                ...filters
+                schoolId: schoolId,
+                classId: classId,
+                divisionId: divisionId
             };
             const response = await api.post(`/api/exams/getAllBy/${accountId}`, payload);
             const content = response?.data?.content || response?.data || [];
             setExams(content);
             setRowCount(response?.data?.totalElements || content.length || 0);
-        } catch (error) {
-            console.error('Failed to load exams:', error);
+        } catch (err) {
+            console.error('Failed to load exams:', err);
             toast.error('Could not load exams.');
             setExams([]);
             setRowCount(0);
         } finally {
             setLoading(false);
         }
-    }, [accountId, paginationModel.page, paginationModel.pageSize, JSON.stringify(filters)]);
+    }, [user, paginationModel.page, paginationModel.pageSize]);
 
     useEffect(() => {
         fetchExams();
@@ -68,20 +78,16 @@ const StudentExamList = () => {
         },
     ];
 
+    if (error) {
+        return (
+            <MainCard title="Available Exams">
+                <Alert severity="error">{error}</Alert>
+            </MainCard>
+        );
+    }
+
     return (
         <MainCard title="Available Exams">
-            <Box sx={{ mb: 2 }}>
-                <ListGridFilters
-                    filters={filters}
-                    onFiltersChange={(newFilters) => {
-                        setFilters(newFilters);
-                        setPaginationModel((prev) => ({ ...prev, page: 0 }));
-                    }}
-                    showSchool
-                    showClass
-                    showDivision
-                />
-            </Box>
             <Box sx={{ height: 600, width: '100%' }}>
                 <DataGrid
                     rows={exams}
@@ -99,4 +105,4 @@ const StudentExamList = () => {
     );
 };
 
-export default StudentExamList;
+export default StudentExamList; 

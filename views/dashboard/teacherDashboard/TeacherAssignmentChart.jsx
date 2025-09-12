@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import MainCard from 'ui-component/cards/MainCard';
 import ReusableBarChart from 'ui-component/charts/ReusableBarChart';
 import { useTheme } from '@mui/material/styles';
-
+import { toast } from 'react-toastify';
+import api from 'utils/apiService';
 // Dummy data to be used instead of an API call
 const dummyAssignmentData = [
     {
@@ -42,19 +43,21 @@ const TeacherAssignmentChart = () => {
             try {
                 setLoading(true);
                 // Commenting out the API call as requested and using dummy data instead.
-                // const response = await api.get(`/api/assignments/completion-status/teacher/${user.id}`);
-                // const data = response.data || [];
+                const response = await api.get(`api/assignments/assignmentList/${user.accountId}/school/${user.schoolId}`);
+                const data = response.data || [];
+                console.log("Fetched assignment data:", data);
+                toast.success('Assignment data fetched successfully');
+               // const data = dummyAssignmentData;
 
-                const data = dummyAssignmentData;
-                
                 if (data.length === 0) {
                     setChartData(null);
+                    toast.error('No assignment data found.');
                     return;
                 }
 
                 const assignmentNames = data.map(item => item.assignmentName);
-                const completedData = data.map(item => item.completedCount);
-                const pendingData = data.map(item => item.pendingCount);
+                const completedData = data.map(item => item.completeCount);
+                const pendingData = data.map(item => item.failCount);
 
                 setChartData({
                     series: [
@@ -63,9 +66,11 @@ const TeacherAssignmentChart = () => {
                     ],
                     categories: assignmentNames
                 });
+                console.log(chartData);
 
             } catch (err) {
                 console.error("Error fetching assignment data:", err);
+                toast.error('Failed to load assignment data.');
                 setError('Failed to load assignment data.');
             } finally {
                 setLoading(false);

@@ -13,12 +13,14 @@ import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import SaveButton from 'layout/MainLayout/Button/SaveButton';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 // ==============================|| EDIT INSTITUTE PAGE ||============================== //
 
 const EditInstitute = ({ ...others }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const { id: instituteId } = useParams();
 
   // State for holding institute data
@@ -44,12 +46,14 @@ const EditInstitute = ({ ...others }) => {
   // Fetch institute data if we are in "edit" mode
   useEffect(() => {
     if (instituteId) {
+
       fetchInstituteData(instituteId);
     }
   }, [instituteId]);
 
   const fetchInstituteData = async (id) => {
     try {
+      setLoading(true);
       const response = await api.get(`api/institutes/getById?id=${id}`);
       if (response.data) {
         setInstituteData(response.data);
@@ -57,6 +61,10 @@ const EditInstitute = ({ ...others }) => {
     } catch (error) {
       toast.error('Failed to fetch institute data.');
       console.error('Failed to fetch institute data:', error);
+    }
+    finally
+    {
+      setLoading(false);
     }
   };
 
@@ -109,6 +117,9 @@ const EditInstitute = ({ ...others }) => {
       }
     }, 100); // 100ms delay
   };
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
+  }
 
   return (
     <MainCard title={Title}>

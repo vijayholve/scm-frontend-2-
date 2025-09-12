@@ -26,6 +26,7 @@ import { gridSpacing } from 'store/constant';
 import api from 'utils/apiService';
 import { useSelector } from 'react-redux';
 import FeeStructureForm from 'views/masters/fee/components/FeeStructureForm';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 const FeeDashboard = () => {
   const navigate = useNavigate(); 
   const [schools, setSchools] = useState([]);
@@ -127,9 +128,14 @@ const FeeDashboard = () => {
           totalPaid: resp2?.data?.paid || 0,
           totalPending: resp2?.data?.due || 0
         });
+      } finally {
+        setLoading(false);
       }
+
     } catch (err) {
       setSummaryData({ fees: [], totalAmount: 0, totalPaid: 0, totalPending: 0 });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -166,7 +172,7 @@ const FeeDashboard = () => {
   };
 
   if (loading) {
-    return <Typography>Loading...</Typography>;
+    return <ReusableLoader message="Loading Fee Dashboard...1" ></ReusableLoader>;
   }
 
   const columns = [

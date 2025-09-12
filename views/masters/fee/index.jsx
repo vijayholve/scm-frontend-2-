@@ -26,6 +26,7 @@ import { gridSpacing } from 'store/constant';
 import api from 'utils/apiService';
 import { useSelector } from 'react-redux';
 import FeeStructureForm from './components/FeeStructureForm';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 const FeeDashboard = () => {
   const navigate = useNavigate(); 
@@ -167,7 +168,7 @@ const FeeDashboard = () => {
   };
 
   if (loading) {
-    return <Typography>Loading...</Typography>;
+    return <ReusableLoader message="Loading Fee Dashboard...2" ></ReusableLoader>;
   }
 
   const columns = [

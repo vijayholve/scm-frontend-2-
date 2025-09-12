@@ -11,6 +11,7 @@ import api, { userDetails } from "../../../utils/apiService";
 import MainCard from "ui-component/cards/MainCard";
 import BackButton from "layout/MainLayout/Button/BackButton";
 import { toast } from "react-hot-toast";
+import ReusableLoader from "ui-component/loader/ReusableLoader";
 
 const examTypes = ["Midterm", "Final", "Quiz", "Practical", "Oral", "Internal", "Other"];
 
@@ -42,6 +43,7 @@ const EditExam = () => {
           console.error(err);
           setLoading(false);
         });
+        
     }
   }, [examId]);
 
@@ -81,7 +83,9 @@ const EditExam = () => {
   };
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  if (loading) {
+    return <ReusableLoader message="Loading Exam Details..." />;
+  }
   return (
     <MainCard title={examId ? "Edit Exam" : "Create Exam"}>
       <form onSubmit={handleSubmit}>

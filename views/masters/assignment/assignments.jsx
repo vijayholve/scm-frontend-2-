@@ -24,7 +24,8 @@ const columns = [
   { field: 'divisionName', headerName: 'Division', width: 100, editable: true },
   { field: 'subjectName', headerName: 'Subject', width: 120, editable: true },
   { field: 'createdBy', headerName: 'Created By', width: 120, editable: true },
-  { field: 'deadLine', headerName: 'Deadline', width: 120, editable: true }
+  { field: 'deadLine', headerName: 'Deadline', width: 120, editable: true },
+  { field: 'isActive', headerName: 'isactive', width: 100, editable: true },
 ];
 
 const Assignments = () => {
@@ -39,7 +40,7 @@ const Assignments = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
           title={"ASSIGNMENTS"}
-            fetchUrl={`/api/assignments/getAll/${accountId}`}
+            fetchUrl={`/api/assignments/getAllBy/${accountId}`}
             isPostRequest={true}
             columns={columns}
             addActionUrl="/masters/assignment/add"

@@ -13,10 +13,13 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 import api, { userDetails } from "../../../utils/apiService"
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
+import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 
 const EditSubjects = ({ ...others }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const { id: subjectId } = useParams();
   const [subjectData, setSubjectData] = useState({
     id:undefined,
@@ -34,10 +37,14 @@ const EditSubjects = ({ ...others }) => {
 
   const fetchSubjectData = async (id) => {
     try {
+      setLoading(true);
       const response = await api.get(`api/subjects/getById?id=${id}`);
       setSubjectData(response.data);
     } catch (error) {
       console.error('Failed to fetch subject data:', error);
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -55,6 +62,9 @@ const EditSubjects = ({ ...others }) => {
       console.error('Failed to update subject data:', error);
     }
   };
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
+  }
 
   return (
     <MainCard title={Title} >
@@ -107,20 +117,7 @@ const EditSubjects = ({ ...others }) => {
               </Grid>
               {/* Submit Button */}
               <Grid item xs={12}>
-                <AnimateButton>
-                  <Button
-                    disableElevation
-                    disabled={isSubmitting}
-                    fullWidth
-                    type="submit"
-                    variant="contained"
-                    color="secondary"
-                  >
-                    Save
-                  </Button>
-                </AnimateButton>
-                <BackButton BackUrl='/masters/subjects'/>
-
+                <BackSaveButton backLink="/masters/subjects" isSubmitting={isSubmitting} />
               </Grid>
             </Grid>
           </form>

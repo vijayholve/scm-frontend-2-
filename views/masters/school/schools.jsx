@@ -55,17 +55,19 @@ const Schools = () => {
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid 
-                        title="SCHOOLS"
-                        fetchUrl={`/api/schoolBranches/getAllBy/${accountId}`}
+                        title="SCHOOLS" 
+                        fetchUrl={`/api/schoolBranches/getAll/${accountId}`}
+                        isPostRequest={true}
+                        
                         // data={schools}
                         loading={loading}
 
+                        
                         addActionUrl={"/masters/school/add"}
                         // fetchUrl={null} // Explicitly set to null to indicate client-side mode
-                        isPostRequest={false}
                         columns={columns}
                         editUrl="/masters/school/edit"
-                        deleteUrl="/api/schoolBranches/delete"
+                        deleteUrl='/api/schoolBranches/delete'
                         entityName="SCHOOL"
                         enableFilters={false}
                     />

@@ -3,8 +3,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import {
   Autocomplete,
-  Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput,
-  TextField, Tabs, Tab, Typography, AppBar, Stack
+  Box,
+  Button,
+  FormControl,
+  FormHelperText,
+  Grid,
+  InputLabel,
+  OutlinedInput,
+  TextField,
+  Tabs,
+  Tab,
+  Typography,
+  AppBar,
+  Stack
 } from '@mui/material';
 import { Formik, FieldArray } from 'formik';
 import * as Yup from 'yup';
@@ -17,6 +28,8 @@ import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import SaveButton from 'layout/MainLayout/Button/SaveButton';
 import { useSelector } from 'react-redux';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
+import UserDocumentManager from 'views/UserDocumentManager';
 
 // Helper component for Tab Panel content
 function TabPanel(props) {
@@ -49,6 +62,7 @@ const EditUsers = ({ ...others }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id: userId } = useParams();
+  const [loader, setLoader] = useState(false);
   const [teacherData, setTeacherData] = useState({
     userName: '',
     password: '',
@@ -70,13 +84,13 @@ const EditUsers = ({ ...others }) => {
   const [schools, setSchools] = useState([]);
   const user = useSelector((state) => state.user);
   const [tabValue, setTabValue] = useState(0); // Initialize tabValue using useState
-  
+
   // Define handleTabChange function
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  console.log("user", user);
+  console.log('user', user);
 
   useEffect(() => {
     fetchData(`api/schoolBranches/getAll/${user?.user?.accountId}`, setSchools);
@@ -93,14 +107,13 @@ const EditUsers = ({ ...others }) => {
       const pagination = {
         page: page,
         size: pageSize,
-        sortBy: "id",
-        sortDir: "asc",
-        search: ""
-      }
+        sortBy: 'id',
+        sortDir: 'asc',
+        search: ''
+      };
       const response = await api.post(endpoint, pagination);
       setter(response.data.content || []);
-    }
-    catch (error) {
+    } catch (error) {
       console.error(`Failed to fetch ${endpoint}:`, error);
     }
   };
@@ -110,17 +123,21 @@ const EditUsers = ({ ...others }) => {
   }, []);
 
   const fetchTeacherData = async (id) => {
+    setLoader(true);
     try {
       const response = await api.get(`api/users/getById?id=${id}`);
       const data = response.data || {};
-      const normalizedEducations = Array.isArray(data.educations)
-        ? data.educations
-        : (data.educations ? [data.educations] : []);
+      const normalizedEducations = Array.isArray(data.educations) ? data.educations : data.educations ? [data.educations] : [];
       setTeacherData({ ...data, educations: normalizedEducations });
     } catch (error) {
       console.error('Failed to fetch teacher data:', error);
+    } finally {
+      setLoader(false);
     }
   };
+  if (loader) {
+    return <ReusableLoader message="Loading Teacher..." />;
+  }
 
   const handleSubmit = async (values, { setSubmitting }) => {
     const userData = { ...values, id: teacherData.id, accountId: userDetails.getAccountId() };
@@ -129,39 +146,35 @@ const EditUsers = ({ ...others }) => {
       const response = await apiCall;
       setTeacherData(response.data);
       toast.success(userId ? 'Teacher updated successfully' : 'Teacher created successfully', {
-        autoClose: '100', onClose: () => {
+        autoClose: '100',
+        onClose: () => {
           navigate('/masters/teachers');
         }
       });
       // setSubmitting(false);
     } catch (error) {
       console.error('Failed to submit teacher data:', error);
-    }
-    finally{
+    } finally {
       setSubmitting(false);
     }
   };
 
   // Options for Higher Qualification Autocomplete
-  const higherQualificationOptions = ['10th','12th', 'Graduation', 'PhD', 'Master'];
+  const higherQualificationOptions = ['10th', '12th', 'Graduation', 'PhD', 'Master'];
 
   // Generate years for Pass Out Year Autocomplete
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => (1900 + i).toString());
 
-
   return (
     <MainCard title={Title}>
       <Box sx={{ width: '100%', mb: 2 }}>
         <AppBar position="static" color="default" elevation={0}>
-          <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            aria-label="teacher form tabs"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="teacher form tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tab label="Basic Details" {...a11yProps(0)} />
             <Tab label="Education" {...a11yProps(1)} />
+              <Tab label="Documents" {...a11yProps(2)} />
+
           </Tabs>
         </AppBar>
       </Box>
@@ -182,11 +195,7 @@ const EditUsers = ({ ...others }) => {
                 .required('Pass Out Year is required')
                 .min(1900)
                 .max(currentYear),
-              percentage: Yup.number()
-                .typeError('Percentage is required')
-                .required('Percentage is required')
-                .min(0)
-                .max(100)
+              percentage: Yup.number().typeError('Percentage is required').required('Percentage is required').min(0).max(100)
             })
           )
         })}
@@ -454,7 +463,9 @@ const EditUsers = ({ ...others }) => {
                         </Box>
                       ))
                     ) : (
-                      <Typography color="text.secondary" sx={{ mb: 2 }}>No education records. Add one below.</Typography>
+                      <Typography color="text.secondary" sx={{ mb: 2 }}>
+                        No education records. Add one below.
+                      </Typography>
                     )}
                     <Button
                       variant="outlined"
@@ -475,7 +486,9 @@ const EditUsers = ({ ...others }) => {
                 )}
               </FieldArray>
             </TabPanel>
-
+<TabPanel value={tabValue} index={2}>
+  <UserDocumentManager userId={userId} userType="TEACHER" />
+</TabPanel>
             <Grid item xs={12}>
               <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
                 <BackButton BackUrl="/masters/teachers" />

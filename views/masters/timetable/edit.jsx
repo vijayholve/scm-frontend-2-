@@ -24,11 +24,13 @@ import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
+
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
 import api from '../../../utils/apiService';
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
 const EditTimetable = ({ ...others }) => {
   const theme = useTheme();
@@ -36,7 +38,7 @@ const EditTimetable = ({ ...others }) => {
   const { id: timetableId } = useParams();
 
   const [loggedInUserData, setLoggedInUserData] = useState(null);
-
+  const [loader, setLoader] = useState(false);
   const [timetableData, setTimetableData] = useState({
     id: undefined,
     schoolId: '',
@@ -64,6 +66,7 @@ const EditTimetable = ({ ...others }) => {
 
   useEffect(() => {
     try {
+      
       const authDataString = localStorage.getItem('SCM-AUTH');
       if (authDataString) {
         const parsedAuthData = JSON.parse(authDataString);
@@ -124,6 +127,7 @@ const EditTimetable = ({ ...others }) => {
   
   useEffect(() => {
     if (timetableId) {
+      setLoader(true);
       fetchTimetableData(timetableId);
     }
   }, [timetableId, loggedInUserData]);
@@ -145,8 +149,13 @@ const EditTimetable = ({ ...others }) => {
     } catch (error) {
       console.error('Failed to fetch timetable data:', error);
       toast.error('Failed to fetch timetable data.');
+    } finally {
+      setLoader(false);
     }
   };
+  if (loader) {
+    return <ReusableLoader message="Loading Timetable..." />;
+  }
 
   const handleSubmit = async (values, { setSubmitting }) => {
     const userName = loggedInUserData?.userName || 'Unknown User';

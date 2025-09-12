@@ -17,11 +17,11 @@ const DashboardDefault = () => {
     case 'STUDENT':
       return <StudentDashboardV1 />;
     case 'TEACHER':
-      return <TeacherDashboard />;
+      return <AdminDashboard />;
     case 'ADMIN':
       return <AdminDashboard />;
     default:
-      return <AdminDashboard />;
+      return <TeacherDashboard />;
   }
 };
 
