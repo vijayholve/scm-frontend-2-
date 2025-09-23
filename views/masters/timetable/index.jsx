@@ -56,7 +56,7 @@ const Timetables = () => {
             fetchUrl={`/api/timetable/getAllBy/${accountId}`}
             isPostRequest={true}
             columns={columns}
-
+// viewScreenIs={true}
             addActionUrl="/masters/timetable/add" 
             editUrl="/masters/timetable/edit"
             deleteUrl="/api/timetable/delete"

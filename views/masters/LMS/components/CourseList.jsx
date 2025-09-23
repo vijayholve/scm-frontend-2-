@@ -19,25 +19,21 @@ const columns = [
   { field: 'schoolName', headerName: 'School', width: 150 },
   { field: 'className', headerName: 'Class', width: 120 },
   { field: 'divisionName', headerName: 'Division', width: 120 },
-  { field: 'status', headerName: 'Status', width: 100 },
+  { field: 'status', headerName: 'Status', width: 100 }
 ];
 
 const CourseList = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
-  const user = useSelector(state => state.user.user);
-  const permissions = useSelector(state => state.user.permissions);
+  const user = useSelector((state) => state.user.user);
+  const permissions = useSelector((state) => state.user.permissions);
 
-  // Function to handle the enrollment process for students
   const handleEnroll = (course) => {
     console.log(`Enrolling student ${user?.id} in course ${course.id}`);
     navigate(`/masters/lms/course/view/${course.id}`);
     toast.success(`You have successfully enrolled in the course: ${course.title}!`);
   };
-
   const customActions = [];
-
-  // Add the "Enroll" button only if the user is a student
   if (user?.type === 'STUDENT') {
     customActions.push({
       icon: <CheckCircleIcon />,
@@ -56,13 +52,11 @@ const CourseList = () => {
           title="COURSES"
           fetchUrl={`/api/lms/course/getAll/${accountId}`}
           isPostRequest={true}
-          columns={columns} 
-          // The following lines are modified to always provide the URLs,
-          // which will force the buttons to be rendered.
-          addActionUrl={"/masters/lms/course/add"}
-          editUrl={"/masters/lms/course/edit"}
-          deleteUrl={"/api/lms/course/delete"}
-          viewUrl={"/masters/lms/course/view"} // Use the dedicated prop for the view button
+          columns={columns}
+          addActionUrl={'/masters/lms/course/add'}
+          editUrl={'/masters/lms/course/edit'}
+          deleteUrl={'/api/lms/course/delete'}
+          viewUrl={'/masters/lms/course/view'} // Use the dedicated prop for the view button
           entityName="LMS"
           // EnrollActionUrl={user?.type === 'STUDENT' ? "/masters/lms/course/view" : null}
           customActions={customActions}

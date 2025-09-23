@@ -4,7 +4,9 @@
 const endpoints = {
   auth: {
     login: 'api/users/login',
-    refresh: 'api/auth/refresh'
+    refresh: 'api/auth/refresh',
+     forgotPasswordRequest: 'api/auth/forgot-password-request',
+    resetPassword: 'api/auth/reset-password'
   },
   users: {
     base: 'api/users',
@@ -92,6 +94,7 @@ const endpoints = {
     getActive: 'api/notifications/active'
   }
 };
+
 
 export default endpoints;
 

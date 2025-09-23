@@ -106,7 +106,7 @@ const NotFound = () => {
                     </Typography>
 
                     <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-                        Sorry, we couldn't find the page you're looking for. Let's get you back to safety.
+                        Sorry, we couldn&#39;t find the page you&#39;re looking for. Let&#39;s get you back to safety.
                     </Typography>
 
                     <Button

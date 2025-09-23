@@ -89,6 +89,7 @@ const StudentExamList = Loadable(lazy(() => import('views/masters/exam/StudentEx
 const TeacherExamView = Loadable(lazy(() => import('views/masters/exam/TeacherExamView')));
 const ExamList = Loadable(lazy(() => import('views/masters/exam/index')));
 const StudentExamResult = Loadable(lazy(() => import('views/masters/exam/StudentExamResult')));
+const ExamView = Loadable(lazy(() => import('views/masters/exam/ExamView')));
 // Fee routing
 const FeeDashboard = Loadable(lazy(() => import('views/masters/fee/index')));
 const StudentFeeView = Loadable(lazy(() => import('views/masters/fee/StudentFeeView')));
@@ -273,7 +274,9 @@ const getMainRoutes = (permissions = []) => ({
           path: 'role/add',
           element: <RoleEdit />
         },
-        hasPermission(permissions, 'USER_PROFILE', 'view') && {
+        // hasPermission(permissions, 'USER_PROFILE', 'view') && 
+        {
+
           path: 'profile',
           element: <Profiles />
         },
@@ -318,6 +321,11 @@ const getMainRoutes = (permissions = []) => ({
       {
           path: 'exams/teacher',
           element: <TeacherExamView />
+      },
+      hasPermission(permissions, 'EXAM', 'view') && {
+        path: 'exam/view/:id',
+        element: <ExamView />
+        
       },
         hasPermission(permissions, 'STUDENT_PARENT', 'view') && {
           path: 'studentParents',

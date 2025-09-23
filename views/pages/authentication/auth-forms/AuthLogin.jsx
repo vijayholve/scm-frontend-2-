@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 // material-ui
@@ -27,14 +27,14 @@ import { Formik } from 'formik';
 
 // project imports
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import api, { endpoints } from '../../../../api'
+import api, { endpoints } from '../../../../api';
 import { setLogin } from 'store/userSlice';
 
 // assets
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Google from 'assets/images/icons/social-google.svg';
-
+// import { fetchAndStoreSCDData } from 'utils/fetchScdData';
 
 // ============================|| FIREBASE - LOGIN ||============================ //
 
@@ -45,6 +45,9 @@ const AuthLogin = ({ ...others }) => {
   const customization = useSelector((state) => state.customization);
   const [checked, setChecked] = useState(true);
   const dispatch = useDispatch();
+  
+
+
 
   const googleHandler = async () => {
     console.error('Login');
@@ -65,9 +68,15 @@ const AuthLogin = ({ ...others }) => {
     try {
       const response = await api.post(endpoints.auth.login, values);
       if (response.data.statusCode === 200 && response.data.accessToken) {
-        localStorage.setItem("SCM-AUTH", JSON.stringify(response.data));
-        dispatch(setLogin(response.data));
-        setSubmitting(false);
+         localStorage.setItem("SCM-AUTH", JSON.stringify(response.data));
+      dispatch(setLogin(response.data));
+      setSubmitting(false);
+
+      // ADD THIS LINE
+      // await fetchAndStoreSCDData();
+
+      // navigate('/');
+
         navigate('/');
       } else {
         setApiError(response.data.message);
@@ -207,7 +216,13 @@ const AuthLogin = ({ ...others }) => {
                 }
                 label="Remember me"
               />
-              <Typography variant="subtitle1" color="secondary" sx={{ textDecoration: 'none', cursor: 'pointer' }}>
+              <Typography
+                component={Link}
+                to="/forgot-password"
+                variant="subtitle1"
+                color="secondary"
+                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+              >
                 Forgot Password?
               </Typography>
             </Stack>

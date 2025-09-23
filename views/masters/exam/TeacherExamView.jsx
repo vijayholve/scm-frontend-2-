@@ -86,7 +86,33 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
     return (
         <Paper sx={{ p: 3, mt: 2 }}>
             <Typography variant="h4" gutterBottom>{`Grading: ${student.studentName} - ${subject.subjectName}`}</Typography>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            {/* this is on phone screen view not showing correctly just show two value of tab enter marks and view  */}
+            <Box sx={{ display: { xs: 'block', sm: 'none' }, mt: 2 }}>
+                <FormControl fullWidth>
+                    <InputLabel id="tab-select-label">Select View</InputLabel>
+                    <Select 
+                        labelId="tab-select-label"
+                        value={tabValue}
+                        label="Select View"
+                        onChange={(e) => setTabValue(e.target.value)}
+                    >
+                        <MenuItem value={0}>Enter Marks</MenuItem>
+                        <MenuItem value={1}>View Paper & Answers</MenuItem>
+                        <MenuItem value={2}>View Quiz Result</MenuItem>
+                        <MenuItem value={3}>Upload Paper</MenuItem>
+                    </Select>       
+                </FormControl>  
+            </Box>
+
+            <Box 
+                sx={{
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    display: { xs: 'none', sm: 'block' },
+                    mt: 2
+                }}  
+            >
+                
                 <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
                     <Tab label="Enter Marks" />
                     <Tab label="View Paper & Answers" />

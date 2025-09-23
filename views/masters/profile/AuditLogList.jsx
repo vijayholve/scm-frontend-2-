@@ -18,7 +18,7 @@ const AuditLogList = () => {
   return (
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <ReusableDataGrid
+          <ReusableDataGrid viewScreenIs={true}
             title="AUDIT LOGS"
             fetchUrl={`/api/auditlogs/getAll/${accountId}`}
             columns={columns}

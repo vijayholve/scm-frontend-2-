@@ -93,7 +93,8 @@ const Classes = () => {
                         enableFilters={true}
                         showSchoolFilter={true}
                         showClassFilter={false}
-                        showDivisionFilter={false}
+                        showDivisionFilter={false}          viewScreenIs={true}
+
                     />
                 </Grid>
             </Grid>

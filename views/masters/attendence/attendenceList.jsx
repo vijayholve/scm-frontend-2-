@@ -37,12 +37,14 @@ const AttendanceList = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
                       title="ATTENDANCE"
+          viewScreenIs={true}
 
             entityName="ATTENDANCE"
             fetchUrl={`/api/attendance/getAll/${accountId}`}
             isPostRequest={true}
             columns={columns}
             editUrl="/masters/attendance/edit"
+            sortDir ="desc"
                         addActionUrl="/masters/attendance/add"
 
             deleteUrl="/api/attendance/delete"

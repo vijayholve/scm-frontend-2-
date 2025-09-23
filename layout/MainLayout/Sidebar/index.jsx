@@ -25,10 +25,8 @@ import { useEffect } from 'react';
 
 const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
   const user = useSelector(state => state.user);
-  console.log("user", user);
-  useEffect(() => {
-    console.log("user", user);
-  }, [user]);
+  // console.log("user", user);
+
 
   const theme = useTheme();
   const matchUpMd = useMediaQuery(theme.breakpoints.up('md'));

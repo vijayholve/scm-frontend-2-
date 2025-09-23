@@ -1,4 +1,4 @@
-import {useEffect}  from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -7,6 +7,8 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import Fab from '@mui/material/Fab';
+import Modal from '@mui/material/Modal'; // or use Drawer if you prefer
 
 // project imports
 import { CssBaseline, styled, useTheme } from '@mui/material';
@@ -16,9 +18,11 @@ import Customization from '../Customization';
 import Breadcrumbs from 'ui-component/extended/Breadcrumbs';
 import { SET_MENU } from 'store/actions';
 import { drawerWidth } from 'store/constant';
-
+import ChatbotUI from 'views/ChatBot/ChatbotUI';
 // assets
 import { IconChevronRight } from '@tabler/icons-react';
+import ChatIcon from '@mui/icons-material/Chat';
+import CloseIcon from '@mui/icons-material/Close';
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' && prop !== 'theme' })(({ theme, open }) => ({
   ...theme.typography.mainContent,
@@ -64,14 +68,16 @@ const MainLayout = () => {
     dispatch({ type: SET_MENU, opened: !leftDrawerOpened });
   };
 
-  useEffect(()=> {
+  const [chatOpen, setChatOpen] = useState(false);
+
+  useEffect(() => {
     const authData = JSON.parse(localStorage.getItem('SCM-AUTH'));
     const isUserLoggedIn = authData?.accessToken ? true : false;
     if (!isUserLoggedIn) {
       navigate('/login');
     }
-  }, [])
- 
+  }, []);
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -100,6 +106,53 @@ const MainLayout = () => {
         {/* <Breadcrumbs separator={IconChevronRight} navigation={navigate} icon title rightAlign /> */}
         <Outlet />
       </Main>
+
+      {/* Floating Chat Button */}
+      {!chatOpen && (
+        <Fab
+          color="primary"
+          aria-label="chat"
+          sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 2000 }}
+          onClick={() => setChatOpen(true)}
+        >
+          <ChatIcon />
+        </Fab>
+      )}
+
+      {/* Chat Modal */}
+      <Modal
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        sx={{ zIndex: 2100, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}
+      >
+        <Box
+          sx={{
+            width: { xs: '100%', sm: 400 },
+            height: { xs: '60%', sm: 600 },
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            borderRadius: 2,
+            m: 2,
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <Fab
+            size="small"
+            color="secondary"
+            aria-label="close"
+            sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2200 }}
+            onClick={() => setChatOpen(false)}
+          >
+            <CloseIcon />
+          </Fab>
+          <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+            <ChatbotUI />
+          </Box>
+        </Box>
+      </Modal>
+
       <Customization />
     </Box>
   );

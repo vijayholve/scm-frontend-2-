@@ -14,7 +14,7 @@ const columnsConfig = [
   { field: 'userName', headerName: 'User Name', width: 150, flex: 1 },
   { field: 'email', headerName: 'Email', width: 110, flex: 1 },
   { field: 'mobile', headerName: 'Mobile', width: 110, flex: 1 },
-  { field: 'address', headerName: 'Address', width: 110, flex: 1 }
+  // { field: 'address', headerName: 'Address', width: 110, flex: 1 }
 ];
 
 const Teachers = () => {
@@ -51,7 +51,8 @@ const Teachers = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
           title={"Teachers"}
-            fetchUrl={`/api/users/getAll/${accountId}?type=${userTypeForApi}`}
+          // viewScreenIs={true}
+            fetchUrl={`/api/users/getAllBy/${accountId}?type=${userTypeForApi}`}
             isPostRequest={true}
             columns={columnsConfig}
             editUrl="/masters/teacher/edit"

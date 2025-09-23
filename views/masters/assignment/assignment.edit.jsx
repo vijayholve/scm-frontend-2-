@@ -314,7 +314,7 @@ const EditAssignment = ({ ...others }) => {
                   <select
                     id="status"
                     name="status"
-                    value={values.status}
+                    value={values.status || ''}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     style={{
@@ -324,6 +324,9 @@ const EditAssignment = ({ ...others }) => {
                       borderRadius: '4px'
                     }}
                   >
+                    <option value="" disabled>
+                      -- Select Status --
+                    </option>
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
                   </select>

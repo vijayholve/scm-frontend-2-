@@ -176,10 +176,10 @@ const StudentSummaryCard = () => {
                     upcomingExamsRes,
                     enrolledCoursesRes
                 ] = await Promise.all([
-                    api.post(`/api/assignments/getAll/${user.accountId}`, { page: 0, size: 1 }),
+                    api.post(`/api/assignments/getAllBy/${user.accountId}`, { page: 0, size: 1 }),
                     api.get(`/api/assignments/pendingAssignments/${user.accountId}/student?studentId=${user.id}&schoolId=${user.schoolId}&classId=${user.classId}&divisionId=${user.divisionId}`),
-                    api.post(`/api/exams/getAll/${user.accountId}`, { page: 0, size: 1000, sortBy: "startDate", sortDir: "asc", fromDate: now, toDate: "2099-12-31T23:59:59.999Z" }),
-                    api.post(`/api/lms/course/getAll/${user.accountId}`, { page: 0, size: 1000, studentId: user.id }),
+                    api.post(`/api/exams/getAllBy/${user.accountId}`, { page: 0, size: 1000, sortBy: "startDate", sortDir: "asc", fromDate: now, toDate: "2099-12-31T23:59:59.999Z" }),
+                    api.post(`/api/lms/course/getAllBy/${user.accountId}`, { page: 0, size: 1000, studentId: user.id }),
                 ]);
 
                 setSummaryData({
@@ -190,7 +190,7 @@ const StudentSummaryCard = () => {
                 });
             } catch (err) {
                 console.error("Error fetching summary data:", err);
-                setError('Failed to load summary data.');
+                // setError('Failed to load summary data.');
             } finally {
                 setLoading(false);
             }

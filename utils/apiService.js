@@ -23,14 +23,43 @@ const apiClient = axios.create({
 // --- Axios Interceptors ---
 apiClient.interceptors.request.use(
   (config) => {
-    const token = getAuthData()?.accessToken;
+    const authData = getAuthData();
+    const token = authData?.accessToken;
+    const userId = authData?.data?.id;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // // Add userId as the last request param if available
+    // if (userId) {
+    //   // Ensure params exists
+    //   config.params = config.params || {};
+
+    //   // Add userId as a param, possibly overwriting if already present
+    //   config.params.userId = userId;
+    // }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
+export const getUserSchoolClassDivision = () => {
+  const user = userDetails.getUser();
+  console.log("User Details:", user);
+  if (user?.type === 'STUDENT') {
+    return {
+      schoolId: user.schoolId || null,
+      classId: user.classId || null,
+      divisionId: user.divisionId || null,
+    };
+  }
+  return {
+    schoolId: null,
+    classId: null,
+    divisionId: null,
+  };
+}
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -49,6 +78,15 @@ export const userDetails = {
   getUser: () => getAuthData()?.data || null,
   getAccountId: () => getAuthData()?.data?.accountId || null,
   getPermissions: () => getAuthData()?.data?.role?.permissions || [],
+  getScdData: () => {
+    try {
+      const scdDataString = localStorage.getItem('SCM_SCD_DATA');
+      return scdDataString ? JSON.parse(scdDataString) : null;
+    } catch (error) {
+      console.error('Failed to parse SCD data from localStorage:', error);
+      return null;
+    }
+  },
 };
 
 // --- Default export ---

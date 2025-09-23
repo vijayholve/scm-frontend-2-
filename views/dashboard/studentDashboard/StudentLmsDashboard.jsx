@@ -87,7 +87,7 @@ const StudentLmsDashboard = () => {
                 setCourses(response.data || []);
             } catch (err) {
                 console.error("Error fetching enrolled courses:", err);
-                setError('Failed to load courses. Please try again later.');
+                // setError('Failed to load courses. Please try again later.');
             } finally {
                 setLoading(false);
             }

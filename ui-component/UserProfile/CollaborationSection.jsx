@@ -13,15 +13,17 @@ import MainCard from '../../ui-component/cards/MainCard'; // Corrected import pa
 const CollaborationSection = ({ user }) => {
   return (
     user.worksWith && user.worksWith.length > 0 && (
-      <MainCard title="Works most with...">
-        <Stack direction="row" flexWrap="wrap" spacing={2}>
+      <MainCard
+      //  title="Works most with..."
+       >
+        {/* <Stack direction="row" flexWrap="wrap" spacing={2}>
           {user.worksWith.map((person, index) => (
             <Stack key={index} alignItems="center" spacing={0.5}>
               <Avatar src={person.avatar} alt={person.name} sx={{ width: 48, height: 48 }} />
               <Typography variant="caption" sx={{ textAlign: 'center' }}>{person.name}</Typography>
             </Stack>
           ))}
-        </Stack>
+        </Stack> */}
       </MainCard>
     )
   );

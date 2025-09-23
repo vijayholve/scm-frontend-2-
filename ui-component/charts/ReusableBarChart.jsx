@@ -22,50 +22,50 @@ const ReusableBarChart = ({
   const divider = theme.palette.divider;
 
   // Chart options
-  const options = {
-    chart: {
-      id: chartId,
-      type: 'bar', // Ensures the chart is a bar chart
-      height: height,
-      toolbar: {
-        show: true
+    const options = {
+      chart: {
+        id: chartId,
+        type: 'bar', // Ensures the chart is a bar chart
+        height: height,
+        toolbar: {
+          show: true
+        },
+        background: 'transparent'
       },
-      background: 'transparent'
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: '55%',
-        borderRadius: 4
-      }
-    },
-    dataLabels: {
-      enabled: false
-    },
-    // The stroke property is removed to prevent conflicts with bar rendering
-    xaxis: {
-      categories: xAxisCategories,
-      labels: {
-        style: {
-          colors: primary
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: '55%',
+          borderRadius: 4
         }
-      }
-    },
-    yaxis: {
-      labels: {
-        style: {
-          colors: primary
+      },
+      dataLabels: {
+        enabled: false
+      },
+      // The stroke property is removed to prevent conflicts with bar rendering
+      xaxis: {
+        categories: xAxisCategories,
+        labels: {
+          style: {
+            colors: primary
+          }
         }
-      }
-    },
-    grid: {
-      borderColor: divider
-    },
-    tooltip: {
-      theme: theme.palette.mode
-    },
-    ...otherChartOptions
-  };
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: primary
+          }
+        }
+      },
+      grid: {
+        borderColor: divider
+      },
+      tooltip: {
+        theme: theme.palette.mode
+      },
+      ...otherChartOptions
+    };
 
   const ChartContent = () => (
     <Grid container spacing={gridSpacing}>

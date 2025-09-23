@@ -296,7 +296,12 @@ const CourseView = () => {
       console.log(selectedLesson);
 
       return (
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 3 ,
+          maxHeight: '80vh', overflowY: 'auto',
+          
+          width: '100%'
+
+        }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             {selectedLesson.title}
           </Typography>
@@ -401,12 +406,22 @@ const CourseView = () => {
           <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
             {course.description}
           </Typography>
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-            <Chip label={`Modules: ${totalModules}`} color="primary" />
-            <Chip label={`Lessons: ${totalLessons}`} color="secondary" />
-            <Chip label={`Status: ${course.status || "N/A"}`} />
-            <Chip label={`Enrolled: ${students.length}`} />
-          </Stack>
+       
+          <Box sx={{ mt: 2 }}>
+            <Stack direction="row" spacing={2}
+            sx={{ mt: { xs: 2, md: 0 } }}
+            alignItems="center"
+
+             flexWrap="wrap"
+             
+             >
+              <Chip
+               label={`Modules: ${totalModules}`} color="primary" />
+              <Chip label={`Lessons: ${totalLessons}`} color="secondary" />
+              <Chip label={`Status: ${course.status || "N/A"}`} />
+              <Chip label={`Enrolled: ${students.length}`} />
+            </Stack>
+          </Box>
         </Box>
         <Box sx={{ minWidth: 250, mt: { xs: 3, md: 0 } }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>

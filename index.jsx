@@ -29,7 +29,6 @@ const container = document.getElementById('root');
 const root = createRoot(container); 
 const store = configureStore({ reducer });
 // ==============================|| REACT DOM RENDER  ||============================== //
-
 root.render(
   <Provider store={store}>
     <App />

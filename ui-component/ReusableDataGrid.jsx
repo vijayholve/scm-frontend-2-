@@ -29,6 +29,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as ViewIcon,
+  // i want same icon as Visibility but with different style and color
+  VisibilityOutlined as OutlinedViewIcon,
   MoreVert as MoreVertIcon,
   PersonAdd as PersonAddIcon
 } from '@mui/icons-material';
@@ -37,10 +39,12 @@ import {
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import api, { userDetails } from 'utils/apiService';
+import ViewDetailsModal from './ViewDetailsModal';
+import api, { userDetails, getUserSchoolClassDivision } from 'utils/apiService';
 import { hasPermission } from 'utils/permissionUtils';
 import { useSelector } from 'react-redux';
 import ListGridFilters from './ListGridFilters';
+import { useDataCache } from 'contexts/DataCacheContext';
 
 const ActionWrapper = styled(Box)({
   display: 'flex',
@@ -105,7 +109,8 @@ const ReusableDataGrid = ({
   getRowId: getRowIdProp = (row) => row.id,
   schoolNameMap = {},
   classNameMap = {},
-  divisionNameMap = {}
+  divisionNameMap = {},
+  viewScreenIs = false
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
@@ -117,10 +122,28 @@ const ReusableDataGrid = ({
   const [searchText, setSearchText] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [gridFilters, setGridFilters] = useState(filters);
+  // If logged in user is a STUDENT, apply their school/class/division as default filters
+  const [gridFilters, setGridFilters] = useState(() => {
+    try {
+      const studentFilter = getUserSchoolClassDivision();
+      // If studentFilter has any value, merge it into initial filters
+      if (studentFilter && (studentFilter.schoolId || studentFilter.classId || studentFilter.divisionId)) {
+        return { ...filters, ...studentFilter };
+      }
+    } catch (e) {
+      console.error('Error reading student filter:', e);
+    }
+    return filters;
+  });
   const [gridData, setGridData] = useState([]);
+  // For view modal
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewRowData, setViewRowData] = useState(null);
   const accountId = userDetails.getAccountId();
-
+const studentScope = getUserSchoolClassDivision();
+  const isStudent = Boolean(
+    studentScope && (studentScope.schoolId || studentScope.classId || studentScope.divisionId)
+  );
   // Use a ref to store the latest filters without triggering a re-render
   const latestFilters = useRef(gridFilters);
   useEffect(() => {
@@ -128,86 +151,100 @@ const ReusableDataGrid = ({
   }, [gridFilters]);
 
   // Memoized function to fetch data, preventing infinite loops
-  const fetchData = useCallback(async () => {
-    // Return early if no fetch URL is provided
-    if (!fetchUrl) {
-      // Client-side filtering fallback
-      const filteredData = clientSideData.filter((item) => {
-        let isMatch = true;
-        if (latestFilters.current.schoolId) {
-          isMatch = isMatch && item.schoolId == latestFilters.current.schoolId;
-        }
-        if (latestFilters.current.classId) {
-          isMatch = isMatch && item.classId == latestFilters.current.classId;
-        }
-        if (latestFilters.current.divisionId) {
-          isMatch = isMatch && item.divisionId == latestFilters.current.divisionId;
-        }
-        if (searchText) {
-          isMatch = isMatch && JSON.stringify(item).toLowerCase().includes(searchText.toLowerCase());
-        }
-        return isMatch;
-      });
-      const transformedData = transformData ? filteredData.map(transformData) : filteredData;
-      setGridData(transformedData);
-      setRowCount(transformedData.length);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let response;
-      const method = (requestMethod || (isPostRequest ? 'POST' : 'GET')).toUpperCase();
-      if (method === 'POST') {
-        const payload = {
-          page: paginationModel.page,
-          size: paginationModel.pageSize,
-          sortBy: 'id',
-          sortDir: 'asc',
-          search: searchText,
-          ...latestFilters.current
-        };
-        response = await api.post(fetchUrl, payload);
-      } else {
-        const payload = {
-          page: paginationModel.page,
-          size: paginationModel.pageSize,
-          sortBy: 'id',
-          sortDir: 'asc',
-          search: searchText,
-          ...latestFilters.current
-        };
-        if (sendBodyOnGet) {
-          response = await api.get(fetchUrl, { data: payload });
-        } else {
-          const queryParams = new URLSearchParams({
-            page: paginationModel.page,
-            size: paginationModel.pageSize,
-            search: searchText,
-            ...latestFilters.current
-          });
-          response = await api.get(`${fetchUrl}?${queryParams}`);
-        }
+  const { fetchData: fetchFromCache, clearCache, isLoading: isCacheLoading } = useDataCache();
+  const fetchData = useCallback(
+    async (forceRefresh = false) => {
+      // Return early if no fetch URL is provided
+      if (!fetchUrl) {
+        // Client-side filtering fallback
+        const filteredData = clientSideData.filter((item) => {
+          let isMatch = true;
+          if (latestFilters.current.schoolId) {
+            isMatch = isMatch && item.schoolId == latestFilters.current.schoolId;
+          }
+          if (latestFilters.current.classId) {
+            isMatch = isMatch && item.classId == latestFilters.current.classId;
+          }
+          if (latestFilters.current.divisionId) {
+            isMatch = isMatch && item.divisionId == latestFilters.current.divisionId;
+          }
+          if (searchText) {
+            isMatch = isMatch && JSON.stringify(item).toLowerCase().includes(searchText.toLowerCase());
+          }
+          return isMatch;
+        });
+        const transformedData = transformData ? filteredData.map(transformData) : filteredData;
+        setGridData(transformedData);
+        setRowCount(transformedData.length);
+        return;
       }
 
-      const responseData = response.data.content || response.data || [];
-      const transformedData = transformData ? responseData.map(transformData) : responseData;
+      const isCurrentlyLoading = isCacheLoading(
+        fetchUrl,
+        latestFilters.current,
+        searchText,
+        paginationModel.page,
+        paginationModel.pageSize
+      );
 
-      setGridData(transformedData);
-      setRowCount(response.data.totalElements || response.data.length || 0);
-    } catch (err) {
-      console.error(`Failed to fetch data from ${fetchUrl}:`, err);
-      toast.error('Could not fetch data.');
-      setGridData([]);
-      setRowCount(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchUrl, isPostRequest, searchText, transformData, clientSideData, paginationModel, JSON.stringify(gridFilters)]);
+      if (isCurrentlyLoading) {
+        setLoading(true);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const result = await fetchFromCache(fetchUrl, {
+          filters: latestFilters.current,
+          searchText,
+          page: paginationModel.page,
+          pageSize: paginationModel.pageSize,
+          isPostRequest,
+          requestMethod,
+          sendBodyOnGet,
+          transformData,
+          forceRefresh
+        });
+
+        setGridData(result.data);
+        setRowCount(result.totalElements);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setGridData([]);
+        setRowCount(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      fetchUrl,
+      fetchFromCache,
+      isCacheLoading,
+      transformData,
+      clientSideData,
+      paginationModel,
+      searchText,
+      isPostRequest,
+      requestMethod,
+      sendBodyOnGet
+    ]
+  );
 
   // Handle filter changes from ListGridFilters
   const handleFiltersChange = useCallback((newFilters) => {
-    setGridFilters(newFilters);
+    try {
+      const studentFilter = getUserSchoolClassDivision();
+      if (studentFilter && (studentFilter.schoolId || studentFilter.classId || studentFilter.divisionId)) {
+        // Preserve student scope — don't allow removing student's school/class/division
+        setGridFilters({ ...newFilters, ...studentFilter });
+      } else {
+        setGridFilters(newFilters);
+      }
+    } catch (e) {
+      console.error('Error applying student filter on change:', e);
+      setGridFilters(newFilters);
+    }
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
 
@@ -224,7 +261,9 @@ const ReusableDataGrid = ({
       try {
         await api.delete(`${deleteUrl}/${accountId}/${id}`);
         toast.success('Item deleted successfully!');
-        fetchData();
+        // Clear cache for this URL and refresh
+        clearCache(fetchUrl);
+        fetchData(true);
       } catch (err) {
         console.error(err);
         toast.error('Failed to delete item.');
@@ -247,6 +286,8 @@ const ReusableDataGrid = ({
     setSearchText('');
     setGridFilters(filters);
     setPaginationModel({ page: 0, pageSize: defaultPageSize });
+    // Force refresh from API
+    setTimeout(() => fetchData(true), 100);
   };
 
   const handleRowClick = (params) => {
@@ -266,116 +307,84 @@ const ReusableDataGrid = ({
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-          const hasCustomActions = customActions.length > 0;
-
-          if (hasCustomActions) {
-            return (
-              <ActionWrapper>
-                {customActions.map((action, index) => {
-                  // if (action.permission && !hasPermission(permissions, entityName, action.permission)) {
-                  //   return null;
-                  // }
-
-                  return (
-                    <Tooltip key={index} title={action.tooltip || action.label}>
-                      <IconButton
-                        size="small"
-                        color={action.color || 'primary'}
-                        onClick={() => action.onClick(params.row)}
-                        sx={{
-                          '&:hover': {
-                            backgroundColor: `rgba(${
-                              action.color === 'error' ? '244, 67, 54' : action.color === 'info' ? '33, 150, 243' : '25, 118, 210'
-                            }, 0.1)`,
-                            transform: 'scale(1.1)'
-                          }
-                        }}
-                      >
-                        {action.icon}
-                      </IconButton>
-                    </Tooltip>
-                  );
-                })}
-
-                {(editUrl || deleteUrl || viewUrl || EnrollActionUrl) && (
-                  <IconButton size="small" onClick={(event) => setAnchorEl(event.currentTarget)}>
-                    <MoreVertIcon />
-                  </IconButton>
-                )}
-              </ActionWrapper>
-            );
+          // Compose actions: view (if enabled), then custom, then built-in
+          const actions = [];
+          if (viewScreenIs) {
+            actions.push({
+              icon: <OutlinedViewIcon />,
+              label: 'View',
+              tooltip: 'View in Details',
+              color: 'info',
+              onClick: () => {
+                setViewRowData(params.row);
+                setViewModalOpen(true);
+              },
+              permission: 'view'
+            });
           }
-
+          if (customActions.length > 0) {
+            customActions.forEach((action) => {
+              actions.push({ ...action, onClick: () => action.onClick(params.row) });
+            });
+          }
+          // Built-in actions (edit, delete, viewUrl, enroll)
+          if (viewUrl && hasPermission(permissions, entityName, 'view')) {
+            actions.push({
+              icon: <ViewIcon />,
+              label: 'View',
+              tooltip: 'View Details',
+              color: 'info',
+              onClick: () => handleOnClickView(params.row.id)
+            });
+          }
+          if (EnrollActionUrl && hasPermission(permissions, entityName, 'view')) {
+            actions.push({
+              icon: <PersonAddIcon />,
+              label: 'Enroll',
+              tooltip: 'Enroll',
+              color: 'secondary',
+              onClick: () => handleOnClickEnrollActionUrl(params.row.id)
+            });
+          }
+          if (editUrl && hasPermission(permissions, entityName, 'edit')) {
+            actions.push({
+              icon: <EditIcon />,
+              label: 'Edit',
+              tooltip: 'Edit',
+              color: 'primary',
+              onClick: () => navigate(`${editUrl}/${params.row.id}`)
+            });
+          }
+          if (deleteUrl && hasPermission(permissions, entityName, 'delete')) {
+            actions.push({
+              icon: <DeleteIcon />,
+              label: 'Delete',
+              tooltip: 'Delete',
+              color: 'error',
+              onClick: () => handleOnClickDelete(params.row.id)
+            });
+          }
           return (
             <ActionWrapper>
-              {viewUrl && hasPermission(permissions, entityName, 'view') && (
-                <Tooltip title="View Details">
+              {actions.map((action, idx) => (
+                <Tooltip key={idx} title={action.tooltip || action.label}>
                   <IconButton
                     size="small"
-                    color="info"
-                    onClick={() => handleOnClickView(params.row.id)}
+                    color={action.color || 'primary'}
+                    onClick={action.onClick}
                     sx={{
                       '&:hover': {
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        backgroundColor: `rgba(${
+                          action.color === 'error' ? '244, 67, 54' : action.color === 'info' ? '33, 150, 243' : '25, 118, 210'
+                        }, 0.1)`,
                         transform: 'scale(1.1)'
                       }
                     }}
                   >
-                    <ViewIcon />
+                    {action.icon}
                   </IconButton>
                 </Tooltip>
-              )}
-              {EnrollActionUrl && hasPermission(permissions, entityName, 'view') && (
-                <Tooltip title="Enroll">
-                  <IconButton
-                    size="small"
-                    color="secondary"
-                    onClick={() => handleOnClickEnrollActionUrl(params.row.id)}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                        transform: 'scale(1.1)'
-                      }
-                    }}
-                  >
-                    <PersonAddIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-              {editUrl && hasPermission(permissions, entityName, 'edit') && (
-                <Tooltip title="Edit">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => navigate(`${editUrl}/${params.row.id}`)}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                        transform: 'scale(1.1)'
-                      }
-                    }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-              {deleteUrl && hasPermission(permissions, entityName, 'delete') && (
-                <Tooltip title="Delete">
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleOnClickDelete(params.row.id)}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                        transform: 'scale(1.1)'
-                      }
-                    }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
+              ))}
             </ActionWrapper>
           );
         }
@@ -445,7 +454,8 @@ const ReusableDataGrid = ({
           Refresh
         </Button>
       )}
-      {showFilters && Object.keys(gridFilters).length > 0 && (
+      {/* hide filter chip for STUDENT users */}
+      {!isStudent && showFilters && Object.keys(gridFilters).length > 0 && (
         <Chip icon={<FilterListIcon />} label={`${Object.keys(gridFilters).length} filters active`} variant="outlined" color="primary" />
       )}
       {addActionUrl && hasPermission(permissions, entityName, 'add') && <SecondaryAction icon={<AddIcon />} link={addActionUrl} />}
@@ -467,7 +477,8 @@ const ReusableDataGrid = ({
     >
       {customToolbar && customToolbar()}
 
-      {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && (
+      {/* Do not render school/class/division filter UI for STUDENT users */}
+      {enableFilters && !isStudent && (showSchoolFilter || showClassFilter || showDivisionFilter) && (
         <ListGridFilters
           filters={gridFilters}
           onFiltersChange={handleFiltersChange}
@@ -514,6 +525,7 @@ const ReusableDataGrid = ({
           </Box>
         </Grid>
       </Grid>
+      {viewScreenIs && <ViewDetailsModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} data={viewRowData} title="Details" />}
     </MainCard>
   );
 };

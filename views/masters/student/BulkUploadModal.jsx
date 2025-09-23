@@ -20,12 +20,14 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadResult, setUploadResult] = useState(null);
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile && selectedFile.name.endsWith('.xlsx')) {
       setFile(selectedFile);
       setError('');
+      setUploadResult(null); // Reset result when a new file is selected
     } else {
       setFile(null);
       setError('Please select a valid Excel file (.xlsx).');
@@ -35,10 +37,10 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
   const handleDownloadSample = async () => {
     try {
       setLoading(true);
-      
+
       // Make a GET request to the backend API to download the file
       const response = await api.get('/api/users/upload/template', {
-        responseType: 'blob', // Important: Set responseType to 'blob' to handle binary data
+        responseType: 'blob' // Important: Set responseType to 'blob' to handle binary data
       });
 
       // Create a URL for the blob and trigger a download
@@ -73,14 +75,15 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
     formData.append('file', file);
 
     try {
-      await api.post('/api/users/upload', formData, {
+      const response = await api.post('/api/users/upload', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+          'Content-Type': 'multipart/form-data'
+        }
       });
-      toast.success('Students uploaded successfully!');
+      setUploadResult(response.data);
+      toast.success(`${response.data.successCount} students uploaded successfully!`);
       onUploadSuccess(); // Call success callback to notify parent
-      onClose(); // Close modal on success
+      // Keep the modal open to show the result
     } catch (err) {
       setError('Failed to upload file. Please check the format and try again.');
       toast.error('Bulk upload failed.');
@@ -105,12 +108,7 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
         </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadSample}
-            disabled={loading}
-          >
+          <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleDownloadSample} disabled={loading}>
             {loading ? 'Downloading...' : 'Download Sample Excel File'}
           </Button>
         </Box>
@@ -123,17 +121,11 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
             textAlign: 'center',
             cursor: 'pointer',
             borderColor: error ? 'error.main' : 'divider',
-            '&:hover': { borderColor: 'primary.main' },
+            '&:hover': { borderColor: 'primary.main' }
           }}
           onClick={() => document.getElementById('file-input').click()}
         >
-          <input
-            type="file"
-            id="file-input"
-            accept=".xlsx"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
+          <input type="file" id="file-input" accept=".xlsx" style={{ display: 'none' }} onChange={handleFileChange} />
           <UploadIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
           <Typography variant="h6" sx={{ mt: 1 }}>
             {file ? file.name : 'Click to select an .xlsx file'}
@@ -148,10 +140,29 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
             {error}
           </Alert>
         )}
+
+        {uploadResult && (
+          <Paper elevation={2} sx={{ p: 2, mt: 2, backgroundColor: 'background.default' }}>
+            <Typography variant="h6" gutterBottom>
+              Upload Summary
+            </Typography>
+            <Typography color="success.main">Successfully created users: {uploadResult.successCount}</Typography>
+            <Typography color="error.main">Failed to create users: {uploadResult.failCount}</Typography>
+            <Typography>Total records processed: {uploadResult.totalCount}</Typography>
+            {uploadResult.failCount > 0 && (
+              <Box mt={2}>
+                <Typography variant="subtitle1" color="error.main">
+                  Failure Details:
+                </Typography>
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{JSON.stringify(uploadResult.failures, null, 2)}</pre>
+              </Box>
+            )}
+          </Paper>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
-          Cancel
+          Close
         </Button>
         <Button
           variant="contained"

@@ -5,7 +5,9 @@ import { Clear as ClearIcon } from '@mui/icons-material';
 import api from 'utils/apiService';
 import { userDetails } from 'utils/apiService';
 
-const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClass = true, showDivision = true, showClearAll = true }) => {
+const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClass = true, showDivision = true, showClearAll = true ,
+  ActiveFiltersDisplay = true
+}) => {
   const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
   const [divisions, setDivisions] = useState([]);
@@ -213,7 +215,7 @@ const ListGridFilters = ({ filters, onFiltersChange, showSchool = true, showClas
           </Grid>
         )}
       </Grid>
-      {hasActiveFilters && (
+      {hasActiveFilters && ActiveFiltersDisplay && (
         <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           <Typography variant="body2" color="textSecondary" sx={{ mr: 1 }}>
             Active filters:

@@ -33,7 +33,8 @@ const Subjects = () => {
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
-                     title="SUBJECTS"
+                     title="SUBJECTS" 
+                     viewScreenIs={true}
                         fetchUrl={`/api/subjects/getAll/${accountId}`}
                         isPostRequest={true}
                         columns={columns}

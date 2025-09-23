@@ -10,6 +10,8 @@ import TeacherQuickActionsCard from './TeacherQuickActionsCard';
 
 
 const TeacherDashboard = () => {
+    const scdData = useSelector((state) => state.user.scdData);
+    console.log("SCD Data in Dashboard:", scdData);
   const { user } = useSelector((state) => state.user);
   const [dashboardData, setDashboardData] = useState({
     courses: [],
@@ -26,9 +28,9 @@ const TeacherDashboard = () => {
       }
     };
 
-    //     if (user && user.id) {
-    //       fetchData();
-    //     }
+    // ï¿½ ï¿½ if (user && user.id) {
+    // ï¿½ ï¿½ ï¿½ fetchData();
+    // ï¿½ ï¿½ }
   }, [user]);
 
   return (

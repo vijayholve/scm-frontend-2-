@@ -17,11 +17,11 @@ const permissions = useSelector((state) => state.user.permissions || []);
 const [menuItemFilter, setMenuItemFilter] = useState([]);
 
 useEffect(() => {
-  console.log('MenuList permissions:', permissions);
+  // console.log('MenuList permissions:', permissions);
    // Filter menu items based on permissions
-   console.log("menuItem ===>",menuItem);
+  //  console.log("menuItem ===>",menuItem);
    const filteredMenu = filterMenuByPermissions(menuItem, permissions ||  []);  
-   console.log("filteredMenu ===>",filteredMenu);
+  //  console.log("filteredMenu ===>",filteredMenu);
    setMenuItemFilter(filteredMenu);
 }, [permissions]);
 

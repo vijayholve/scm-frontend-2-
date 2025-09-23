@@ -3,7 +3,7 @@
 import React, { lazy } from 'react';
 import { useSelector } from 'react-redux';
 import Loadable from 'ui-component/Loadable';
-
+import Loader from 'ui-component/Loader';
 // project imports
 const AdminDashboard = Loadable(lazy(() => import('./adminDashboard/index')));
 const TeacherDashboard = Loadable(lazy(() => import('./teacherDashboard/TeacherDashboard')));
@@ -13,15 +13,20 @@ const DashboardDefault = () => {
   const user = useSelector((state) => state.user.user);
   const userType = user?.type;
 
+  if (!userType) {
+    // Show loader while userType is loading or changing
+    return <Loader />;
+  }
+
   switch (userType) {
     case 'STUDENT':
       return <StudentDashboardV1 />;
     case 'TEACHER':
-      return <AdminDashboard />;
+      return <TeacherDashboard />;
     case 'ADMIN':
       return <AdminDashboard />;
     default:
-      return <TeacherDashboard />;
+      return <Loader />;
   }
 };
 

@@ -336,21 +336,42 @@ const AttendenceEdit = () => {
         <SubCard title={reqData.className ? `${reqData.className} - ${reqData.divisionName} - ${reqData.subjectName}` : 'Select Class, Division and Subject'}>
           <Grid container spacing={2}>
             {students.map((student, index) => (
+        
+             
+
+
               <Grid item xs={12} sm={6} md={4} key={student.rollno}>
-                <Item>
-                  <Avatar sx={{ bgcolor: '#673ab7', color: '#fff' }}>S</Avatar>
+                <Item sx={{
+                  backgroundColor: student.vailable ? '#C8E6C9' : '#FFCDD2',
+                  border: student.vailable ? '2px solid #4caf50' : '2px solid #f44336',
+                  '&:hover': {
+                    boxShadow: theme.shadows[6],
+                    cursor: 'pointer'
+                  }
+                }} onClick={() => handleToggle(index)}>
+                  <Avatar sx={{ bgcolor: student.vailable ? '#4caf50' : '#f44336', color: '#fff' }}>
+                    {student.studentName ? student.studentName.charAt(0).toUpperCase() : 'S'}
+                  </Avatar>
                   <div style={{ paddingLeft: '10px', minWidth: '200px' }}>
                     {student.studentName}
                     <p style={{ marginTop: 0, marginBottom: 0 }}>Roll No: {student.studentRollNo}</p>
                   </div>
+         
                   <Checkbox
                     edge="end"
                     checked={!!student.vailable}
                     onChange={() => handleToggle(index)}
                     sx={{ position: 'absolute', right: '22px' }}
+                    
+                    onClick={(e) => e.stopPropagation()}
+
+                    
+
+                   
                   />
                 </Item>
               </Grid>
+            
             ))}
           </Grid>
         </SubCard>

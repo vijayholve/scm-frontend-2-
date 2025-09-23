@@ -25,7 +25,7 @@ const columns = [
   { field: 'subjectName', headerName: 'Subject', width: 120, editable: true },
   { field: 'createdBy', headerName: 'Created By', width: 120, editable: true },
   { field: 'deadLine', headerName: 'Deadline', width: 120, editable: true },
-  { field: 'isActive', headerName: 'isactive', width: 100, editable: true },
+  { field: 'status', headerName: 'status', width: 100, editable: true }
 ];
 
 const Assignments = () => {
@@ -33,34 +33,34 @@ const Assignments = () => {
   const accountId = userDetails.getAccountId();
   const user = useSelector((state) => state.user);
   const permissions = user?.permissions || [];
-  
+
   return (
- 
-      <Grid container spacing={gridSpacing}>
-        <Grid item xs={12}>
-          <ReusableDataGrid
-          title={"ASSIGNMENTS"}
-            fetchUrl={`/api/assignments/getAllBy/${accountId}`}
-            isPostRequest={true}
-            columns={columns}
-            addActionUrl="/masters/assignment/add"
-            editUrl="/masters/assignment/edit"
-            deleteUrl="/api/assignments/delete"
-            entityName="ASSIGNMENT"
-            searchPlaceholder="Search assignments by name, type, or year..."
-            showSearch={true}
-            showRefresh={true}
-            showFilters={true}
-            pageSizeOptions={[5, 10, 25, 50]}
-            defaultPageSize={10}
-            height={600}
-            enableFilters={true}
-            showSchoolFilter={true}
-            showClassFilter={true}
-            showDivisionFilter={true}
-          />
-        </Grid>
+    <Grid container spacing={gridSpacing}>
+      <Grid item xs={12}>
+        <ReusableDataGrid
+          viewScreenIs={true}
+          title={'ASSIGNMENTS'}
+          fetchUrl={`/api/assignments/getAllBy/${accountId}`}
+          isPostRequest={true}
+          columns={columns}
+          addActionUrl="/masters/assignment/add"
+          editUrl="/masters/assignment/edit"
+          deleteUrl="/api/assignments/delete"
+          entityName="ASSIGNMENT"
+          searchPlaceholder="Search assignments by name, type, or year..."
+          showSearch={true}
+          showRefresh={true}
+          showFilters={true}
+          pageSizeOptions={[5, 10, 25, 50]}
+          defaultPageSize={10}
+          height={600}
+          enableFilters={true}
+          showSchoolFilter={true}
+          showClassFilter={true}
+          showDivisionFilter={true}
+        />
       </Grid>
+    </Grid>
     // </MainCard>
   );
 };

@@ -1,8 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Grid, Typography, CircularProgress, Paper, Divider, List, ListItem, ListItemText } from '@mui/material';
+import {
+    Box,
+    Grid,
+    Typography,
+    CircularProgress,
+    Paper,
+    Divider,
+    List,
+    ListItem,
+    ListItemText,
+    Card,
+    CardContent,
+    Chip,
+    Stack,
+    ListItemIcon
+} from '@mui/material';
 import MainCard from 'ui-component/cards/MainCard';
 import BackButton from 'layout/MainLayout/Button/BackButton';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import SubjectIcon from '@mui/icons-material/Subject';
+import EventIcon from '@mui/icons-material/Event';
+import SchoolIcon from '@mui/icons-material/School';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const dummyExamDetails = {
     id: 1, examName: "Annual Science Examination", academicYear: "2025", examType: "WRITTEN", startDate: "2025-10-20T09:00:00.000Z", endDate: "2025-10-20T12:00:00.000Z", status: "SCHEDULED", maxMarksOverall: 175,
@@ -27,24 +48,98 @@ const ExamView = () => {
     
     return (
         <MainCard title="Exam Details" secondary={<BackButton BackUrl="/masters/exams" />}>
-            <Paper sx={{ p: 3 }}>
-                <Grid container spacing={2}>
-                    <Grid item xs={12}><Typography variant="h3" gutterBottom>{exam.examName}</Typography><Typography variant="h5" color="textSecondary">Academic Year: {exam.academicYear}</Typography></Grid>
-                    <Grid item xs={12}><Divider sx={{ my: 2 }} /></Grid>
-                    <Grid item xs={12} sm={6}><Typography variant="subtitle1"><strong>Exam Type:</strong> {exam.examType}</Typography></Grid>
-                    <Grid item xs={12} sm={6}><Typography variant="subtitle1"><strong>Total Marks:</strong> {exam.maxMarksOverall}</Typography></Grid>
-                    <Grid item xs={12} sm={6}><Typography variant="subtitle1"><strong>Start Date:</strong> {new Date(exam.startDate).toLocaleString()}</Typography></Grid>
-                    <Grid item xs={12} sm={6}><Typography variant="subtitle1"><strong>End Date:</strong> {new Date(exam.endDate).toLocaleString()}</Typography></Grid>
-                    <Grid item xs={12} sx={{ mt: 3 }}>
-                        <Typography variant="h4">Subjects & Schedule</Typography>
-                        <List>
+            <Paper elevation={3} sx={{ p: 4, borderRadius: '12px' }}>
+                <Grid container spacing={4}>
+                    {/* Exam Header */}
+                    <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box>
+                                <Typography variant="h2" component="h1" gutterBottom>{exam.examName}</Typography>
+                                <Typography variant="subtitle1" color="text.secondary">Academic Year: {exam.academicYear}</Typography>
+                            </Box>
+                            <Chip 
+                                label={exam.status} 
+                                color={exam.status === 'SCHEDULED' ? 'primary' : 'success'} 
+                                icon={<CheckCircleIcon />}
+                            />
+                        </Box>
+                        <Divider sx={{ my: 2 }} />
+                    </Grid>
+
+                    {/* Key Information Cards */}
+                    <Grid item xs={12}>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card variant="outlined">
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <SchoolIcon sx={{ mr: 2, color: 'primary.main', fontSize: 40 }} />
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">Exam Type</Typography>
+                                            <Typography variant="h6">{exam.examType}</Typography>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card variant="outlined">
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <EventIcon sx={{ mr: 2, color: 'secondary.main', fontSize: 40 }} />
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">Total Marks</Typography>
+                                            <Typography variant="h6">{exam.maxMarksOverall}</Typography>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card variant="outlined">
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <CalendarMonthIcon sx={{ mr: 2, color: 'success.main', fontSize: 40 }} />
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">Start Date</Typography>
+                                            <Typography variant="h6">{new Date(exam.startDate).toLocaleDateString()}</Typography>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card variant="outlined">
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <AccessTimeIcon sx={{ mr: 2, color: 'error.main', fontSize: 40 }} />
+                                        <Box>
+                                            <Typography variant="subtitle2" color="text.secondary">End Date</Typography>
+                                            <Typography variant="h6">{new Date(exam.endDate).toLocaleDateString()}</Typography>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    {/* Subjects Section */}
+                    <Grid item xs={12}>
+                        <Typography variant="h4" sx={{ mb: 2 }}>Subjects & Schedule</Typography>
+                        <List component={Paper} elevation={1} sx={{ borderRadius: '8px' }}>
                             {exam.examSubjects.map((subject) => (
-                                <ListItem key={subject.id} divider>
-                                    <ListItemText
-                                        primary={<Typography variant="h6">{subject.subjectName}</Typography>}
-                                        secondary={<><Typography component="span" display="block">Max Marks: {subject.maxMarksSubject}</Typography><Typography component="span" display="block">Passing Marks: {subject.passingMarksSubject}</Typography><Typography component="span" display="block">Duration: {subject.durationMinutes} minutes</Typography><Typography component="span" display="block">Scheduled for: {new Date(subject.examDateTime).toLocaleString()}</Typography></>}
-                                    />
-                                </ListItem>
+                                <React.Fragment key={subject.id}>
+                                    <ListItem alignItems="flex-start" sx={{ py: 2 }}>
+                                        <ListItemIcon>
+                                            <SubjectIcon color="action" sx={{ fontSize: 30, mt: 1 }} />
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary={<Typography variant="h5" component="span" sx={{ fontWeight: 'bold' }}>{subject.subjectName}</Typography>}
+                                            secondary={
+                                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1, sm: 3 }} sx={{ mt: 1 }}>
+                                                    <Chip label={`Max Marks: ${subject.maxMarksSubject}`} variant="outlined" color="info" size="small" />
+                                                    <Chip label={`Passing Marks: ${subject.passingMarksSubject}`} variant="outlined" color="success" size="small" />
+                                                    <Chip label={`Duration: ${subject.durationMinutes} min`} variant="outlined" color="primary" size="small" />
+                                                    <Chip label={`Scheduled: ${new Date(subject.examDateTime).toLocaleString()}`} variant="outlined" color="secondary" size="small" />
+                                                </Stack>
+                                            }
+                                        />
+                                    </ListItem>
+                                    {exam.examSubjects.indexOf(subject) !== exam.examSubjects.length - 1 && <Divider component="li" />}
+                                </React.Fragment>
                             ))}
                         </List>
                     </Grid>

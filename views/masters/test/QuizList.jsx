@@ -17,13 +17,13 @@ const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'title', headerName: 'Title', width: 200, editable: false },
     { field: 'description', headerName: 'Description', width: 250, editable: false },
-    {
-        field: 'questions',
-        headerName: 'Questions',
-        width: 120,
-        editable: false,
-        renderCell: (params) => <Chip label={params.value?.length || 0} color="primary" variant="outlined" size="small" />
-    },
+    // {
+    //     field: 'questions',
+    //     headerName: 'Questions',
+    //     width: 120,
+    //     editable: false,
+    //     renderCell: (params) => <Chip label={params.value?.length || 0} color="primary" variant="outlined" size="small" />
+    // },
     {
         field: 'startTime',
         headerName: 'Start Time',
@@ -42,7 +42,7 @@ const columns = [
     { field: 'className', headerName: 'Class', width: 110, flex: 1 },
     { field: 'divisionName', headerName: 'Division', width: 110, flex: 1 },
     {
-        field: 'showScoreAfterSubmission',
+        field: 'showScoreImmediately',
         headerName: 'Show Score',
         width: 120,
         editable: false,
@@ -116,7 +116,7 @@ const QuizList = () => {
                         showSchoolFilter={true}
                         showClassFilter={true}
                         showDivisionFilter={true}
-                    />
+                viewScreenIs={true}    />
                 </Grid>
             </Grid>
         // </MainCard>

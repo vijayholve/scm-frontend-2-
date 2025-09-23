@@ -76,12 +76,17 @@ const EditUsers = ({ ...others }) => {
     gender: null,
     schoolId: null,
     type: null,
-    educations: []
+    educations: [],
+    allocatedClasses: []
   });
 
   const Title = userId ? 'Edit Teacher' : 'Add Teacher';
 
   const [schools, setSchools] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [divisions, setDivisions] = useState([]);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedDivision, setSelectedDivision] = useState(null);
   const user = useSelector((state) => state.user);
   const [tabValue, setTabValue] = useState(0); // Initialize tabValue using useState
 
@@ -122,13 +127,41 @@ const EditUsers = ({ ...others }) => {
     fetchData(`api/roles/getAll/${userDetails.getAccountId()}`, setRoles);
   }, []);
 
+  // Fetch classes and divisions using GET endpoints (getAllBy)
+  useEffect(() => {
+    const accountId = userDetails.getAccountId();
+    const fetchDropdowns = async () => {
+      try {
+        const [classRes, divisionRes] = await Promise.all([
+          api.get(`/api/schoolClasses/getAllBy/${accountId}`),
+          api.get(`/api/divisions/getAllBy/${accountId}`)
+        ]);
+        setClasses(classRes.data || []);
+        setDivisions(divisionRes.data || []);
+      } catch (err) {
+        console.error('Failed to fetch classes/divisions:', err);
+      }
+    };
+    fetchDropdowns();
+  }, []);
+
   const fetchTeacherData = async (id) => {
     setLoader(true);
     try {
       const response = await api.get(`api/users/getById?id=${id}`);
       const data = response.data || {};
       const normalizedEducations = Array.isArray(data.educations) ? data.educations : data.educations ? [data.educations] : [];
-      setTeacherData({ ...data, educations: normalizedEducations });
+      const normalizedAllocations = Array.isArray(data.allocatedClasses)
+        ? data.allocatedClasses
+          .map((item) => {
+            const classId = item?.classId ?? item?.class?.id ?? item?.class_id ?? item?.clsId;
+            const divisionId = item?.divisionId ?? item?.division?.id ?? item?.division_id ?? item?.divId;
+            if (!classId || !divisionId) return null;
+            return { classId, divisionId };
+          })
+          .filter(Boolean)
+        : [];
+      setTeacherData({ ...data, educations: normalizedEducations, allocatedClasses: normalizedAllocations });
     } catch (error) {
       console.error('Failed to fetch teacher data:', error);
     } finally {
@@ -144,13 +177,14 @@ const EditUsers = ({ ...others }) => {
     try {
       const apiCall = userId ? api.put(`api/users/update`, userData) : api.post(`api/users/save`, userData);
       const response = await apiCall;
-      setTeacherData(response.data);
-      toast.success(userId ? 'Teacher updated successfully' : 'Teacher created successfully', {
-        autoClose: '100',
-        onClose: () => {
-          navigate('/masters/teachers');
-        }
-      });
+      if (response.data.statusCode === 200) {
+        toast.success(userId ? 'Teacher updated successfully' : 'Teacher created successfully', {
+          autoClose: '100',
+          onClose: () => {
+            navigate('/masters/teachers');
+          }
+        });
+      }
       // setSubmitting(false);
     } catch (error) {
       console.error('Failed to submit teacher data:', error);
@@ -173,7 +207,8 @@ const EditUsers = ({ ...others }) => {
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="teacher form tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tab label="Basic Details" {...a11yProps(0)} />
             <Tab label="Education" {...a11yProps(1)} />
-              <Tab label="Documents" {...a11yProps(2)} />
+            <Tab label="Class Allocation" {...a11yProps(2)} />
+            <Tab label="Documents" {...a11yProps(3)} />
 
           </Tabs>
         </AppBar>
@@ -486,9 +521,94 @@ const EditUsers = ({ ...others }) => {
                 )}
               </FieldArray>
             </TabPanel>
-<TabPanel value={tabValue} index={2}>
-  <UserDocumentManager userId={userId} userType="TEACHER" />
-</TabPanel>
+            <TabPanel value={tabValue} index={2}>
+              <Grid container spacing={gridSpacing}>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    disablePortal
+                    options={classes}
+                    getOptionLabel={(option) => option.name || ''}
+                    value={selectedClass}
+                    onChange={(event, newValue) => {
+                      setSelectedClass(newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Class" />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    disablePortal
+                    options={divisions}
+                    getOptionLabel={(option) => option.name || ''}
+                    value={selectedDivision}
+                    onChange={(event, newValue) => {
+                      setSelectedDivision(newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Division" />}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => {
+                      if (!selectedClass || !selectedDivision) return;
+                      const exists = (values.allocatedClasses || []).some(
+                        (ac) => ac.classId === selectedClass.id && ac.divisionId === selectedDivision.id
+                      );
+                      if (exists) return;
+                      const next = [
+                        ...(values.allocatedClasses || []),
+                        { classId: selectedClass.id, divisionId: selectedDivision.id }
+                      ];
+                      setFieldValue('allocatedClasses', next);
+                      setSelectedClass(null);
+                      setSelectedDivision(null);
+                    }}
+                  >
+                    Add Allocation
+                  </Button>
+                </Grid>
+                <Grid item xs={12}>
+                  {values.allocatedClasses && values.allocatedClasses.length > 0 ? (
+                    <Box sx={{ mt: 2 }}>
+                      {values.allocatedClasses.map((ac, idx) => {
+                        const cls = classes.find((c) => c.id === ac.classId);
+                        const div = divisions.find((d) => d.id === ac.divisionId);
+                        return (
+                          <Stack
+                            key={`${ac.classId}-${ac.divisionId}-${idx}`}
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            sx={{ mb: 1, p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+                          >
+                            <Typography>{`${cls?.name || ac.classId} - ${div?.name || ac.divisionId}`}</Typography>
+                            <Button
+                              color="error"
+                              size="small"
+                              onClick={() => {
+                                const next = [...(values.allocatedClasses || [])];
+                                next.splice(idx, 1);
+                                setFieldValue('allocatedClasses', next);
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </Stack>
+                        );
+                      })}
+                    </Box>
+                  ) : (
+                    <Typography color="text.secondary">No allocations added.</Typography>
+                  )}
+                </Grid>
+              </Grid>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+              <UserDocumentManager userId={userId} userType="TEACHER" />
+            </TabPanel>
             <Grid item xs={12}>
               <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
                 <BackButton BackUrl="/masters/teachers" />

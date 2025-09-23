@@ -32,7 +32,7 @@ const columnsConfig = [
 const Exams = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
-  
+
   // Custom actions for exams
   const customActions = [
     {
@@ -73,34 +73,35 @@ const Exams = () => {
   });
 
   return (
-      <Grid container spacing={gridSpacing}>
-        <Grid item xs={12}>
-          <ReusableDataGrid
-            title="Exams Management"
-            fetchUrl={`/api/exams/getAllBy/${accountId}`}
-            isPostRequest={true}
-            columns={columnsConfig}
-            editUrl="/masters/exam/edit"
-            deleteUrl="/api/exams/delete"
-            addActionUrl="/masters/exam/add"
-            viewUrl="/masters/exam/view"
-            entityName="EXAM"
-            //customActions={customActions}
-            searchPlaceholder="Search exams by name, type, or year..."
-            showSearch={true}
-            showRefresh={true}
-            showFilters={true}
-            pageSizeOptions={[5, 10, 25, 50]}
-            defaultPageSize={10}
-            height={600}
-            transformData={transformExamData}
-            enableFilters={true}
-            showSchoolFilter={true}
-            showClassFilter={true}
-            showDivisionFilter={true}
-          />
-        </Grid>
+    <Grid container spacing={gridSpacing}>
+      <Grid item xs={12}>
+        <ReusableDataGrid
+          title="Exams Management"
+          fetchUrl={`/api/exams/getAllBy/${accountId}`}
+          isPostRequest={true}
+          columns={columnsConfig}
+          editUrl="/masters/exam/edit"
+          deleteUrl="/api/exams/delete"
+          addActionUrl="/masters/exam/add"
+          viewUrl="/masters/exam/view"
+          entityName="EXAM"
+          //customActions={customActions}
+          searchPlaceholder="Search exams by name, type, or year..."
+          showSearch={true}
+          showRefresh={true}
+          showFilters={true}
+          pageSizeOptions={[5, 10, 25, 50]}
+          defaultPageSize={10}
+          height={600}
+          transformData={transformExamData}
+          enableFilters={true}
+          showSchoolFilter={true}
+          showClassFilter={true}
+          showDivisionFilter={true}
+          viewScreenIs={true}
+        />
       </Grid>
+    </Grid>
     // </MainCard>
   );
 };

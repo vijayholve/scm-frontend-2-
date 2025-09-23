@@ -901,7 +901,7 @@ const CourseEdit = () => {
                     <Box sx={{ textAlign: 'center', py: 8 }}>
                       <Typography variant="h6" color="text.secondary">No modules added yet.</Typography>
                       <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                        Click "Add Module" to get started.
+                        Click &quot;Add Module&quot; to get started.
                       </Typography>
                     </Box>
                   </Grid>

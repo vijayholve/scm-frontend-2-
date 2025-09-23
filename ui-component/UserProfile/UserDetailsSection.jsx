@@ -61,7 +61,7 @@ const UserDetailsSection = ({ user }) => {
               <Stack direction="row" alignItems="center" spacing={1}>
                 <IconId stroke={1.5} size="1.1rem" color={theme.palette.grey[600]} />
                 <Typography variant="body2" color="text.secondary">
-                  Student ID: <Typography component="span" variant="subtitle2" color="text.primary">{user?.studentId || 'N/A'}</Typography>
+                  Student ID: <Typography component="span" variant="subtitle2" color="text.primary">{user?.rollNo || 'N/A'}</Typography>
                 </Typography>
               </Stack>
             </Stack>

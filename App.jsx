@@ -16,22 +16,27 @@ import NavigationScroll from 'layout/NavigationScroll';
 
 import 'react-toastify/dist/ReactToastify.css';
 import RouterProviderWrapper from 'routes';
-
+import { DataCacheProvider } from './contexts/DataCacheContext';
+import { SelectorProvider } from './contexts/SelectorContext'; // Use this instead
 
 const App = () => {
-    const customization = useSelector((state) => state.customization);
+  const customization = useSelector((state) => state.customization);
 
-    return (
-        <StyledEngineProvider injectFirst>
-            <ThemeProvider theme={themes(customization)}>
-                <CssBaseline />
-                <ToastContainer />
-                <NavigationScroll>
-                    <RouterProviderWrapper />
-                </NavigationScroll>
-            </ThemeProvider>
-        </StyledEngineProvider>
-    );
+  return (
+    <StyledEngineProvider injectFirst>
+      <ThemeProvider theme={themes(customization)}>
+        <CssBaseline />
+        <ToastContainer />
+        <NavigationScroll>
+          <DataCacheProvider>
+            <SelectorProvider>
+              <RouterProviderWrapper />
+            </SelectorProvider>
+          </DataCacheProvider>
+        </NavigationScroll>
+      </ThemeProvider>
+    </StyledEngineProvider>
+  );
 };
 
 export default App;
