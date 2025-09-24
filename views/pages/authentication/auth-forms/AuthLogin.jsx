@@ -28,7 +28,7 @@ import { Formik } from 'formik';
 // project imports
 import AnimateButton from 'ui-component/extended/AnimateButton';
 import api, { endpoints } from '../../../../api';
-import { setLogin } from 'store/userSlice';
+import { setLogin  } from 'store/userSlice';
 
 // assets
 import Visibility from '@mui/icons-material/Visibility';
@@ -71,6 +71,9 @@ const AuthLogin = ({ ...others }) => {
          localStorage.setItem("SCM-AUTH", JSON.stringify(response.data));
       dispatch(setLogin(response.data));
       setSubmitting(false);
+
+             
+
 
       // ADD THIS LINE
       // await fetchAndStoreSCDData();

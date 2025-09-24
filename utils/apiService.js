@@ -78,15 +78,7 @@ export const userDetails = {
   getUser: () => getAuthData()?.data || null,
   getAccountId: () => getAuthData()?.data?.accountId || null,
   getPermissions: () => getAuthData()?.data?.role?.permissions || [],
-  getScdData: () => {
-    try {
-      const scdDataString = localStorage.getItem('SCM_SCD_DATA');
-      return scdDataString ? JSON.parse(scdDataString) : null;
-    } catch (error) {
-      console.error('Failed to parse SCD data from localStorage:', error);
-      return null;
-    }
-  },
+
 };
 
 // --- Default export ---

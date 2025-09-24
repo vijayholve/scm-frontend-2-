@@ -13,6 +13,7 @@ const initialState = {
   // New state for student data filtering
   allStudents: [],
   filteredStudents: [],
+
 };
 
 const userSlice = createSlice({
@@ -62,9 +63,10 @@ const userSlice = createSlice({
       }
       
       state.filteredStudents = filteredData;
-    }
+    },
+
   }
 });
 
-export const { setLogin, setLogout, setAllStudents, filterStudents } = userSlice.actions;
+export const { setLogin, setLogout, setAllStudents, filterStudents,  } = userSlice.actions;
 export default userSlice.reducer;

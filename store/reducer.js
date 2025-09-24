@@ -8,7 +8,10 @@ import customizationReducer from './customizationReducer';
 
 const reducer = combineReducers({
   customization: customizationReducer,
-  user: userReducer
+  user: userReducer ,
+  // Add any additional reducers here
+  //scdData: scdDataReducer, // Example if you have a separate reducer for SCD data
+  
 });
 
 export default reducer;
