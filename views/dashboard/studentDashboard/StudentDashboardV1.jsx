@@ -176,17 +176,17 @@ const StudentSummaryCard = () => {
                     upcomingExamsRes,
                     enrolledCoursesRes
                 ] = await Promise.all([
-                    api.post(`/api/assignments/getAllBy/${user.accountId}`, { page: 0, size: 1 }),
+                    api.post(`/api/assignments/getAllBy/${user.accountId}`, { page: 0, size: 1000, sortBy: "deadLine", sortDir: "desc", fromDate: now, toDate: "2099-12-31T23:59:59.999Z",classId: user.classId,divisionId: user.divisionId,schoolId: user.schoolId }),
                     api.get(`/api/assignments/pendingAssignments/${user.accountId}/student?studentId=${user.id}&schoolId=${user.schoolId}&classId=${user.classId}&divisionId=${user.divisionId}`),
                     api.post(`/api/exams/getAllBy/${user.accountId}`, { page: 0, size: 1000, sortBy: "startDate", sortDir: "asc", fromDate: now, toDate: "2099-12-31T23:59:59.999Z" }),
-                    api.post(`/api/lms/course/getAllBy/${user.accountId}`, { page: 0, size: 1000, studentId: user.id }),
+                    api.get(`/api/lms/courses/${user.accountId}/get/enrollFor/${user.id}`),
                 ]);
 
                 setSummaryData({
                     totalAssignments: totalAssignmentsRes.data.totalElements || 0,
                     upcomingExams: upcomingExamsRes.data.totalElements || 0,
                     pendingSubmissions: pendingSubmissionsRes.data.totalElements || 0,
-                    enrolledCourses: enrolledCoursesRes.data.totalElements || 0,
+                    enrolledCourses: enrolledCoursesRes.data.length || 0,
                 });
             } catch (err) {
                 console.error("Error fetching summary data:", err);
@@ -348,7 +348,7 @@ const StudentDashboardV1 = () => {
                     // Fetch upcoming assignments
                     api.get(`/api/assignments/pendingAssignments/${user.accountId}/student?studentId=${user.id}&schoolId=${user.schoolId}&classId=${user.classId}&divisionId=${user.divisionId}`),
                     // Fetch upcoming exams
-                    api.post(`/api/exams/getAll/${user.accountId}`, {
+                    api.post(`/api/exams/getAllBy/${user.accountId}`, {
                         page: 0,
                         size: 1000,
                         sortBy: "startDate",
@@ -359,7 +359,7 @@ const StudentDashboardV1 = () => {
                 ]);
                 
                 setDashboardData({
-                    upcomingAssignments: assignmentsRes.data.content || [],
+                    upcomingAssignments: assignmentsRes.data || [],
                     upcomingExams: examsRes.data.content || [],
                 });
             } catch (err) {

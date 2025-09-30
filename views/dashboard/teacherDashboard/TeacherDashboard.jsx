@@ -13,22 +13,21 @@ const TeacherDashboard = () => {
     recentSubmissions: []
   });
 
-  // local SCD state (prefill from cache if present)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (user?.id) {
-          const response = await api.get(`/dashboard/teacher/${user.id}`);
-          setDashboardData(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching teacher dashboard data:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       if (user?.id) {
+  //         const response = await api.get(`/dashboard/teacher/${user.id}`);
+  //         setDashboardData(response.data);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching teacher dashboard data:', error);
+  //     }
+  //   };
 
-    fetchData();
-  }, [user]);
+  //   fetchData();
+  // }, [user]);
 
   // Ensure SCD loaded on mount and after login (when user changes)
 

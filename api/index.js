@@ -3,10 +3,13 @@
 // - Exposes endpoints registry
 // - Exposes userDetails helper
 
-import apiClient, { userDetails } from '../utils/apiService';
+import apiClient, {
+  userDetails,
+  getDocumentsByAccountAndUser,
+  downloadUserDocument,
+  getUserSchoolClassDivision
+} from '../utils/apiService';
 import endpoints from './endpoints';
 
-export { endpoints, userDetails };
+export { endpoints, userDetails, getDocumentsByAccountAndUser, downloadUserDocument, getUserSchoolClassDivision };
 export default apiClient;
-
-

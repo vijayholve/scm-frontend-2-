@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setAllStudents, filterStudents } from '../../../store/userSlice';
 import ListGridFilters from '../../../ui-component/ListGridFilters';
 import BulkUploadModal from './BulkUploadModal';
+import { useSCDData } from '../../../contexts/SCDProvider';
 
 const columnsConfig = [
   { field: 'rollNo', headerName: 'Roll No', width: 90 },
@@ -29,46 +30,35 @@ const columnsConfig = [
 const Students = () => {
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
-  const [schoolNames, setSchoolNames] = useState({});
-  const [classNames, setClassNames] = useState({});
-  const [divisionNames, setDivisionNames] = useState({});
-  const [loading, setLoading] = useState(true);
+  // Get SCD data from context instead of API calls
+  const { schools = [], classes = [], divisions = [], loading: scdLoading } = useSCDData();
+  const [loading, setLoading] = useState(false);
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
 
-  useEffect(() => {
-    const fetchDropdownData = async () => {
-      try {
-        const [schoolResponse, classResponse, divisionResponse] = await Promise.all([
-          api.post(`/api/schoolBranches/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
-          api.post(`/api/schoolClasses/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
-          api.post(`/api/divisions/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' })
-        ]);
+  // Create lookup maps from SCD data
+  const schoolNames = React.useMemo(() => {
+    const map = {};
+    schools.forEach((school) => {
+      map[school.id] = school.name;
+    });
+    return map;
+  }, [schools]);
 
-        const schoolMap = {};
-        (schoolResponse.data.content || []).forEach((sch) => {
-          schoolMap[sch.id] = sch.name;
-        });
-        setSchoolNames(schoolMap);
+  const classNames = React.useMemo(() => {
+    const map = {};
+    classes.forEach((cls) => {
+      map[cls.id] = cls.name;
+    });
+    return map;
+  }, [classes]);
 
-        const classMap = {};
-        (classResponse.data.content || []).forEach((cls) => {
-          classMap[cls.id] = cls.name;
-        });
-        setClassNames(classMap);
-
-        const divisionMap = {};
-        (divisionResponse.data.content || []).forEach((div) => {
-          divisionMap[div.id] = div.name;
-        });
-        setDivisionNames(divisionMap);
-      } catch (error) {
-        console.error('Failed to fetch dropdown data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDropdownData();
-  }, [accountId]);
+  const divisionNames = React.useMemo(() => {
+    const map = {};
+    divisions.forEach((div) => {
+      map[div.id] = div.name;
+    });
+    return map;
+  }, [divisions]);
 
   const transformStudentData = useCallback(
     (student) => ({
@@ -87,7 +77,7 @@ const Students = () => {
     // This is a good place to trigger a refresh of the data grid if needed.
   };
 
-  if (loading) {
+  if (loading || scdLoading) {
     return (
       <MainCard title="Students Management">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
@@ -113,7 +103,7 @@ const Students = () => {
           <ReusableDataGrid
             // viewScreenIs={true}
             title="STUDENTS"
-            fetchUrl={`/api/users/getAll/${accountId}?type=STUDENT`}
+            fetchUrl={`/api/users/getAllBy/${accountId}?type=STUDENT`}
             isPostRequest={true}
             columns={columnsConfig}
             addActionUrl={'/masters/student/add'}

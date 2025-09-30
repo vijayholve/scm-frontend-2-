@@ -40,7 +40,7 @@ const AttendanceList = () => {
           viewScreenIs={true}
 
             entityName="ATTENDANCE"
-            fetchUrl={`/api/attendance/getAll/${accountId}`}
+            fetchUrl={`/api/attendance/getAllBy/${accountId}`}
             isPostRequest={true}
             columns={columns}
             editUrl="/masters/attendance/edit"
@@ -52,6 +52,7 @@ const AttendanceList = () => {
             showSchoolFilter={true}
             showClassFilter={true}
             showDivisionFilter={true}
+            sortBy='desc'
 
           />
         </Grid>

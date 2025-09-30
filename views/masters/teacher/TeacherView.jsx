@@ -10,6 +10,7 @@ import ProfileHeader from 'ui-component/UserProfile/ProfileHeader';
 import UserDetailsSection from 'ui-component/UserProfile/UserDetailsSection';
 import ActivitySection from 'ui-component/UserProfile/ActivitySection';
 import CollaborationSection from 'ui-component/UserProfile/CollaborationSection';
+import TeacherClassesList from '../profile/TeacherClassesList';
 
 /**
  * TeacherView Component
@@ -156,12 +157,13 @@ const TeacherView = () => {
           <ActivitySection user={teacherData} />
         </Box>
 
-        {/* Reusable Collaboration Section */}
-        <Box sx={{ mt: 4 }}>
-          <CollaborationSection user={teacherData} />
-        </Box>
+
+     {/* <Box mt={3}>
+       <TeacherClassesList teacher={teacherData} />
+     </Box> */}
 
       </Paper>
+
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
         <BackButton BackUrl="/masters/teachers" />

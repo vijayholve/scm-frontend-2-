@@ -42,7 +42,7 @@ const Teachers = () => {
     }
   ];
     const user = useSelector((state) => state.user.user);
-    const userTypeForApi = user?.type === 'ADMIN' ? 'ADMIN' : 'TEACHER';
+    const userTypeForApi = 'TEACHER';
 
 
   return (

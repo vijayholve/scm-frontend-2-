@@ -2,9 +2,28 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import {
-  Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput, Autocomplete, TextField,
-  Card, CardContent, Typography, Chip, Table, TableBody, TableCell, TableContainer, TableHead, 
-  TableRow, Paper, IconButton, Divider
+  Box,
+  Button,
+  FormControl,
+  FormHelperText,
+  Grid,
+  InputLabel,
+  OutlinedInput,
+  Autocomplete,
+  TextField,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Divider
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -24,17 +43,19 @@ import { toast } from 'react-toastify';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import api, { userDetails } from "../../../utils/apiService"
+import api, { userDetails } from '../../../utils/apiService';
 import { gridSpacing } from 'store/constant';
 import { useSelector } from 'react-redux';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
+import { useSCDData } from 'contexts/SCDProvider';
+import SCDSelector from 'ui-component/SCDSelector';
 
 const EditAssignment = ({ ...others }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
   const [loader, setLoader] = useState(false);
-  console.log("user", user);
+  console.log('user', user);
   const { id: assignmentId } = useParams();
   const [assignmentData, setAssignmentData] = useState({
     id: undefined,
@@ -58,13 +79,9 @@ const EditAssignment = ({ ...others }) => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [assignmentSubmission, setAssignmentSubmission] = useState(null);
   const [submissions, setSubmissions] = useState([]);
-  
-  // Dropdown data states
-  const [schools, setSchools] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [divisions, setDivisions] = useState([]);
+
   const [subjects, setSubjects] = useState([]);
-  
+
   // Fetch dropdown data
   const fetchData = async (endpoint, setter) => {
     try {
@@ -77,11 +94,9 @@ const EditAssignment = ({ ...others }) => {
 
   // Fetch all dropdown data on component mount
   useEffect(() => {
-    fetchData(`api/schoolBranches/getAllBy/${userDetails.getAccountId()}`, setSchools);
-    fetchData(`api/schoolClasses/getAllBy/${userDetails.getAccountId()}`, setClasses);
-    fetchData(`api/divisions/getAllBy/${userDetails.getAccountId()}`, setDivisions);
     fetchData(`api/subjects/getAllBy/${userDetails.getAccountId()}`, setSubjects);
   }, []);
+  const { schools, classes, divisions, loading: scdLoading } = useSCDData();
 
   useEffect(() => {
     // Fetch submissions for the current assignment and user
@@ -90,9 +105,9 @@ const EditAssignment = ({ ...others }) => {
         try {
           setLoader(true);
           let response;
-          if (user?.type === "STUDENT") {
+          if (user?.type === 'STUDENT') {
             response = await api.get(`/api/assignments/submissions/${assignmentId}/student/${user.id}`);
-          } else if (user?.type === "TEACHER") {
+          } else if (user?.type === 'TEACHER') {
             response = await api.get(`/api/assignments/submissions/${assignmentId}`);
           }
           if (Array.isArray(response.data)) {
@@ -100,15 +115,13 @@ const EditAssignment = ({ ...others }) => {
           }
         } catch (error) {
           console.error('Failed to fetch submissions:', error);
-        }
-        finally {
+        } finally {
           setLoader(false);
         }
       };
       fetchSubmissions();
     }
   }, [assignmentId, user?.id]);
-
 
   const Title = assignmentId ? 'Edit Assignment' : 'Add Assignment';
 
@@ -129,7 +142,6 @@ const EditAssignment = ({ ...others }) => {
     }
   };
 
-
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
       values.accountId = userDetails.getAccountId();
@@ -149,7 +161,7 @@ const EditAssignment = ({ ...others }) => {
         }
       });
 
-      toast.success("Assignment saved successfully", {
+      toast.success('Assignment saved successfully', {
         autoClose: 500,
         onClose: () => navigate('/masters/assignments')
       });
@@ -162,11 +174,11 @@ const EditAssignment = ({ ...others }) => {
     }
   };
   if (loader) {
-    return <ReusableLoader message="Loading Assignment..." ></ReusableLoader>;
-  } 
+    return <ReusableLoader message="Loading Assignment..."></ReusableLoader>;
+  }
 
   return (
-    <MainCard title={Title} >
+    <MainCard title={Title}>
       <Formik
         enableReinitialize
         initialValues={assignmentData}
@@ -195,76 +207,36 @@ const EditAssignment = ({ ...others }) => {
                     onChange={handleChange}
                     label="Assignment Name"
                   />
-                  {touched.name && errors.name && (
-                    <FormHelperText error>{errors.name}</FormHelperText>
-                  )}
+                  {touched.name && errors.name && <FormHelperText error>{errors.name}</FormHelperText>}
                 </FormControl>
               </Grid>
 
-
-              {/* School */}
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                  disablePortal
-                  options={schools}
-                  getOptionLabel={(option) => option.name || ''}
-                  value={schools.find((school) => school.id === values.schoolId) || null}
-                  onChange={(event, newValue) => {
-                    setFieldValue('schoolId', newValue?.id || null);
-                    setFieldValue('schoolName', newValue?.name || '');
+              {/* School / Class / Division (reusable SCD selector) */}
+              <Grid item xs={12} sm={12}>
+                <SCDSelector
+                  formik={{
+                    values,
+                    setFieldValue: (field, value) => {
+                      // keep names in sync (set name fields where applicable)
+                      if (field === 'schoolId') {
+                        setFieldValue('schoolId', value);
+                        const school = schools.find((s) => String(s.id) === String(value));
+                        setFieldValue('schoolName', school?.name || '');
+                      } else if (field === 'classId') {
+                        setFieldValue('classId', value);
+                        const cls = classes.find((c) => String(c.id) === String(value));
+                        setFieldValue('className', cls?.name || '');
+                      } else if (field === 'divisionId') {
+                        setFieldValue('divisionId', value);
+                        const div = divisions.find((d) => String(d.id) === String(value));
+                        setFieldValue('divisionName', div?.name || '');
+                      } else {
+                        setFieldValue(field, value);
+                      }
+                    },
+                    touched,
+                    errors
                   }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="School *"
-                      error={touched.schoolId && !!errors.schoolId}
-                      helperText={touched.schoolId && errors.schoolId}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Class */}
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                  disablePortal
-                  options={classes}
-                  getOptionLabel={(option) => option.name || ''}
-                  value={classes.find((cls) => cls.id === values.classId) || null}
-                  onChange={(event, newValue) => {
-                    setFieldValue('classId', newValue?.id || null);
-                    setFieldValue('className', newValue?.name || '');
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Class *"
-                      error={touched.classId && !!errors.classId}
-                      helperText={touched.classId && errors.classId}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Division */}
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                  disablePortal
-                  options={divisions}
-                  getOptionLabel={(option) => option.name || ''}
-                  value={divisions.find((division) => division.id === values.divisionId) || null}
-                  onChange={(event, newValue) => {
-                    setFieldValue('divisionId', newValue?.id || null);
-                    setFieldValue('divisionName', newValue?.name || '');
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Division *"
-                      error={touched.divisionId && !!errors.divisionId}
-                      helperText={touched.divisionId && errors.divisionId}
-                    />
-                  )}
                 />
               </Grid>
 
@@ -310,7 +282,9 @@ const EditAssignment = ({ ...others }) => {
               {/* Is Active */}
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel shrink htmlFor="status">Status</InputLabel>
+                  <InputLabel shrink htmlFor="status">
+                    Status
+                  </InputLabel>
                   <select
                     id="status"
                     name="status"
@@ -349,7 +323,7 @@ const EditAssignment = ({ ...others }) => {
               </Grid>
 
               {/* Upload File */}
-              {user?.type != "STUDENT" && (
+              {user?.type != 'STUDENT' && (
                 <Grid item xs={12} sm={6}>
                   <Card
                     sx={{
@@ -381,14 +355,7 @@ const EditAssignment = ({ ...others }) => {
                           <Typography variant="body2" color="text.secondary">
                             Click to select file or drag & drop
                           </Typography>
-                          {uploadedFile && (
-                            <Chip
-                              label={`📎 ${uploadedFile.name}`}
-                              color="primary"
-                              variant="outlined"
-                              sx={{ mt: 2 }}
-                            />
-                          )}
+                          {uploadedFile && <Chip label={`📎 ${uploadedFile.name}`} color="primary" variant="outlined" sx={{ mt: 2 }} />}
                         </Box>
                       </label>
                     </CardContent>
@@ -397,7 +364,7 @@ const EditAssignment = ({ ...others }) => {
               )}
 
               {/* Submit and Cancel Buttons */}
-              {user?.type != "STUDENT" && (
+              {user?.type != 'STUDENT' && (
                 <Grid item xs={12}>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
                     <Button
@@ -433,15 +400,13 @@ const EditAssignment = ({ ...others }) => {
                           }
                         }}
                       >
-                        {isSubmitting ? 'Saving...' : (assignmentId ? 'Update Assignment' : 'Create Assignment')}
+                        {isSubmitting ? 'Saving...' : assignmentId ? 'Update Assignment' : 'Create Assignment'}
                       </Button>
                     </AnimateButton>
                   </Box>
                 </Grid>
               )}
             </Grid>
-
-
 
             {/* Assignment Files Section - Teacher uploaded files for student submission */}
             {Array.isArray(assignmentSubmission) && assignmentSubmission.length > 0 && (
@@ -457,16 +422,18 @@ const EditAssignment = ({ ...others }) => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                       <FileIcon sx={{ mr: 1, color: '#2196F3' }} />
                       <Typography variant="h6" sx={{ color: '#1976D2', fontWeight: 600 }}>
-                        📁 {user?.type === "STUDENT" ? "Assignment Files - Submit Your Work" : "Assignment Files"}
+                        📁 {user?.type === 'STUDENT' ? 'Assignment Files - Submit Your Work' : 'Assignment Files'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                        {user?.type === "STUDENT" ? "Download the assignment and upload your completed work" : "Files uploaded for this assignment"}
+                        {user?.type === 'STUDENT'
+                          ? 'Download the assignment and upload your completed work'
+                          : 'Files uploaded for this assignment'}
                       </Typography>
                     </Box>
-                    
-                    <TableContainer 
-                      component={Paper} 
-                      sx={{ 
+
+                    <TableContainer
+                      component={Paper}
+                      sx={{
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                       }}
@@ -477,7 +444,7 @@ const EditAssignment = ({ ...others }) => {
                             <TableCell sx={{ fontWeight: 600 }}>📄 Assignment File</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>📊 Size</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>⬇️ Download Assignment</TableCell>
-                            {user?.type === "STUDENT" && (
+                            {user?.type === 'STUDENT' && (
                               <>
                                 <TableCell sx={{ fontWeight: 600 }}>📤 Upload Your Work</TableCell>
                                 <TableCell sx={{ fontWeight: 600 }}>✅ Submit Work</TableCell>
@@ -487,9 +454,9 @@ const EditAssignment = ({ ...others }) => {
                         </TableHead>
                         <TableBody>
                           {assignmentSubmission.map((submission, idx) => (
-                            <TableRow 
+                            <TableRow
                               key={idx}
-                              sx={{ 
+                              sx={{
                                 '&:hover': { backgroundColor: '#f8f9fa' },
                                 '&:last-child td, &:last-child th': { border: 0 }
                               }}
@@ -501,7 +468,7 @@ const EditAssignment = ({ ...others }) => {
                                 </Box>
                               </TableCell>
                               <TableCell>
-                                <Chip 
+                                <Chip
                                   label={`${(submission.fileSize / 1024).toFixed(2)} KB`}
                                   size="small"
                                   color="info"
@@ -537,14 +504,14 @@ const EditAssignment = ({ ...others }) => {
                                       link.remove();
                                     } catch (error) {
                                       console.error('Failed to download file:', error);
-                                      toast.error("Failed to download file");
+                                      toast.error('Failed to download file');
                                     }
                                   }}
                                 >
                                   Download Assignment
                                 </Button>
                               </TableCell>
-                              {user?.type === "STUDENT" && (
+                              {user?.type === 'STUDENT' && (
                                 <>
                                   <TableCell>
                                     <Box>
@@ -577,7 +544,7 @@ const EditAssignment = ({ ...others }) => {
                                             }
                                           }}
                                         >
-                                          {submission.file ? "Change File" : "Upload Your Work"}
+                                          {submission.file ? 'Change File' : 'Upload Your Work'}
                                         </Button>
                                       </label>
                                       {submission.file && (
@@ -605,7 +572,7 @@ const EditAssignment = ({ ...others }) => {
                                       }}
                                       onClick={async () => {
                                         if (!submission.file) {
-                                          toast.error("Please select a file to submit.");
+                                          toast.error('Please select a file to submit.');
                                           return;
                                         }
                                         try {
@@ -616,9 +583,9 @@ const EditAssignment = ({ ...others }) => {
                                           await api.post('/api/assignments/submit', formData, {
                                             headers: { 'Content-Type': 'multipart/form-data' }
                                           });
-                                          toast.success("Assignment submitted successfully");
+                                          toast.success('Assignment submitted successfully');
                                         } catch (error) {
-                                          toast.error("Failed to submit assignment");
+                                          toast.error('Failed to submit assignment');
                                         }
                                       }}
                                     >
@@ -643,30 +610,28 @@ const EditAssignment = ({ ...others }) => {
       <Box mt={5}>
         <Card
           sx={{
-            background: user?.type === "STUDENT" 
-              ? 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)'
-              : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-            border: user?.type === "STUDENT" ? '1px solid #4CAF50' : '1px solid #FF9800',
+            background:
+              user?.type === 'STUDENT'
+                ? 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)'
+                : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+            border: user?.type === 'STUDENT' ? '1px solid #4CAF50' : '1px solid #FF9800',
             borderRadius: '12px'
           }}
         >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <EditIcon sx={{ mr: 1, color: user?.type === "STUDENT" ? '#4CAF50' : '#FF9800' }} />
-              <Typography variant="h6" sx={{ color: user?.type === "STUDENT" ? '#2E7D32' : '#F57C00', fontWeight: 600 }}>
-                📋 {user?.type === "STUDENT" ? "My Submissions & Teacher Feedback" : "All Student Submissions"}
+              <EditIcon sx={{ mr: 1, color: user?.type === 'STUDENT' ? '#4CAF50' : '#FF9800' }} />
+              <Typography variant="h6" sx={{ color: user?.type === 'STUDENT' ? '#2E7D32' : '#F57C00', fontWeight: 600 }}>
+                📋 {user?.type === 'STUDENT' ? 'My Submissions & Teacher Feedback' : 'All Student Submissions'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                {user?.type === "STUDENT" 
-                  ? "View your submitted work and teacher's comments"
-                  : "Review and grade student submissions"
-                }
+                {user?.type === 'STUDENT' ? "View your submitted work and teacher's comments" : 'Review and grade student submissions'}
               </Typography>
             </Box>
-            
-            <TableContainer 
-              component={Paper} 
-              sx={{ 
+
+            <TableContainer
+              component={Paper}
+              sx={{
                 borderRadius: '8px',
                 boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
               }}
@@ -674,40 +639,31 @@ const EditAssignment = ({ ...others }) => {
               <Table>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    {user?.type !== "STUDENT" && (
-                      <TableCell sx={{ fontWeight: 600 }}>👤 Student ID</TableCell>
-                    )}
+                    {user?.type !== 'STUDENT' && <TableCell sx={{ fontWeight: 600 }}>👤 Student ID</TableCell>}
                     <TableCell sx={{ fontWeight: 600 }}>📄 Submitted File</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>📅 Submission Date</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>👁️ Download</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>⭐ Status</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>💬 {user?.type === "STUDENT" ? "Teacher's Feedback" : "Comment & Grade"}</TableCell>
-                    {user?.type !== "STUDENT" && (
-                      <TableCell sx={{ fontWeight: 600 }}>🔧 Actions</TableCell>
-                    )}
+                    <TableCell sx={{ fontWeight: 600 }}>💬 {user?.type === 'STUDENT' ? "Teacher's Feedback" : 'Comment & Grade'}</TableCell>
+                    {user?.type !== 'STUDENT' && <TableCell sx={{ fontWeight: 600 }}>🔧 Actions</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {submissions.map((sub, idx) => (
-                    <TableRow 
+                    <TableRow
                       key={idx}
-                      sx={{ 
+                      sx={{
                         '&:hover': { backgroundColor: '#f8f9fa' },
                         '&:last-child td, &:last-child th': { border: 0 }
                       }}
                     >
                       {/* Student ID - Only for Teachers */}
-                      {user?.type !== "STUDENT" && (
+                      {user?.type !== 'STUDENT' && (
                         <TableCell>
-                          <Chip 
-                            label={sub.studentId}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                          />
+                          <Chip label={sub.studentId} size="small" color="primary" variant="outlined" />
                         </TableCell>
                       )}
-                      
+
                       {/* File Name */}
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -715,14 +671,14 @@ const EditAssignment = ({ ...others }) => {
                           <Typography variant="body2">{sub.fileName}</Typography>
                         </Box>
                       </TableCell>
-                      
+
                       {/* Submission Date */}
                       <TableCell>
                         <Typography variant="body2" color="text.secondary">
                           {sub.submissionDate ? new Date(sub.submissionDate).toLocaleDateString() : 'N/A'}
                         </Typography>
                       </TableCell>
-                      
+
                       {/* Download Button */}
                       <TableCell>
                         <Button
@@ -745,7 +701,7 @@ const EditAssignment = ({ ...others }) => {
                               link.remove();
                             } catch (error) {
                               console.error('Failed to download file:', error);
-                              toast.error("Failed to download file");
+                              toast.error('Failed to download file');
                             }
                           }}
                           sx={{
@@ -760,24 +716,20 @@ const EditAssignment = ({ ...others }) => {
                           Download
                         </Button>
                       </TableCell>
-                      
+
                       {/* Status */}
                       <TableCell>
-                        <Chip 
+                        <Chip
                           label={sub.status || 'Pending'}
                           size="small"
-                          color={
-                            sub.status === 'accepted' ? 'success' : 
-                            sub.status === 'rejected' ? 'error' : 
-                            'default'
-                          }
+                          color={sub.status === 'accepted' ? 'success' : sub.status === 'rejected' ? 'error' : 'default'}
                           variant="outlined"
                         />
                       </TableCell>
-                      
+
                       {/* Comments/Feedback */}
                       <TableCell>
-                        {user?.type === "STUDENT" ? (
+                        {user?.type === 'STUDENT' ? (
                           /* Student view - Read-only teacher feedback */
                           <Box>
                             <Typography variant="body2" color="text.secondary">
@@ -802,9 +754,9 @@ const EditAssignment = ({ ...others }) => {
                           </Box>
                         )}
                       </TableCell>
-                      
+
                       {/* Actions - Only for Teachers */}
-                      {user?.type !== "STUDENT" && (
+                      {user?.type !== 'STUDENT' && (
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                             <Button
@@ -843,9 +795,9 @@ const EditAssignment = ({ ...others }) => {
                             >
                               Reject
                             </Button>
-                            <Button 
-                              variant="contained" 
-                              color="primary" 
+                            <Button
+                              variant="contained"
+                              color="primary"
                               size="small"
                               startIcon={<SaveIcon />}
                               sx={{
@@ -863,12 +815,13 @@ const EditAssignment = ({ ...others }) => {
                                   status: submission.status,
                                   message: submission.message
                                 };
-                                api.put(`/api/assignments/submissions/update/${submission.id}`, payload)
-                                  .then(res => {
-                                    toast.success("Submission updated");
+                                api
+                                  .put(`/api/assignments/submissions/update/${submission.id}`, payload)
+                                  .then((res) => {
+                                    toast.success('Submission updated');
                                   })
-                                  .catch(err => {
-                                    toast.error("Failed to update submission");
+                                  .catch((err) => {
+                                    toast.error('Failed to update submission');
                                     console.error(err);
                                   });
                               }}
@@ -886,14 +839,14 @@ const EditAssignment = ({ ...others }) => {
                               }}
                               onClick={async () => {
                                 const submission = submissions[idx];
-                                if (window.confirm("Are you sure you want to delete this submission?")) {
+                                if (window.confirm('Are you sure you want to delete this submission?')) {
                                   try {
                                     await api.delete(`/api/assignments/submissions/delete/${submission.id}`);
-                                    toast.success("Submission deleted");
+                                    toast.success('Submission deleted');
                                     const updated = submissions.filter((_, i) => i !== idx);
                                     setSubmissions(updated);
                                   } catch (err) {
-                                    toast.error("Failed to delete submission");
+                                    toast.error('Failed to delete submission');
                                     console.error(err);
                                   }
                                 }
@@ -908,12 +861,11 @@ const EditAssignment = ({ ...others }) => {
                   ))}
                   {submissions.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={user?.type === "STUDENT" ? 5 : 7} sx={{ textAlign: 'center', py: 4 }}>
+                      <TableCell colSpan={user?.type === 'STUDENT' ? 5 : 7} sx={{ textAlign: 'center', py: 4 }}>
                         <Typography variant="body1" color="text.secondary">
-                          {user?.type === "STUDENT" 
+                          {user?.type === 'STUDENT'
                             ? "You haven't submitted any work for this assignment yet."
-                            : "No student submissions found for this assignment."
-                          }
+                            : 'No student submissions found for this assignment.'}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -924,7 +876,6 @@ const EditAssignment = ({ ...others }) => {
           </CardContent>
         </Card>
       </Box>
-
     </MainCard>
   );
 };

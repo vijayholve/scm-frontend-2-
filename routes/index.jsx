@@ -2,10 +2,15 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import getMainRoutes from './MainRoutes';
 import LoginRoutes from './AuthenticationRoutes';
+import LMSRoutes from './LMSRoutes';
 
 const RouterProviderWrapper = () => {
   const permissions = useSelector((state) => state.user.permissions || []);
-  const router = createBrowserRouter([getMainRoutes(permissions), LoginRoutes], {
+  const router = createBrowserRouter([
+    getMainRoutes(permissions), 
+    LoginRoutes, 
+    LMSRoutes
+  ], {
     basename: import.meta.env.VITE_APP_BASE_NAME
   });
 

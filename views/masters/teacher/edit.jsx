@@ -30,6 +30,7 @@ import SaveButton from 'layout/MainLayout/Button/SaveButton';
 import { useSelector } from 'react-redux';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
 import UserDocumentManager from 'views/UserDocumentManager';
+import { useSCDData } from 'contexts/SCDProvider';
 
 // Helper component for Tab Panel content
 function TabPanel(props) {
@@ -82,9 +83,8 @@ const EditUsers = ({ ...others }) => {
 
   const Title = userId ? 'Edit Teacher' : 'Add Teacher';
 
-  const [schools, setSchools] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [divisions, setDivisions] = useState([]);
+  // Get SCD data from context instead of API calls
+  const { schools = [], classes = [], divisions = [], loading: scdLoading } = useSCDData();
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedDivision, setSelectedDivision] = useState(null);
   const user = useSelector((state) => state.user);
@@ -96,10 +96,6 @@ const EditUsers = ({ ...others }) => {
   };
 
   console.log('user', user);
-
-  useEffect(() => {
-    fetchData(`api/schoolBranches/getAll/${user?.user?.accountId}`, setSchools);
-  }, []);
 
   useEffect(() => {
     if (userId) {
@@ -127,24 +123,6 @@ const EditUsers = ({ ...others }) => {
     fetchData(`api/roles/getAll/${userDetails.getAccountId()}`, setRoles);
   }, []);
 
-  // Fetch classes and divisions using GET endpoints (getAllBy)
-  useEffect(() => {
-    const accountId = userDetails.getAccountId();
-    const fetchDropdowns = async () => {
-      try {
-        const [classRes, divisionRes] = await Promise.all([
-          api.get(`/api/schoolClasses/getAllBy/${accountId}`),
-          api.get(`/api/divisions/getAllBy/${accountId}`)
-        ]);
-        setClasses(classRes.data || []);
-        setDivisions(divisionRes.data || []);
-      } catch (err) {
-        console.error('Failed to fetch classes/divisions:', err);
-      }
-    };
-    fetchDropdowns();
-  }, []);
-
   const fetchTeacherData = async (id) => {
     setLoader(true);
     try {
@@ -153,13 +131,13 @@ const EditUsers = ({ ...others }) => {
       const normalizedEducations = Array.isArray(data.educations) ? data.educations : data.educations ? [data.educations] : [];
       const normalizedAllocations = Array.isArray(data.allocatedClasses)
         ? data.allocatedClasses
-          .map((item) => {
-            const classId = item?.classId ?? item?.class?.id ?? item?.class_id ?? item?.clsId;
-            const divisionId = item?.divisionId ?? item?.division?.id ?? item?.division_id ?? item?.divId;
-            if (!classId || !divisionId) return null;
-            return { classId, divisionId };
-          })
-          .filter(Boolean)
+            .map((item) => {
+              const classId = item?.classId ?? item?.class?.id ?? item?.class_id ?? item?.clsId;
+              const divisionId = item?.divisionId ?? item?.division?.id ?? item?.division_id ?? item?.divId;
+              if (!classId || !divisionId) return null;
+              return { classId, divisionId };
+            })
+            .filter(Boolean)
         : [];
       setTeacherData({ ...data, educations: normalizedEducations, allocatedClasses: normalizedAllocations });
     } catch (error) {
@@ -209,7 +187,6 @@ const EditUsers = ({ ...others }) => {
             <Tab label="Education" {...a11yProps(1)} />
             <Tab label="Class Allocation" {...a11yProps(2)} />
             <Tab label="Documents" {...a11yProps(3)} />
-
           </Tabs>
         </AppBar>
       </Box>
@@ -557,10 +534,7 @@ const EditUsers = ({ ...others }) => {
                         (ac) => ac.classId === selectedClass.id && ac.divisionId === selectedDivision.id
                       );
                       if (exists) return;
-                      const next = [
-                        ...(values.allocatedClasses || []),
-                        { classId: selectedClass.id, divisionId: selectedDivision.id }
-                      ];
+                      const next = [...(values.allocatedClasses || []), { classId: selectedClass.id, divisionId: selectedDivision.id }];
                       setFieldValue('allocatedClasses', next);
                       setSelectedClass(null);
                       setSelectedDivision(null);
@@ -607,7 +581,7 @@ const EditUsers = ({ ...others }) => {
             </TabPanel>
 
             <TabPanel value={tabValue} index={3}>
-              <UserDocumentManager userId={userId} userType="TEACHER" />
+              <UserDocumentManager accountId={userDetails.getAccountId()} userId={userId} userType="TEACHER" />
             </TabPanel>
             <Grid item xs={12}>
               <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>

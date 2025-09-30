@@ -11,6 +11,7 @@ import { hasPermission } from 'utils/permissionUtils';
 import { useSelector } from 'react-redux';
 import { Download as DownloadIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import api from '../../../utils/apiService';
+import { useSCDData } from 'contexts/SCDProvider';
 
 // Dummy Data (This data is no longer used, as we'll fetch from the API)
 
@@ -31,55 +32,77 @@ const DocumentList = () => {
     const [loading, setLoading] = useState(true);
   
   const accountId = userDetails.getAccountId();
-  const [schoolNames, setSchoolNames] = useState({});
-  const [classNames, setClassNames] = useState({});
-  const [divisionNames, setDivisionNames] = useState({});
-  useEffect(() => {
-    const fetchDropdownData = async () => {
-      try {
-        const [schoolResponse, classResponse, divisionResponse] = await Promise.all([
-          api.post(`/api/schoolBranches/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
-          api.post(`/api/schoolClasses/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
-          api.post(`/api/divisions/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' })
-        ]);
 
-        const schoolMap = {};
-        (schoolResponse.data.content || []).forEach((sch) => {
-          schoolMap[sch.id] = sch.name;
-        });
-        setSchoolNames(schoolMap);
+  const { schools, classes, divisions, loading: scdLoading, error: scdError } = useSCDData();
 
-        const classMap = {};
-        (classResponse.data.content || []).forEach((cls) => {
-          classMap[cls.id] = cls.name;
-        });
-        setClassNames(classMap);
+  // useEffect(() => {
+  //   const fetchDropdownData = async () => {
+  //     try {
+  //       const [schoolResponse, classResponse, divisionResponse] = await Promise.all([
+  //         api.post(`/api/schoolBranches/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
+  //         api.post(`/api/schoolClasses/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' }),
+  //         api.post(`/api/divisions/getAll/${accountId}`, { page: 0, size: 1000, sortBy: 'id', sortDir: 'asc' })
+  //       ]);
 
-        const divisionMap = {};
-        (divisionResponse.data.content || []).forEach((div) => {
-          divisionMap[div.id] = div.name;
-        });
-        setDivisionNames(divisionMap);
-      } catch (error) {
-        console.error('Failed to fetch dropdown data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDropdownData();
-  }, [accountId]);
+  //       const schoolMap = {};
+  //       (schoolResponse.data.content || []).forEach((sch) => {
+  //         schoolMap[sch.id] = sch.name;
+  //       });
+  //       setSchoolNames(schoolMap);
 
+  //       const classMap = {};
+  //       (classResponse.data.content || []).forEach((cls) => {
+  //         classMap[cls.id] = cls.name;
+  //       });
+  //       setClassNames(classMap);
+
+  //       const divisionMap = {};
+  //       (divisionResponse.data.content || []).forEach((div) => {
+  //         divisionMap[div.id] = div.name;
+  //       });
+  //       setDivisionNames(divisionMap);
+  //     } catch (error) {
+  //       console.error('Failed to fetch dropdown data:', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchDropdownData();
+  // }, [accountId]);
+
+  // const transformDocumentData = useCallback(
+  //   (document) => ({
+  //     ...document,
+  //     rollno: document.rollNo || document.id,
+  //     name: `${document.firstName || ''} ${document.lastName || ''}`.trim() || document.userName,
+  //     schoolName: schoolNames[document.schoolId] || 'N/A',
+  //     className: classNames[document.classId] || 'N/A',
+  //     divisionName: divisionNames[document.divisionId] || 'N/A'
+  //   }),
+  //   [schoolNames, classNames, divisionNames]
+  // ); 
   const transformDocumentData = useCallback(
-    (document) => ({
-      ...document,
-      rollno: document.rollNo || document.id,
-      name: `${document.firstName || ''} ${document.lastName || ''}`.trim() || document.userName,
-      schoolName: schoolNames[document.schoolId] || 'N/A',
-      className: classNames[document.classId] || 'N/A',
-      divisionName: divisionNames[document.divisionId] || 'N/A'
-    }),
-    [schoolNames, classNames, divisionNames]
+    (document) => {
+      const school = schools.find(sch => sch.id === document.schoolId);
+      const classObj = classes.find(cls => cls.id === document.classId);
+      const division = divisions.find(div => div.id === document.divisionId);
+      return {
+        ...document,
+        documentName: document.name,
+        schoolName: school ? school.name : 'N/A',
+        className: classObj ? classObj.name : 'N/A',
+        divisionName: division ? division.name : 'N/A'
+      };
+    },
+    [schools, classes, divisions]
   );
+
+  useEffect(() => {
+    if (!scdLoading) {
+      setLoading(false);
+    }
+  }, [scdLoading]);
+  
   // Define all actions directly in the customActions array
   const customActions = [
     {
@@ -143,7 +166,7 @@ const DocumentList = () => {
   ];
   if (loading) {
     return (
-      <MainCard title="Students Management">
+      <MainCard title="Document Management">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
           <CircularProgress />
         </Box>

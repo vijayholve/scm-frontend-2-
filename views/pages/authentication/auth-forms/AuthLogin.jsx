@@ -34,6 +34,7 @@ import { setLogin  } from 'store/userSlice';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Google from 'assets/images/icons/social-google.svg';
+import { fetchScdData } from 'store/scdSlice';
 // import { fetchAndStoreSCDData } from 'utils/fetchScdData';
 
 // ============================|| FIREBASE - LOGIN ||============================ //
@@ -64,22 +65,14 @@ const AuthLogin = ({ ...others }) => {
 
   const [apiError, setApiError] = useState('');
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+    const handleSubmit = async (values, { setSubmitting }) => {
     try {
       const response = await api.post(endpoints.auth.login, values);
       if (response.data.statusCode === 200 && response.data.accessToken) {
-         localStorage.setItem("SCM-AUTH", JSON.stringify(response.data));
-      dispatch(setLogin(response.data));
-      setSubmitting(false);
-
-             
-
-
-      // ADD THIS LINE
-      // await fetchAndStoreSCDData();
-
-      // navigate('/');
-
+        localStorage.setItem('SCM-AUTH', JSON.stringify(response.data));
+        dispatch(setLogin(response.data.data));
+        // call SCD getALL api store that data into userSlice state
+        setSubmitting(false);
         navigate('/');
       } else {
         setApiError(response.data.message);
@@ -91,6 +84,7 @@ const AuthLogin = ({ ...others }) => {
       setSubmitting(false);
     }
   };
+
 
   return (
     <>

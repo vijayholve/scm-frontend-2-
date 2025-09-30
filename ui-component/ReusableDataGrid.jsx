@@ -40,7 +40,8 @@ import { gridSpacing } from 'store/constant';
 import api, { userDetails, getUserSchoolClassDivision } from 'utils/apiService';
 import { hasPermission } from 'utils/permissionUtils';
 import { useSelector } from 'react-redux';
-import ListGridFilters from './ListGridFilters';
+import ListGridFiltersContainer from './ListGridFiltersContainer';
+import { useSCDData } from 'contexts/SCDProvider'; // add SCD hook
 
 const ActionWrapper = styled(Box)({
   display: 'flex',
@@ -105,7 +106,8 @@ const ReusableDataGrid = ({
   getRowId: getRowIdProp = (row) => row.id,
   schoolNameMap = {},
   classNameMap = {},
-  divisionNameMap = {}
+  divisionNameMap = {},
+  sortBy = 'asc'
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
@@ -125,11 +127,39 @@ const ReusableDataGrid = ({
   const isTeacher = user?.type === 'TEACHER';
   const isAdmin = user?.type === 'ADMIN';
 
+  // Teacher's school id (if available) — used to force school filter/payload
+  const teacherSchoolId = user?.schoolId ?? userDetails.getUser()?.schoolId ?? null;
+
+  // SCD data for resolving names from ids (schools/classes/divisions)
+  const { schools = [], classes = [], divisions = [], loading: scdLoading, error: scdError } = useSCDData();
+
+  // track initial fetch to handle Admin "don't send filters on landing" rule
+  const isInitialLoadRef = useRef(true);
+
+  const transformDocumentData = useCallback(
+    (document) => {
+      const school = schools.find((sch) => sch.id === document.schoolId);
+      const classObj = classes.find((cls) => cls.id === document.classId);
+      const division = divisions.find((div) => div.id === document.divisionId);
+      return {
+        ...document,
+        documentName: document.name,
+        schoolName: school ? school.name : 'N/A',
+        className: classObj ? classObj.name : 'N/A',
+        divisionName: division ? division.name : 'N/A'
+      };
+    },
+    [schools, classes, divisions]
+  );
+
   // Use a ref to store the latest filters without triggering a re-render
   const latestFilters = useRef(gridFilters);
   useEffect(() => {
     latestFilters.current = gridFilters;
   }, [gridFilters]);
+
+  // stable key for gridFilters to use in hook deps
+  const gridFiltersKey = React.useMemo(() => JSON.stringify(gridFilters), [gridFilters]);
 
   // Memoized function to fetch data, preventing infinite loops
   const fetchData = useCallback(async () => {
@@ -162,39 +192,74 @@ const ReusableDataGrid = ({
     try {
       let response;
       const method = (requestMethod || (isPostRequest ? 'POST' : 'GET')).toUpperCase();
-      // Merge latest filters with student defaults (student defaults should override any filter values)
+      // Merge latest filters with student defaults and role-based enforced filters
       const studentDefaults = getUserSchoolClassDivision() || {};
-      const enforcedStudentFilters = {};
-      if (studentDefaults.schoolId != null) enforcedStudentFilters.schoolId = studentDefaults.schoolId;
-      if (studentDefaults.classId != null) enforcedStudentFilters.classId = studentDefaults.classId;
-      if (studentDefaults.divisionId != null) enforcedStudentFilters.divisionId = studentDefaults.divisionId;
+      const enforcedFilters = {};
+
+      // If student, enforce their IDs (these should override any UI filters)
+      if (isStudent) {
+        if (studentDefaults.schoolId != null) {
+          enforcedFilters.schoolId = studentDefaults.schoolId;
+        }
+        if (studentDefaults.classId != null) {
+          enforcedFilters.classId = studentDefaults.classId;
+        }
+        if (studentDefaults.divisionId != null) {
+          enforcedFilters.divisionId = studentDefaults.divisionId;
+        }
+      }
+
+      // If teacher, we'll send their schoolId and allocated class/division lists
+      let teacherClassList = [];
+      let teacherDivisionList = [];
+      if (isTeacher && Array.isArray(user?.allocatedClasses)) {
+        teacherClassList = Array.from(new Set(user.allocatedClasses.map((ac) => ac.classId).filter(Boolean)));
+        teacherDivisionList = Array.from(new Set(user.allocatedClasses.map((ac) => ac.divisionId).filter(Boolean)));
+        if (teacherSchoolId != null) {
+          enforcedFilters.schoolId = teacherSchoolId;
+        }
+      }
+
+      // Determine which UI filters should be sent. Admin: on initial load do NOT send UI filters.
+      const isInitialLoad = isInitialLoadRef.current;
+      const uiFilters = {};
+      if (!(isAdmin && isInitialLoad)) {
+        // send latest UI filters when not initial admin landing
+        Object.assign(uiFilters, latestFilters.current);
+      }
 
       const basePayload = {
         page: paginationModel.page,
         size: paginationModel.pageSize,
         sortBy: 'id',
-        sortDir: 'asc',
-        search: searchText,
-        ...latestFilters.current
+        sortDir: sortBy,
+        search: searchText
       };
-      // Ensure student filters override any incoming filters
-      const payload = { ...basePayload, ...enforcedStudentFilters };
+
+      // Build final payload in order: base -> uiFilters -> role enforced filters -> teacher lists
+      const payload = { ...basePayload, ...uiFilters, ...enforcedFilters };
+      if (isTeacher) {
+        if (teacherClassList.length) {
+          payload.classList = teacherClassList;
+        }
+        if (teacherDivisionList.length) {
+          payload.divisionList = teacherDivisionList;
+        }
+      }
 
       if (method === 'POST') {
         response = await api.post(fetchUrl, payload);
+      } else if (sendBodyOnGet) {
+        response = await api.get(fetchUrl, { data: payload });
       } else {
-        if (sendBodyOnGet) {
-          response = await api.get(fetchUrl, { data: payload });
-        } else {
-          const queryParams = new URLSearchParams({
-            page: paginationModel.page,
-            size: paginationModel.pageSize,
-            search: searchText,
-            ...latestFilters.current,
-            ...enforcedStudentFilters
-          });
-          response = await api.get(`${fetchUrl}?${queryParams}`);
-        }
+        const queryParams = new URLSearchParams({
+          page: paginationModel.page,
+          size: paginationModel.pageSize,
+          search: searchText,
+          ...latestFilters.current,
+          ...enforcedFilters
+        });
+        response = await api.get(`${fetchUrl}?${queryParams}`);
       }
 
       const responseData = response.data.content || response.data || [];
@@ -209,8 +274,27 @@ const ReusableDataGrid = ({
       setRowCount(0);
     } finally {
       setLoading(false);
+      // we completed the first load attempt
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+      }
     }
-  }, [fetchUrl, isPostRequest, searchText, transformData, clientSideData, paginationModel, JSON.stringify(gridFilters)]);
+  }, [
+    fetchUrl,
+    isPostRequest,
+    requestMethod,
+    sendBodyOnGet,
+    searchText,
+    transformData,
+    clientSideData,
+    paginationModel,
+    isAdmin,
+    isStudent,
+    isTeacher,
+    sortBy,
+    teacherSchoolId,
+    user?.allocatedClasses
+  ]);
 
   // Handle filter changes from ListGridFilters
   const handleFiltersChange = useCallback((newFilters) => {
@@ -220,7 +304,7 @@ const ReusableDataGrid = ({
 
   useEffect(() => {
     fetchData();
-  }, [paginationModel.page, paginationModel.pageSize, searchText, gridFilters]);
+  }, [ paginationModel.page, paginationModel.pageSize, searchText, gridFilters]);
   const handleSearchChange = (event) => {
     const newSearchText = event.target.value;
     setSearchText(newSearchText);
@@ -396,26 +480,100 @@ const ReusableDataGrid = ({
     if (col.valueFormatter || col.renderCell) {
       return col;
     }
-
-    if (col.field === 'schoolId') {
+    if (col.field === '') {
       return {
         ...col,
         valueFormatter: (params) => getNameForId(params.value, schoolNameMap),
         headerName: col.headerName || 'School'
       };
     }
+    // Resolve school/class/division names using SCD data when available
+    if (col.field === 'schoolId') {
+      return {
+        ...col,
+        headerName: col.headerName || 'School',
+        valueGetter: (params) => {
+          // defensive guards: params may be null during some grid lifecycle phases
+          const idFromParam = params?.value;
+          const row = params?.row || {};
+          const id = idFromParam ?? row.schoolId ?? null;
+
+          if (!id) {
+            return '';
+          }
+          // prefer mapped names if provided; fall back to SCD lookup
+          if (schoolNameMap && schoolNameMap[id]) {
+            return schoolNameMap[id];
+          }
+          const school = schools.find((sch) => String(sch.id) === String(id));
+          return school ? school.name : '';
+        },
+        renderCell: (params) => {
+          const text = params?.value ?? '';
+          return (
+            <Typography variant="body2" title={text}>
+              {text}
+            </Typography>
+          );
+        }
+      };
+    }
+
     if (col.field === 'classId') {
       return {
         ...col,
-        valueFormatter: (params) => getNameForId(params.value, classNameMap),
-        headerName: col.headerName || 'Class'
+        headerName: col.headerName || 'Class',
+        valueGetter: (params) => {
+          const idFromParam = params?.value;
+          const row = params?.row || {};
+          const id = idFromParam ?? row.classId ?? null;
+
+          if (!id) {
+            return '';
+          }
+          if (classNameMap && classNameMap[id]) {
+            return classNameMap[id];
+          }
+          const cls = classes.find((c) => String(c.id) === String(id));
+          return cls ? cls.name : '';
+        },
+        renderCell: (params) => {
+          const text = params?.value ?? '';
+          return (
+            <Typography variant="body2" title={text}>
+              {text}
+            </Typography>
+          );
+        }
       };
     }
+
     if (col.field === 'divisionId') {
       return {
         ...col,
-        valueFormatter: (params) => getNameForId(params.value, divisionNameMap),
-        headerName: col.headerName || 'Division'
+        headerName: col.headerName || 'Division',
+        valueGetter: (params) => {
+          const idFromParam = params?.value;
+          const row = params?.row || {};
+          const id = idFromParam ?? row.divisionId ?? null;
+
+          if (!id) {
+            return '';
+          }
+          if (divisionNameMap && divisionNameMap[id]) {
+            return divisionNameMap[id];
+          }
+          const div = divisions.find((d) => String(d.id) === String(id));
+          return div ? div.name : '';
+        },
+        renderCell: (params) => {
+          const text = params?.value ?? '';
+          return (
+            <Typography variant="body2" title={text}>
+              {text}
+            </Typography>
+          );
+        }
       };
     }
 
@@ -474,13 +632,19 @@ const ReusableDataGrid = ({
     >
       {customToolbar && customToolbar()}
 
-      {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && (
-        <ListGridFilters
+      {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && !isTeacher && !isStudent && (
+        <ListGridFiltersContainer
           filters={gridFilters}
           onFiltersChange={handleFiltersChange}
-          showSchool={isStudent ? null : showSchoolFilter}
-          showClass={isStudent ? null : showClassFilter}
-          showDivision={isStudent ? null : showDivisionFilter}
+          // pass SCD lists so the container shows the saved state lists
+          schools={schools}
+          classes={classes}
+          divisions={divisions}
+          loading={scdLoading}
+          // keep previous behavior: hide school control for teachers (but container will still enforce payload)
+          showSchool={!isTeacher && showSchoolFilter}
+          showClass={showClassFilter}
+          showDivision={showDivisionFilter}
         />
       )}
 
@@ -568,7 +732,8 @@ ReusableDataGrid.propTypes = {
   getRowId: PropTypes.func,
   schoolNameMap: PropTypes.object,
   classNameMap: PropTypes.object,
-  divisionNameMap: PropTypes.object
+  divisionNameMap: PropTypes.object,
+  sortBy: PropTypes.string
 };
 
 export default ReusableDataGrid;

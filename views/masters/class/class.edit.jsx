@@ -12,6 +12,7 @@ import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
+import { useSCDData } from 'contexts/SCDProvider';
 
 const EditClass = ({ ...others }) => {
   const navigate = useNavigate();
@@ -29,12 +30,13 @@ const EditClass = ({ ...others }) => {
   const Title = classId ? 'Edit Class' : 'Add Class';
   const isEditMode = !!classId;
 
+  // Get SCD data from context instead of API calls
+  const { schools = [], classes = [], divisions = [], loading: scdLoading } = useSCDData();
+
   const [institutes, setInstitutes] = useState([]);
-  const [schools, setSchools] = useState([]);
-  const [divisions, setDivisions] = useState([]);
   const [allClasses, setAllClasses] = useState([]); // For uniqueness validation
 
-  // Fetch dropdown data
+  // Fetch remaining dropdown data (institutes and all classes for validation)
   useEffect(() => {
     const fetchData = async (endpoint, setter) => {
       try {
@@ -51,9 +53,7 @@ const EditClass = ({ ...others }) => {
       }
     };
 
-    fetchData('api/schoolBranches/getAll', setSchools);
     fetchData('api/institutes/getAll', setInstitutes);
-    fetchData('api/divisions/getAll', setDivisions);
     fetchData('api/schoolClasses/getAll', setAllClasses);
   }, []);
 
@@ -102,13 +102,12 @@ const EditClass = ({ ...others }) => {
     }
   };
 
-
   if (loading) {
     return <ReusableLoader></ReusableLoader>;
   }
 
   return (
-    <MainCard title={Title} >
+    <MainCard title={Title}>
       <Formik
         enableReinitialize
         initialValues={classData}
@@ -226,12 +225,12 @@ const EditClass = ({ ...others }) => {
                     {isEditMode ? 'Update' : 'Save'}
                   </Button>
                 </Stack> */}
-                <BackSaveButton 
-                  title={classId ? "Update":"Save"}
+                <BackSaveButton
+                  title={classId ? 'Update' : 'Save'}
                   backUrl="/masters/classes"
                   isSubmitting={isSubmitting}
                   // onSaveClick={handleSubmit}
-                  ></BackSaveButton>
+                ></BackSaveButton>
               </Grid>
             </Grid>
           </form>

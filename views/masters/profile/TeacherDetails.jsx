@@ -1,6 +1,7 @@
 import React from 'react';
 import { Paper, Typography, Grid, Box } from '@mui/material';
 import { IconChalkboard, IconCertificate } from '@tabler/icons-react';
+import TeacherClassesList from './TeacherClassesList';
 
 const TeacherDetails = ({ user }) => {
   // Dummy data for demonstration
@@ -10,6 +11,7 @@ const TeacherDetails = ({ user }) => {
     experience: '10 years',
     ...user
   };
+  
 
   return (
     <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
@@ -34,6 +36,10 @@ const TeacherDetails = ({ user }) => {
           </Box>
         </Grid>
       </Grid>
+      <Box mt={3}>
+        <TeacherClassesList teacherId={user} />
+      </Box>  
+
     </Paper>
   );
 };

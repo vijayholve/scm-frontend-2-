@@ -2,11 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Grid, Box, Typography, Button, TextField, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Tabs, Tab, Paper, Table, TableHead, TableRow, TableCell, TableBody,
-  Chip, Divider, Switch, RadioGroup, Radio, FormControlLabel, IconButton,
-  TableContainer, TablePagination,
+  Grid,
+  Box,
+  Typography,
+  Button,
+  TextField,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
+  Paper,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Chip,
+  Divider,
+  Switch,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  IconButton,
+  TableContainer,
+  TablePagination,
   CircularProgress
 } from '@mui/material';
 
@@ -18,6 +40,7 @@ import { useSelector } from 'react-redux';
 import { styled } from '@mui/system';
 import api from 'utils/apiService';
 import { userDetails } from 'utils/apiService';
+import { useSCDData } from 'contexts/SCDProvider';
 
 // Enums based on your provided schema
 const ContentType = {
@@ -62,10 +85,8 @@ const NotificationModule = () => {
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [editData, setEditData] = useState(null);
   const [viewData, setViewData] = useState(null);
-  const [schools, setSchools] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [divisions, setDivisions] = useState([]);
-  const [teachers, setTeachers] = useState([]);
+  // Get SCD data from context instead of API calls
+  const { schools = [], classes = [], divisions = [], loading: scdLoading } = useSCDData();
   const [isFetchingData, setIsFetchingData] = useState(true);
 
   const [formState, setFormState] = useState({
@@ -92,22 +113,7 @@ const NotificationModule = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
 
-  const fetchDropdownData = async () => {
-    try {
-      const [schoolRes, classRes, divisionRes, teachersRes] = await Promise.all([
-        api.get(`/api/schoolBranches/getAllBy/${accountId}`),
-        api.get(`/api/schoolClasses/getAllBy/${accountId}`),
-        api.get(`/api/divisions/getAllBy/${accountId}`),
-        api.get(`/api/users/getAllBy/${accountId}?type=TEACHER`),
-      ]);
-      setSchools(schoolRes.data || []);
-      setClasses(classRes.data || []);
-      setDivisions(divisionRes.data || []);
-      setTeachers(teachersRes.data || []);
-    } catch (err) {
-      console.error('Failed to fetch dropdown data:', err);
-    }
-  };
+ 
 
   const fetchNotifications = async () => {
     setIsFetchingData(true);
@@ -133,11 +139,7 @@ const NotificationModule = () => {
     }
   };
 
-  useEffect(() => {
-    if (accountId) {
-      fetchDropdownData();
-    }
-  }, [accountId]);
+
 
   useEffect(() => {
     if (accountId) {
@@ -154,22 +156,24 @@ const NotificationModule = () => {
 
   const getTargetName = (type, value) => {
     switch (type) {
-      case TargetType.SCHOOL:
+      case TargetType.SCHOOL: {
         const school = schools.find((s) => String(s.id) === String(value));
         return school ? school.name : 'All Schools';
-      case TargetType.CLASS:
+      }
+      case TargetType.CLASS: {
         const cls = classes.find((c) => String(c.id) === String(value));
         return cls ? cls.name : 'All Classes';
-      case TargetType.DIVISION:
+      }
+      case TargetType.DIVISION: {
         const div = divisions.find((d) => String(d.id) === String(value));
         return div ? div.name : 'All Divisions';
+      }
       case TargetType.USER_TYPE:
         return value || 'All User Types';
       default:
         return 'All';
     }
   };
-  
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -205,13 +209,13 @@ const NotificationModule = () => {
   };
 
   const handleOpenEdit = (id) => {
-    const notificationToEdit = notifications.find(n => n.id === id);
+    const notificationToEdit = notifications.find((n) => n.id === id);
     if (notificationToEdit) {
       setEditData(notificationToEdit);
       setFormState({
         ...notificationToEdit,
         fromDate: notificationToEdit.fromDate ? notificationToEdit.fromDate.split('T')[0] : '',
-        toDate: notificationToEdit.toDate ? notificationToEdit.toDate.split('T')[0] : '',
+        toDate: notificationToEdit.toDate ? notificationToEdit.toDate.split('T')[0] : ''
       });
       setOpenCreateModal(true);
     }
@@ -228,7 +232,7 @@ const NotificationModule = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
-  
+
   const handleTargetChange = (e) => {
     const { name, value } = e.target;
     setFormState((prev) => ({
@@ -241,13 +245,13 @@ const NotificationModule = () => {
   const getTargetOptions = () => {
     switch (formState.targetType) {
       case TargetType.SCHOOL:
-        return schools.map(s => ({ id: s.id, name: s.name }));
+        return schools.map((s) => ({ id: s.id, name: s.name }));
       case TargetType.CLASS:
-        return classes.map(c => ({ id: c.id, name: c.name }));
+        return classes.map((c) => ({ id: c.id, name: c.name }));
       case TargetType.DIVISION:
-        return divisions.map(d => ({ id: d.id, name: d.name }));
+        return divisions.map((d) => ({ id: d.id, name: d.name }));
       case TargetType.USER_TYPE:
-        return ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'].map(type => ({ id: type, name: type }));
+        return ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'].map((type) => ({ id: type, name: type }));
       default:
         return [];
     }
@@ -255,19 +259,33 @@ const NotificationModule = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formState.title || formState.title.trim() === '') errors.title = 'Title is required';
-    if (!formState.message || formState.message.trim() === '') errors.message = 'Message is required';
-    if (!formState.targetType) errors.targetType = 'Target Type is required';
-    if (!formState.contentType) errors.contentType = 'Content Type is required';
-    if (!formState.fromDate) errors.fromDate = 'Active From date is required';
-    if (!formState.toDate) errors.toDate = 'Active To date is required';
+    if (!formState.title || formState.title.trim() === '') {
+      errors.title = 'Title is required';
+    }
+    if (!formState.message || formState.message.trim() === '') {
+      errors.message = 'Message is required';
+    }
+    if (!formState.targetType) {
+      errors.targetType = 'Target Type is required';
+    }
+    if (!formState.contentType) {
+      errors.contentType = 'Content Type is required';
+    }
+    if (!formState.fromDate) {
+      errors.fromDate = 'Active From date is required';
+    }
+    if (!formState.toDate) {
+      errors.toDate = 'Active To date is required';
+    }
     return errors;
   };
 
   const handleFormSubmit = async () => {
     const errors = validateForm();
     setFormErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
     const payload = {
       ...formState,
       createdBy: user?.id,
@@ -297,7 +315,7 @@ const NotificationModule = () => {
       }
     }
   };
-  
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -307,11 +325,13 @@ const NotificationModule = () => {
     setPage(0);
   };
 
-
   const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'title', headerName: 'Title', flex: 1 },
-    { field: 'targetType', headerName: 'Audience', width: 150, 
+    {
+      field: 'targetType',
+      headerName: 'Audience',
+      width: 150,
       renderCell: (params) => {
         const { row } = params;
         return getTargetName(row.targetType, row.targetValue);
@@ -324,7 +344,7 @@ const NotificationModule = () => {
       renderCell: (params) => <Chip label={params.value} color={params.value === 'ACTIVE' ? 'success' : 'error'} size="small" />
     },
     { field: 'fromDate', headerName: 'Active From', width: 150, valueFormatter: (params) => new Date(params.value).toLocaleDateString() },
-    { field: 'toDate', headerName: 'Active To', width: 150, valueFormatter: (params) => new Date(params.value).toLocaleDateString() },
+    { field: 'toDate', headerName: 'Active To', width: 150, valueFormatter: (params) => new Date(params.value).toLocaleDateString() }
   ];
 
   const actionColumn = {
@@ -337,14 +357,14 @@ const NotificationModule = () => {
           <ViewIcon />
         </IconButton>
         {/* {hasPermission(permissions, 'NOTIFICATION', 'edit') && ( */}
-            <IconButton color="primary" size="small" onClick={() => handleOpenEdit(params.row.id)}>
-              <EditIcon />
-            </IconButton>
+        <IconButton color="primary" size="small" onClick={() => handleOpenEdit(params.row.id)}>
+          <EditIcon />
+        </IconButton>
         {/* // )} */}
         {/* {hasPermission(permissions, 'NOTIFICATION', 'delete') && ( */}
-            <IconButton color="error" size="small" onClick={() => handleDelete(params.row.id)}>
-              <DeleteIcon />
-            </IconButton>
+        <IconButton color="error" size="small" onClick={() => handleDelete(params.row.id)}>
+          <DeleteIcon />
+        </IconButton>
         {/* // )} */}
       </Box>
     )
@@ -363,7 +383,6 @@ const NotificationModule = () => {
     >
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
-         
           <Box sx={{ height: 600, width: '100%', mt: 2 }}>
             <TableContainer component={Paper}>
               <Table>
@@ -393,7 +412,11 @@ const NotificationModule = () => {
                       <TableRow key={row.id}>
                         {columns.map((col) => (
                           <TableCell key={col.field}>
-                            {col.renderCell ? col.renderCell({ value: row[col.field], row }) : (col.valueFormatter ? col.valueFormatter({ value: row[col.field] }) : row[col.field])}
+                            {col.renderCell
+                              ? col.renderCell({ value: row[col.field], row })
+                              : col.valueFormatter
+                                ? col.valueFormatter({ value: row[col.field] })
+                                : row[col.field]}
                           </TableCell>
                         ))}
                         <TableCell>{actionColumn.renderCell({ row })}</TableCell>
@@ -571,7 +594,7 @@ const NotificationModule = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       <Dialog open={!!viewData} onClose={() => setViewData(null)} maxWidth="sm" fullWidth>
         <DialogTitle>{viewData?.title}</DialogTitle>
         <DialogContent>

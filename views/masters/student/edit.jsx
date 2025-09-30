@@ -22,13 +22,15 @@ import { toast, Toaster } from 'react-hot-toast';
 
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import api, { userDetails } from '../../../utils/apiService';
+import api, { userDetails } from 'utils/apiService';
 import { gridSpacing } from 'store/constant';
 import NavingateToOtherPage from 'ui-component/button/NavingateToOtherPage';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import { useSelector } from 'react-redux';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
 import UserDocumentManager from 'views/UserDocumentManager';
+import SCDSelector from 'ui-component/SCDSelector';
+import { useSCDData } from 'contexts/SCDProvider';
 
 // Helper component for Tab Panel content
 function TabPanel(props) {
@@ -59,6 +61,10 @@ const EditStudent = () => {
   const { id: userId } = useParams();
 
   const [loader, setLoader] = useState(false);
+
+  // roles state (was missing -> caused "roles is not defined")
+  const [roles, setRoles] = useState([]);
+
   const [studentData, setStudentData] = useState({
     userName: '',
     password: '',
@@ -78,10 +84,6 @@ const EditStudent = () => {
     status: 'active'
   });
 
-  const [classes, setClasses] = useState([]);
-  const [divisions, setDivisions] = useState([]);
-  const [roles, setRoles] = useState([]);
-  const [schools, setSchools] = useState([]);
   const user = useSelector((state) => state.user);
   const [value, setValue] = useState(0);
 
@@ -149,12 +151,9 @@ const EditStudent = () => {
     [roles]
   );
 
-  // Fetch initial data (classes, divisions, roles) on component mount
+  // Fetch initial data: only roles. SCD (school/class/division) is provided centrally via SCDSelector/useSCDData
   useEffect(() => {
-    fetchData('api/schoolClasses/getAll', setClasses);
-    fetchData('api/divisions/getAll', setDivisions);
     fetchData('api/roles/getAll', setRoles);
-    fetchData(`api/schoolBranches/getAll`, setSchools);
   }, [fetchData]);
 
   // Fetch student data if userId is present (for edit mode)
@@ -235,8 +234,7 @@ const EditStudent = () => {
           >
             <Tabs value={value} onChange={handleTabChange} aria-label="student form tabs">
               <Tab label="Student Details" {...a11yProps(0)} />
-                <Tab label="Documents" {...a11yProps(1)} />
-
+              <Tab label="Documents" {...a11yProps(1)} />
             </Tabs>
           </Box>
         </AppBar>
@@ -401,66 +399,9 @@ const EditStudent = () => {
                     </FormControl>
                   </Grid>
 
-                  {/* School Selection */}
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth error={Boolean(touched.schoolId && errors.schoolId)}>
-                      <Autocomplete
-                        disablePortal
-                        id="school-autocomplete"
-                        options={schools}
-                        getOptionLabel={(option) => option.name || ''}
-                        value={schools.find((school) => school.id === values.schoolId) || null}
-                        onChange={(event, newValue) => {
-                          setFieldValue('schoolId', newValue?.id ? newValue?.id : null);
-                          setFieldValue('schoolName', newValue?.name ? newValue?.name : null);
-                        }}
-                        isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                        renderInput={(params) => <TextField {...params} label="School" />}
-                      />
-                      {touched.schoolId && errors.schoolId && <FormHelperText>{errors.schoolId}</FormHelperText>}
-                    </FormControl>
-                  </Grid>
-
-                  {/* Class Selection */}
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth error={Boolean(touched.classId && errors.classId)}>
-                      <Autocomplete
-                        disablePortal
-                        id="class-autocomplete"
-                        options={classes}
-                        getOptionLabel={(option) => option.name || ''}
-                        value={classes.find((cls) => String(cls.id) === String(values.classId)) || null} // Ensure type consistency
-                        onChange={(event, newValue) => {
-                          setFieldValue('classId', newValue ? String(newValue.id) : ''); // Store as string
-                          setFieldValue('className', newValue?.name ? newValue?.name : null);
-                        }}
-                        isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                        renderInput={(params) => <TextField {...params} label="Class" />}
-                      />
-                      {touched.classId && errors.classId && <FormHelperText>{errors.classId}</FormHelperText>}
-                    </FormControl>
-                  </Grid>
-
-                  {/* Division Selection */}
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth error={Boolean(touched.divisionId && errors.divisionId)}>
-                      <Autocomplete
-                        disablePortal
-                        id="division-autocomplete"
-                        options={divisions} // Filter divisions by selected class, ensure type consistency
-                        getOptionLabel={(option) => option.name || ''}
-                        value={divisions.find((div) => String(div.id) === String(values.divisionId)) || null} // Ensure type consistency
-                        onChange={(event, newValue) => {
-                          setFieldValue('divisionId', newValue ? String(newValue.id) : ''); // Store as string
-                          setFieldValue('divisionName', newValue?.name ? newValue?.name : null);
-                        }}
-                        renderInput={(params) => <TextField {...params} label="Division" />}
-                        disabled={!values.classId} // Disable if no class is selected
-                        isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                      />
-                      {touched.divisionId && errors.divisionId && <FormHelperText>{errors.divisionId}</FormHelperText>}
-                    </FormControl>
+                  {/* School / Class / Division (reusable SCD selector) */}
+                  <Grid item xs={12} sm={12}>
+                    <SCDSelector formik={{ values, setFieldValue, touched, errors }} />
                   </Grid>
 
                   {/* Role Selection */}
@@ -498,8 +439,8 @@ const EditStudent = () => {
           </Formik>
         </TabPanel>
         <TabPanel value={value} index={1}>
-  <UserDocumentManager userId={userId} userType="STUDENT" />
-</TabPanel>
+          <UserDocumentManager userId={userId} userType="STUDENT" />
+        </TabPanel>
       </Box>
     </MainCard>
   );

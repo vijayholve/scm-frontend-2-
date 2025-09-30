@@ -24,6 +24,9 @@ import BackButton from 'layout/MainLayout/Button/BackButton';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
+// new import: reusable SCD selector
+import SCDSelector from 'ui-component/SCDSelector';
+
 // Styled component for items
 const Item = styled(Paper)(({ theme }) => ({
   display: 'flex',
@@ -46,9 +49,6 @@ const AttendenceEdit = () => {
   const [pageSize, setPageSize] = useState(5);
   const [rowCount, setRowCount] = useState(0);
 
-  const [schools, setSchools] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [divisions, setDivisions] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [students, setStudents] = useState([]);
   const [attendenceData, setAttendenceData] = useState([]);
@@ -64,47 +64,52 @@ const AttendenceEdit = () => {
     divisionName: '',
     subjectName: ''
   });
+  // Note: schools/classes/divisions come from SCDSelector/useSCDData centrally.
+  // reqData keeps the selected ids/names for submission. The SCDSelector adapter below maps fields.
 
   const [validationErrors, setValidationErrors] = useState({});
   const [showValidation, setShowValidation] = useState(false);
 
-  const fetchData = async (endpoint, setter) => {
-    try {
-      const response = await api.get(endpoint);
-      setter(response.data || []);
-    } catch (error) {
-      console.error(`Failed to fetch ${endpoint}:`, error);
-    }
-  };
-
-  // Fetch all required data
+  // Fetch subjects only (S/C/D comes from SCDProvider via SCDSelector)
   useEffect(() => {
-    
-    fetchData(`api/schoolBranches/getAllBy/${userDetails.getAccountId()}`, setSchools);
-    fetchData(`api/schoolClasses/getAllBy/${userDetails.getAccountId()}`, setClasses);
-    fetchData(`api/divisions/getAllBy/${userDetails.getAccountId()}`, setDivisions);
-    fetchData(`api/subjects/getAllBy/${userDetails.getAccountId()}`, setSubjects);
+    let mounted = true;
+    const loadSubjects = async () => {
+      try {
+        const res = await api.get(`api/subjects/getAllBy/${userDetails.getAccountId()}`);
+        if (!mounted) return;
+        setSubjects(res.data || []);
+      } catch (err) {
+        console.error('Failed to fetch subjects:', err);
+      }
+    };
+    loadSubjects();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Fetch attendance data if editing
   useEffect(() => {
     if (id) {
-      api.get(`api/attendance/getById/${id}`).then(response => {
-        const data = response.data;
-        setAttendenceData(data);
-        setReqData({
-          schoolId: data.schoolId,
-          schooldClassId: data.schooldClassId,
-          divisionId: data.divisionId,
-          subjectId: data.subjectId,
-          date: dayjs(data.attendanceDate).format('YYYY-MM-DD'),
-          schoolName: data.schoolName,
-          className: data.className,
-          subjectName: data.subjectName,
-          divisionName: data.divisionName
-        });
-        setStudents(data.studentAttendanceMappings || []);  
-      }).catch(err => console.error('Failed to fetch attendance data:', err));
+      api
+        .get(`api/attendance/getById/${id}`)
+        .then((response) => {
+          const data = response.data;
+          setAttendenceData(data);
+          setReqData({
+            schoolId: data.schoolId,
+            schooldClassId: data.schooldClassId,
+            divisionId: data.divisionId,
+            subjectId: data.subjectId,
+            date: dayjs(data.attendanceDate).format('YYYY-MM-DD'),
+            schoolName: data.schoolName,
+            className: data.className,
+            subjectName: data.subjectName,
+            divisionName: data.divisionName
+          });
+          setStudents(data.studentAttendanceMappings || []);
+        })
+        .catch((err) => console.error('Failed to fetch attendance data:', err));
     }
   }, [id]);
 
@@ -113,7 +118,6 @@ const AttendenceEdit = () => {
     const { schooldClassId, divisionId, subjectId, date } = reqData;
     if (schooldClassId && divisionId && subjectId && date) {
       fetchAttendance(schooldClassId, divisionId, subjectId, date);
-
     }
   }, [reqData]);
 
@@ -129,7 +133,35 @@ const AttendenceEdit = () => {
       console.error('Failed to fetch attendance data:', error);
     }
     setLoading(false);
-  }
+  };
+
+  // SCDSelector adapter for this non-Formik form:
+  // SCDSelector calls setFieldValue('schoolId'|'classId'|'divisionId', value)
+  // We map 'classId' -> reqData.schooldClassId to keep existing payload shape.
+  const scdAdapter = {
+    values: {
+      schoolId: reqData.schoolId,
+      classId: reqData.schooldClassId,
+      divisionId: reqData.divisionId
+    },
+    setFieldValue: (field, value) => {
+      if (field === 'classId') {
+        setReqData((prev) => ({ ...prev, schooldClassId: value }));
+      } else {
+        setReqData((prev) => ({ ...prev, [field]: value }));
+      }
+      // clear dependent names when id changes so UI label updates correctly
+      if (field === 'schoolId') {
+        setReqData((prev) => ({ ...prev, className: '', divisionName: '' }));
+      } else if (field === 'classId') {
+        setReqData((prev) => ({ ...prev, className: '', divisionName: '' }));
+      } else if (field === 'divisionId') {
+        setReqData((prev) => ({ ...prev, divisionName: '' }));
+      }
+    },
+    touched: {},
+    errors: {}
+  };
 
   // Handle attendance toggle for students
   const handleToggle = (index) => {
@@ -141,7 +173,7 @@ const AttendenceEdit = () => {
   // Validate required fields
   const validateForm = () => {
     const errors = {};
-    
+
     if (!reqData.schoolId) {
       errors.schoolId = 'School is required';
     }
@@ -165,15 +197,15 @@ const AttendenceEdit = () => {
   // Handle attendance submission
   const onHandleClickSubmit = async () => {
     setShowValidation(true);
-    
+
     // Validate form
     if (!validateForm()) {
-      toast.error("Please fill all required fields");
+      toast.error('Please fill all required fields');
       return;
     }
 
     const { schooldClassId, divisionId, subjectId, date, className, subjectName, divisionName, schoolId, schoolName } = reqData;
-    
+
     const payload = {
       attendanceDate: date,
       studentAttendanceMappings: students,
@@ -193,200 +225,133 @@ const AttendenceEdit = () => {
     try {
       const response = await api.post('api/attendance/save', payload);
       console.log('Attendance updated:', response.data);
-      toast.success("Attendance updated successfully", {
-        autoClose: '500', onClose: () => {
+      toast.success('Attendance updated successfully', {
+        autoClose: '500',
+        onClose: () => {
           navigate('/masters/attendance/list');
         }
-      })
+      });
     } catch (error) {
       console.error('Failed to update attendance:', error);
-      toast.error("Failed to update attendance. Please try again.");
+      toast.error('Failed to update attendance. Please try again.');
     }
   };
-  if(loading){
-    return <ReusableLoader ></ReusableLoader>
+  if (loading) {
+    return <ReusableLoader></ReusableLoader>;
   }
   return (
     <MainCard title="Attendance">
-    {/* ... (rest of your component logic) ... */}
-  
-    {/* All selection fields in a single responsive row */}
-    <Grid container spacing={gridSpacing} sx={{ p: 2 }}>
-      {/* School */}
-      <Grid item xs={12} sm={6} md={3} lg={2}>
-        <Autocomplete
-          disablePortal
-          options={schools}
-          getOptionLabel={(option) => option.name}
-          onChange={(event, value) => {
-            setReqData({ ...reqData, schoolId: value?.id, schoolName: value?.name });
-            if (validationErrors.schoolId) {
-              setValidationErrors({ ...validationErrors, schoolId: null });
-            }
-          }}
-          renderInput={(params) => (
-            <TextField 
-              {...params} 
-              label="School *" 
-              error={showValidation && !!validationErrors.schoolId}
-              helperText={showValidation && validationErrors.schoolId}
-            />
-          )}
-          value={schools.find((st) => st.id === reqData.schoolId) || null}
-          fullWidth
-        />
-      </Grid>
-      {/* Class */}
-      <Grid item xs={12} sm={6} md={3} lg={2}>
-        <Autocomplete
-          disablePortal
-          options={classes}
-          getOptionLabel={(option) => option.name}
-          onChange={(event, value) => {
-            setReqData({ ...reqData, schooldClassId: value?.id, className: value?.name });
-            if (validationErrors.schooldClassId) {
-              setValidationErrors({ ...validationErrors, schooldClassId: null });
-            }
-          }}
-          renderInput={(params) => (
-            <TextField 
-              {...params} 
-              label="Class *" 
-              error={showValidation && !!validationErrors.schooldClassId}
-              helperText={showValidation && validationErrors.schooldClassId}
-            />
-          )}
-          value={classes.find((st) => st.id === reqData.schooldClassId) || null}
-          fullWidth
-        />
-      </Grid>
-      {/* Division */}
-      <Grid item xs={12} sm={6} md={3} lg={2}>
-        <Autocomplete
-          disablePortal
-          options={divisions}
-          getOptionLabel={(option) => option.name}
-          onChange={(event, value) => {
-            setReqData({ ...reqData, divisionId: value?.id, divisionName: value?.name });
-            if (validationErrors.divisionId) {
-              setValidationErrors({ ...validationErrors, divisionId: null });
-            }
-          }}
-          renderInput={(params) => (
-            <TextField 
-              {...params} 
-              label="Division *" 
-              error={showValidation && !!validationErrors.divisionId}
-              helperText={showValidation && validationErrors.divisionId}
-            />
-          )}
-          value={divisions.find((st) => st.id === reqData.divisionId) || null}
-          fullWidth
-        />
-      </Grid>
-      {/* Subject */}
-      <Grid item xs={12} sm={6} md={3} lg={2}>
-        <Autocomplete
-          disablePortal
-          options={subjects}
-          getOptionLabel={(option) => option.name}
-          onChange={(event, value) => {
-            setReqData({ ...reqData, subjectId: value?.id, subjectName: value?.name });
-            if (validationErrors.subjectId) {
-              setValidationErrors({ ...validationErrors, subjectId: null });
-            }
-          }}
-          renderInput={(params) => (
-            <TextField 
-              {...params} 
-              label="Subject *" 
-              error={showValidation && !!validationErrors.subjectId}
-              helperText={showValidation && validationErrors.subjectId}
-            />
-          )}
-          value={subjects.find((st) => st.id === reqData.subjectId) || null}
-          fullWidth
-        />
-      </Grid>
-      {/* Date Picker */}
-      <Grid item xs={12} sm={6} md={3} lg={2}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Date *"
-            value={reqData.date ? dayjs(reqData.date) : null}
-            onChange={(newValue) => {
-              setReqData({ ...reqData, date: newValue ? dayjs(newValue).format('YYYY-MM-DD') : null });
-              if (validationErrors.date) {
-                setValidationErrors({ ...validationErrors, date: null });
+      {/* ... (rest of your component logic) ... */}
+
+      {/* All selection fields in a single responsive row */}
+      <Grid container spacing={gridSpacing} sx={{ p: 2 }}>
+        {/* School / Class / Division (reusable SCD selector) */}
+        <Grid item xs={12} sm={12} md={6} lg={4}>
+          <SCDSelector formik={scdAdapter} />
+        </Grid>
+
+        {/* Subject */}
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <Autocomplete
+            disablePortal
+            options={subjects}
+            getOptionLabel={(option) => option.name}
+            onChange={(event, value) => {
+              setReqData({ ...reqData, subjectId: value?.id, subjectName: value?.name });
+              if (validationErrors.subjectId) {
+                setValidationErrors({ ...validationErrors, subjectId: null });
               }
             }}
             renderInput={(params) => (
-              <TextField 
-                {...params} 
-                fullWidth 
-                error={showValidation && !!validationErrors.date}
-                helperText={showValidation && validationErrors.date}
+              <TextField
+                {...params}
+                label="Subject *"
+                error={showValidation && !!validationErrors.subjectId}
+                helperText={showValidation && validationErrors.subjectId}
               />
             )}
+            value={subjects.find((st) => st.id === reqData.subjectId) || null}
+            fullWidth
           />
-        </LocalizationProvider>
+        </Grid>
+        {/* Date Picker */}
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Date *"
+              value={reqData.date ? dayjs(reqData.date) : null}
+              onChange={(newValue) => {
+                setReqData({ ...reqData, date: newValue ? dayjs(newValue).format('YYYY-MM-DD') : null });
+                if (validationErrors.date) {
+                  setValidationErrors({ ...validationErrors, date: null });
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  error={showValidation && !!validationErrors.date}
+                  helperText={showValidation && validationErrors.date}
+                />
+              )}
+            />
+          </LocalizationProvider>
+        </Grid>
+        {/* Student Attendance List */}
+        <Grid item xs={12}>
+          <SubCard
+            title={
+              reqData.className
+                ? `${reqData.className} - ${reqData.divisionName} - ${reqData.subjectName}`
+                : 'Select Class, Division and Subject'
+            }
+          >
+            <Grid container spacing={2}>
+              {students.map((student, index) => (
+                <Grid item xs={12} sm={6} md={4} key={student.rollno}>
+                  <Item
+                    sx={{
+                      backgroundColor: student.vailable ? '#C8E6C9' : '#FFCDD2',
+                      border: student.vailable ? '2px solid #4caf50' : '2px solid #f44336',
+                      '&:hover': {
+                        boxShadow: theme.shadows[6],
+                        cursor: 'pointer'
+                      }
+                    }}
+                    onClick={() => handleToggle(index)}
+                  >
+                    <Avatar sx={{ bgcolor: student.vailable ? '#4caf50' : '#f44336', color: '#fff' }}>
+                      {student.studentName ? student.studentName.charAt(0).toUpperCase() : 'S'}
+                    </Avatar>
+                    <div style={{ paddingLeft: '10px', minWidth: '200px' }}>
+                      {student.studentName}
+                      <p style={{ marginTop: 0, marginBottom: 0 }}>Roll No: {student.studentRollNo}</p>
+                    </div>
+
+                    <Checkbox
+                      edge="end"
+                      checked={!!student.vailable}
+                      onChange={() => handleToggle(index)}
+                      sx={{ position: 'absolute', right: '22px' }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </Item>
+                </Grid>
+              ))}
+            </Grid>
+          </SubCard>
+        </Grid>
+        {/* Submit Button */}
+        <Grid item xs={12}>
+          <BackSaveButton
+            title={id ? 'Update' : 'Save'}
+            backUrl="/masters/attendances"
+            isSubmitting={false}
+            onSaveClick={onHandleClickSubmit}
+          ></BackSaveButton>
+        </Grid>
       </Grid>
-      {/* Student Attendance List */}
-      <Grid item xs={12}>
-        <SubCard title={reqData.className ? `${reqData.className} - ${reqData.divisionName} - ${reqData.subjectName}` : 'Select Class, Division and Subject'}>
-          <Grid container spacing={2}>
-            {students.map((student, index) => (
-        
-             
-
-
-              <Grid item xs={12} sm={6} md={4} key={student.rollno}>
-                <Item sx={{
-                  backgroundColor: student.vailable ? '#C8E6C9' : '#FFCDD2',
-                  border: student.vailable ? '2px solid #4caf50' : '2px solid #f44336',
-                  '&:hover': {
-                    boxShadow: theme.shadows[6],
-                    cursor: 'pointer'
-                  }
-                }} onClick={() => handleToggle(index)}>
-                  <Avatar sx={{ bgcolor: student.vailable ? '#4caf50' : '#f44336', color: '#fff' }}>
-                    {student.studentName ? student.studentName.charAt(0).toUpperCase() : 'S'}
-                  </Avatar>
-                  <div style={{ paddingLeft: '10px', minWidth: '200px' }}>
-                    {student.studentName}
-                    <p style={{ marginTop: 0, marginBottom: 0 }}>Roll No: {student.studentRollNo}</p>
-                  </div>
-         
-                  <Checkbox
-                    edge="end"
-                    checked={!!student.vailable}
-                    onChange={() => handleToggle(index)}
-                    sx={{ position: 'absolute', right: '22px' }}
-                    
-                    onClick={(e) => e.stopPropagation()}
-
-                    
-
-                   
-                  />
-                </Item>
-              </Grid>
-            
-            ))}
-          </Grid>
-        </SubCard>
-      </Grid>
-      {/* Submit Button */}
-      <Grid item xs={12}> 
-                  <BackSaveButton 
-                    title={id?  "Update":"Save"}
-                    backUrl="/masters/attendances"
-                    isSubmitting={false} 
-                    onSaveClick={onHandleClickSubmit}
-                    ></BackSaveButton>
-      </Grid>
-    </Grid>
-  </MainCard>
+    </MainCard>
   );
 };
 

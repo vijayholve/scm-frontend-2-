@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, Card, CardContent, Typography, Box, LinearProgress, Chip, CircularProgress, Alert } from '@mui/material';
+import { Grid, Card, CardContent, Typography, Box, LinearProgress, Chip, CircularProgress, Alert, Button } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { gridSpacing } from 'store/constant';
 import api from 'utils/apiService';
 import { IconBook2 } from '@tabler/icons-react';
@@ -36,7 +36,7 @@ const CourseProgressCard = ({ course }) => {
             <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="h5" component="h3" gutterBottom>
-                        {course.title}
+                        {course.courseName}
                     </Typography>
                     <Chip 
                         label={isCompleted ? 'Completed' : 'In Progress'} 
@@ -83,7 +83,7 @@ const StudentLmsDashboard = () => {
 
             try {
                 setLoading(true);
-                const response = await api.get(`/api/lms/course/enrollment/${accountId}/${studentId}`);
+                const response = await api.get(`/api/lms/courses/${accountId}/get/enrollFor/${studentId}`);
                 setCourses(response.data || []);
             } catch (err) {
                 console.error("Error fetching enrolled courses:", err);
@@ -130,9 +130,12 @@ const StudentLmsDashboard = () => {
                 ))
             ) : (
                 <Grid item xs={12}>
-                    <Typography variant="body1" align="center" color="text.secondary">
-                        You are not enrolled in any courses yet.
-                    </Typography>
+                   {/* add here enroll selection to redirect on lms  add react router link  Link */}
+                   <Link to="/masters/lms">
+                       <Button variant="contained" color="primary">
+                           Enroll in Courses
+                       </Button>
+                   </Link>
                 </Grid>
             )}
         </Grid>

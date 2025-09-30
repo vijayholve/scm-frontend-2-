@@ -24,6 +24,8 @@ import api, { userDetails } from "../../../utils/apiService";
 import { useSelector } from "react-redux";
 import { use } from "react";
 import { Autocomplete } from "@mui/material";
+import SCDSelector from 'ui-component/SCDSelector';
+import { useSCDData } from 'contexts/SCDProvider';
 import { gridSpacing } from "store/constant";
 import { toast } from 'react-hot-toast';
 import ReusableLoader from "ui-component/loader/ReusableLoader";
@@ -379,42 +381,17 @@ const CourseEdit = () => {
   const [loading, setLoading] = useState(false);
   const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [editingModuleIdx, setEditingModuleIdx] = useState(null);
-  const [schools, setSchools] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [divisions, setDivisions] = useState([]);
+  // S/C/D come from central SCD provider — do not fetch locally
+  const { schools, classes, divisions } = useSCDData();
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const user = useSelector(state => state.user);
-
+  
   useEffect(() => {
     setCourse(prev => ({ ...prev, accountId: user?.user?.accountId }));
   }, [user]);
 
   console.log("user ===>", user);
-
-  useEffect(() => {
-    // Fetch schools on mount
-    api.post(`api/schoolBranches/getAll/${user?.user?.accountId}`, {
-      page: 0,
-      size: 100,
-      sortBy: "id",
-      sortDir: "asc"
-    }).then(res => setSchools(res.data.content || []));
-
-    api.post(`/api/schoolClasses/getAll/${user?.user?.accountId}`, {
-      page: 0,
-      size: 100,
-      sortBy: "id",
-      sortDir: "asc"
-    }).then(res => setClasses(res.data.content || []));
-
-    api.post(`/api/divisions/getAll/${user?.user?.accountId}`, {
-      page: 0,
-      size: 100,
-      sortBy: "id",
-      sortDir: "asc"
-    }).then(res => setDivisions(res.data.content || []));
-  }, []);
 
   // Fetch course for edit
   useEffect(() => {
@@ -514,8 +491,31 @@ const CourseEdit = () => {
 
   // --- Add imports at the top of the file if not already present:
 
-
-
+  // Adapter for SCDSelector (non-Formik)
+  const scdAdapter = {
+    values: {
+      schoolId: course.schoolId,
+      classId: course.classId,
+      divisionId: course.divisionId
+    },
+    setFieldValue: (field, value) => {
+      // keep display names in sync when ids change
+      if (field === 'schoolId') {
+        const school = (schools || []).find(s => String(s.id) === String(value));
+        setCourse(prev => ({ ...prev, schoolId: value ?? '', schoolName: school?.name ?? '' , classId: '', className: '', divisionId: '', divisionName: '' }));
+      } else if (field === 'classId') {
+        const cls = (classes || []).find(c => String(c.id) === String(value));
+        setCourse(prev => ({ ...prev, classId: value ?? '', className: cls?.name ?? '' }));
+      } else if (field === 'divisionId') {
+        const div = (divisions || []).find(d => String(d.id) === String(value));
+        setCourse(prev => ({ ...prev, divisionId: value ?? '', divisionName: div?.name ?? '' }));
+      } else {
+        setCourse(prev => ({ ...prev, [field]: value }));
+      }
+    },
+    touched: {},
+    errors: {}
+  };
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
@@ -603,39 +603,9 @@ const CourseEdit = () => {
             </Box>
           </Box>
         </Grid>
-        {/* School Selection */}
-
-        <Grid item xs={3}>
-          <Autocomplete
-            disablePortal
-            options={schools}
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => setCourse({ ...course, schoolId: value?.id, schoolName: value?.name })}
-            renderInput={(params) => <TextField {...params} label="School" />}
-            value={schools.find((st) => st.id === course.schoolId) || null}
-          />
-        </Grid>
-        {/* Class Selection */}
-        <Grid item xs={3}>
-          <Autocomplete
-            disablePortal
-            options={classes}
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => setCourse({ ...course, classId: value?.id, className: value?.name })}
-            renderInput={(params) => <TextField {...params} label="Class" />}
-            value={classes.find((st) => st.id === course.classId) || null}
-          />
-        </Grid>
-        {/* Division Selection */}
-        <Grid item xs={3}>
-          <Autocomplete
-            disablePortal
-            options={divisions}
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => setCourse({ ...course, divisionId: value?.id, divisionName: value?.name })}
-            renderInput={(params) => <TextField {...params} label="Division" />}
-            value={divisions.find((st) => st.id === course.divisionId) || null}
-          />
+        {/* School / Class / Division (reusable SCD selector) */}
+        <Grid item xs={12} md={6} lg={4}>
+          <SCDSelector formik={scdAdapter} />
         </Grid>
         {/* Status Selection */}
         <Grid item xs={3}>
@@ -657,8 +627,6 @@ const CourseEdit = () => {
         </Grid>
 
         <Grid item xs={12}>
-
-
           <TextField
             label="Course Title"
             value={course.title}

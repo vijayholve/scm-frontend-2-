@@ -22,10 +22,10 @@ const columnsConfig = [
     field: 'startDate',
     headerName: 'Start Date',
     width: 180,
-    valueFormatter: (params) => {
-      if (!params || !params.value) return 'N/A';
-      return new Date(params.value).toLocaleString();
-    }
+    // valueFormatter: (params) => {
+    //   if (!params || !params.value) return 'N/A';
+    //   return new Date(params.value).toLocaleString();
+    // }
   }
 ];
 
