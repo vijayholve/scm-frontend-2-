@@ -107,7 +107,8 @@ const ReusableDataGrid = ({
   schoolNameMap = {},
   classNameMap = {},
   divisionNameMap = {},
-  sortBy = 'asc'
+  sortBy = 'asc',
+  onDataChange = null
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
@@ -135,6 +136,8 @@ const ReusableDataGrid = ({
 
   // track initial fetch to handle Admin "don't send filters on landing" rule
   const isInitialLoadRef = useRef(true);
+
+  // Sync external filters prop with internal gridFilters state
 
   const transformDocumentData = useCallback(
     (document) => {
@@ -185,6 +188,11 @@ const ReusableDataGrid = ({
       const transformedData = transformData ? filteredData.map(transformData) : filteredData;
       setGridData(transformedData);
       setRowCount(transformedData.length);
+      
+      // Notify parent of data changes
+      if (onDataChange) {
+        onDataChange(transformedData);
+      }
       return;
     }
 
@@ -267,6 +275,11 @@ const ReusableDataGrid = ({
 
       setGridData(transformedData);
       setRowCount(response.data.totalElements || response.data.length || 0);
+      
+      // Notify parent of data changes
+      if (onDataChange) {
+        onDataChange(transformedData);
+      }
     } catch (err) {
       console.error(`Failed to fetch data from ${fetchUrl}:`, err);
       toast.error('Could not fetch data.');
@@ -293,7 +306,8 @@ const ReusableDataGrid = ({
     isTeacher,
     sortBy,
     teacherSchoolId,
-    user?.allocatedClasses
+    user?.allocatedClasses,
+    onDataChange
   ]);
 
   // Handle filter changes from ListGridFilters
@@ -733,7 +747,8 @@ ReusableDataGrid.propTypes = {
   schoolNameMap: PropTypes.object,
   classNameMap: PropTypes.object,
   divisionNameMap: PropTypes.object,
-  sortBy: PropTypes.string
+  sortBy: PropTypes.string,
+  onDataChange: PropTypes.func
 };
 
 export default ReusableDataGrid;
