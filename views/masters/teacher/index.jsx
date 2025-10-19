@@ -42,7 +42,7 @@ const Teachers = () => {
     }
   ];
     const user = useSelector((state) => state.user.user);
-    const userTypeForApi = 'TEACHER';
+    const userTypeForApi = 'TEACHER'; // Default to ADMIN
 
 
   return (

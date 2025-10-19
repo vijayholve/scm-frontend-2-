@@ -50,7 +50,7 @@ const CourseList = () => {
       <Grid item xs={12}>
         <ReusableDataGrid
           title="COURSES"
-          fetchUrl={`/api/lms/course/getAll/${accountId}`}
+          fetchUrl={`/api/lms/course/getAllBy/${accountId}`}
           isPostRequest={true}
           columns={columns}
           addActionUrl={'/masters/lms/course/add'}

@@ -34,6 +34,7 @@ const TeacherClassesList = ({ accountId: accountIdProp, teacherId, teacher }) =>
     // If teacher prop contains allocatedClasses, use it and skip API
     if (teacher && Array.isArray(teacher.allocatedClasses) && teacher.allocatedClasses.length > 0) {
       setAllocations(teacher.allocatedClasses);
+      console.log('Using allocations from teacher prop:', teacher.allocatedClasses);
       setLoading(false);
       setError(null);
       return;
@@ -59,6 +60,7 @@ const TeacherClassesList = ({ accountId: accountIdProp, teacherId, teacher }) =>
     const fetchAllocations = async () => {
       try {
         setAllocations(user?.allocatedClasses || []);
+        console.log('Using user allocated classes:', user?.allocatedClasses);
       } catch (err) {
         console.error('Failed to fetch teacher allocations:', err);
         if (mounted) setError('Failed to load allocated classes.');

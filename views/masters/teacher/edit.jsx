@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -33,19 +33,33 @@ import UserDocumentManager from 'views/UserDocumentManager';
 import { useSCDData } from 'contexts/SCDProvider';
 
 // Helper component for Tab Panel content
+import PropTypes from 'prop-types';
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
   return (
-    <div role="tabpanel" hidden={value !== index} id={`simple-tabpanel-${index}`} aria-labelledby={`simple-tab-${index}`} {...other}>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 3, overflowY: 'auto', maxHeight: 'calc(100vh - 150px)' }}>
           <Typography component="div">{children}</Typography>
         </Box>
       )}
     </div>
   );
 }
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  value: PropTypes.number.isRequired,
+  index: PropTypes.number.isRequired
+};
 
 // Function to generate accessibility props for tabs
 function a11yProps(index) {
@@ -180,9 +194,17 @@ const EditUsers = ({ ...others }) => {
 
   return (
     <MainCard title={Title}>
-      <Box sx={{ width: '100%', mb: 2 }}>
+      {/* Tabs Header */}
+      <Box sx={{ width: '100%', mb: 2, overflowX: 'auto' }}>
         <AppBar position="static" color="default" elevation={0}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="teacher form tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="teacher form tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
+          >
             <Tab label="Basic Details" {...a11yProps(0)} />
             <Tab label="Education" {...a11yProps(1)} />
             <Tab label="Class Allocation" {...a11yProps(2)} />
@@ -191,6 +213,7 @@ const EditUsers = ({ ...others }) => {
         </AppBar>
       </Box>
 
+      {/* Form Content */}
       <Formik
         enableReinitialize
         initialValues={teacherData}
@@ -215,6 +238,7 @@ const EditUsers = ({ ...others }) => {
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values, setFieldValue }) => (
           <form noValidate onSubmit={handleSubmit} {...others}>
+            {/* Tab Panels */}
             <TabPanel value={tabValue} index={0}>
               <Grid container spacing={gridSpacing}>
                 {/* User Name */}

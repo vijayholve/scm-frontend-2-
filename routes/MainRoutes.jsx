@@ -23,6 +23,7 @@ const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
 // const UtilsTablerIcons = Loadable(lazy(() => import('views/utilities/TablerIcons')));
 const TeacherView = Loadable(lazy(() => import('../views/masters/teacher/TeacherView'))); // Corrected import path
 const StudentView = Loadable(lazy(() => import('../views/masters/student/StudentView'))); // Corrected import path
+const StudentDashboardView = Loadable(lazy(() => import('../views/masters/student/StudentDashboardView'))); // Corrected import path
 
 const Users = Loadable(lazy(() => import('views/masters/teacher/index')));
 const EditUsers = Loadable(lazy(() => import('views/masters/teacher/edit')));
@@ -65,6 +66,7 @@ const Profiles = Loadable(lazy(() => import('views/masters/profile/index')));
 
 // ID Card routing
 const IdCardManagement = Loadable(lazy(() => import('views/masters/idcards/index')));
+const LeavingManagement = Loadable(lazy(() => import('views/masters/Leavings/index')));
 
 
 const StudentParentList = Loadable(lazy(() => import('views/masters/StudentParent/index')));
@@ -101,6 +103,7 @@ const DocumentList = Loadable(lazy(() => import('../views/masters/documentHub/Do
 const DocumentUpload = Loadable(lazy(() => import('../views/masters/documentHub/DocumentUpload')));
 
 const NotificationModule = Loadable(lazy(() => import('../views/masters/notifications/NotificationModule')));
+const MasterDocumentation = Loadable(lazy(() => import('../views/masters/MasterDocumentation')));
 
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
@@ -136,9 +139,14 @@ const getMainRoutes = (permissions = []) => ({
     {
       path: 'masters',
       children: [
+
         hasPermission(permissions, 'TEACHER', 'view') && {
           path: 'teachers',
           element: <Users />
+        },
+        {
+          path: 'MasterDocumentation',
+          element: <MasterDocumentation />
         },
         hasPermission(permissions, 'TEACHER', 'edit') && {
           path: 'teacher/edit/:id',
@@ -171,6 +179,10 @@ const getMainRoutes = (permissions = []) => ({
         hasPermission(permissions, 'STUDENT', 'view') && { // Added Student View Route
           path: 'students/view/:id',
           element: <StudentView />
+        }, {
+          path: 'students/dashboard/:id',
+          element: <StudentDashboardView />
+
         },
         // ...repeat for other entities like 'INSTITUTE', 'SCHOOL', etc.
         // Example for roles:
@@ -281,10 +293,15 @@ const getMainRoutes = (permissions = []) => ({
           element: <Profiles />
         },
         hasPermission(permissions, 'IDCARD', 'view') && {
+          path: 'leavings',
+          element: <LeavingManagement />
+        },
+        hasPermission(permissions, 'IDCARD', 'view') && {
           path: 'idcards',
           element: <IdCardManagement />
         },
-        // hasPermission(permissions, 'EXAM', 'view') && {
+        // hasP
+        // ermission(permissions, 'EXAM', 'view') && {
         //   path: 'exams',
         //   element: <ExamList />
         // },

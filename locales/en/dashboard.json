@@ -1,0 +1,81 @@
+{
+  "admin": {
+    "summaryFilters": "Summary Filters",
+    "totalStudents": "Total Students",
+    "totalStaff": "Total Staff",
+    "todayPresent": "Today's Present",
+    "todayAbsent": "Today's Absent",
+    "totalDue": "Total Due",
+    "totalCollected": "Total Collected",
+    "pendingFees": "Pending Fees",
+    "latestNotifications": "Latest Notifications",
+    "noNewNotifications": "No new notifications.",
+    "viewAllNotifications": "View All Notifications",
+    "addNewFee": "Add New Fee",
+    "loadingDashboard": "Loading Dashboard...",
+    "fromYearFilter": "From Year",
+    "toYearFilter": "To Year",
+    "feeStructures": "Fee Structures"
+  },
+  "teacher": {
+    "todaysTimetable": "Today's Timetable",
+    "noClassesScheduled": "No classes scheduled for today.",
+    "quickActions": "Quick Actions",
+    "addNewAssignment": "Add New Assignment",
+    "takeAttendance": "Take Attendance",
+    "createQuiz": "Create a Quiz",
+    "assignmentStatus": "Assignment Submission Status",
+    "assignmentCompleted": "Completed",
+    "assignmentPending": "Pending",
+    "loadingTimetable": "Error fetching timetable.",
+    "loadingAssignment": "Error fetching assignment data.",
+    "yAxisTitle": "Number of Students"
+  },
+  "common": {
+    "allSchools": "All Schools",
+    "allClasses": "All Classes",
+    "allDivisions": "All Divisions",
+    "schoolFilter": "School",
+    "classFilter": "Class",
+    "divisionFilter": "Division",
+    "all": "All",
+    "active": "Active",
+    "draft": "Draft",
+    "expired": "Expired"
+  },
+  "studentDashboard": {
+    "title": "Student Dashboard - Teacher View",
+    "noAllocatedClasses": "No allocated classes found for this teacher. Please contact administrator.",
+    "selectClass": "Select Class",
+    "selectDivision": "Select Division",
+    "summary": {
+      "totalStudents": "Total Students",
+      "attendanceToday": "Today's Attendance",
+      "averageGrade": "Average Grade",
+      "pendingTasks": "Pending Tasks"
+    },
+    "tabs": {
+      "studentList": "Student List",
+      "performance": "Performance Overview",
+      "attendance": "Attendance Tracking"
+    },
+    "studentList": {
+      "noData": "No students found for the selected class and division.",
+      "roll": "Roll",
+      "unknown": "Unknown",
+      "grade": "Grade: {{value}}"
+    },
+    "performance": {
+      "title": "Class Performance Analysis",
+      "noData": "No students found for performance analysis.",
+      "overallGrade": "Overall Grade: {{value}}"
+    },
+    "attendance": {
+      "title": "Attendance Overview",
+      "noData": "No students found for attendance tracking.",
+      "attendance": "Attendance: {{value}}%",
+      "present": "Present: {{value}}",
+      "absent": "Absent: {{value}}"
+    }
+  }
+}

@@ -50,7 +50,7 @@ const ChatbotUI = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: '#673ab7', color: '#fff', p: 2 }}>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          SCM Assistant
+          KoolERP Assistant
         </Typography>
         {/* <IconButton onClick={() => setIsChatOpen(false)} sx={{ color: '#fff' }}>
           <CloseIcon />
@@ -70,7 +70,7 @@ const ChatbotUI = () => {
       >
         {messages.length === 0 && (
           <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
-            Ask me anything about your SCM!
+            Ask me anything about your KoolERP!
           </Typography>
         )}
         {messages.map((msg, idx) => (

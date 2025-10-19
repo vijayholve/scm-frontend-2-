@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
-import { Grid } from '@mui/material';
+import { Grid, Box, Typography } from '@mui/material';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
+import api from '../../../utils/apiService';
+import ExamResultCell from './components/ExamResultCell';
+
+// Cell component - fetches current user's percentage & rank for the exam
 
 // Define the columns for exams
 const columnsConfig = [
@@ -18,14 +22,17 @@ const columnsConfig = [
   { field: 'className', headerName: 'Class', flex: 1 },
   { field: 'divisionName', headerName: 'Division', flex: 1 },
   { field: 'maxMarksOverall', headerName: 'Total Mark', width: 130 },
+  // {
+  //   field: 'myResult',
+  //   headerName: 'My % / Rank',
+  //   width: 160,
+  //   sortable: false,
+  //   renderCell: (params) => <ExamResultCell examId={params.row.id} />
+  // },
   {
     field: 'startDate',
     headerName: 'Start Date',
-    width: 180,
-    // valueFormatter: (params) => {
-    //   if (!params || !params.value) return 'N/A';
-    //   return new Date(params.value).toLocaleString();
-    // }
+    width: 180
   }
 ];
 

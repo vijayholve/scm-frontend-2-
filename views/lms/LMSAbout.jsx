@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -25,10 +25,15 @@ import {
   EmojiEvents as TrophyIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-
+import Navbar from 'ui-component/lms/Navbar';
+import { userDetails, api, checkMultipleCourseEnrollments } from '../../utils/apiService';
+import { useDataCache } from '../../contexts/DataCacheContext';
+import LMSLayout from 'ui-component/lms/LMSLayout';
 const LMSAbout = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const [userType, setUserType] = useState('guest'); // 'guest', 'user', 'enrolled'
+  // console.log('User Type:', userDetails.isLoggedIn() ? 'user' : 'guest');
 
   const stats = [
     { icon: <BookIcon sx={{ fontSize: 40 }} />, label: 'Courses Available', value: '150+', color: theme.palette.primary.main },
@@ -39,22 +44,22 @@ const LMSAbout = () => {
 
   const team = [
     {
-      name: 'Dr. Sarah Johnson',
-      role: 'Director of Education',
+      name: 'Dadasaheb Tadwalkar',
+      role: 'Founder & CEO',
       image: '/api/placeholder/150/150',
-      bio: 'With over 15 years in educational technology, Dr. Johnson leads our curriculum development and ensures the highest quality of learning experiences.'
+      bio: 'With over 15 years in educational technology, Dadasaheb leads our curriculum development and ensures the highest quality of learning experiences.'
     },
     {
-      name: 'Michael Chen',
-      role: 'Head of Technology',
+      name: 'Vijay Gholve',
+      role: 'Software Engineer',
       image: '/api/placeholder/150/150',
-      bio: 'Michael oversees our platform development and ensures our LMS stays at the cutting edge of educational technology.'
+      bio: 'Vijay oversees our platform development and ensures our LMS stays at the cutting edge of educational technology.'
     },
     {
-      name: 'Emily Rodriguez',
-      role: 'Student Success Manager',
+      name: 'Yuvraj ',
+      role: 'Graphic Designer',
       image: '/api/placeholder/150/150',
-      bio: 'Emily works closely with students to ensure they achieve their learning goals and have the support they need to succeed.'
+      bio: 'Yuvraj creates visually engaging designs that enhance the learning experience.'
     },
     {
       name: 'David Kim',
@@ -86,6 +91,7 @@ const LMSAbout = () => {
       icon: <TrophyIcon sx={{ fontSize: 50, color: theme.palette.info.main }} />
     }
   ];
+  
 
   const StatCard = ({ stat }) => (
     <Card sx={{ textAlign: 'center', height: '100%' }}>
@@ -146,29 +152,53 @@ const LMSAbout = () => {
       </CardContent>
     </Card>
   );
+    const handleLogout = () => {
+      
+    // Clear localStorage following project conventions
+    localStorage.removeItem('SCM-AUTH');
+    setUserType('guest');
+    setEnrolledCourses([]);
+    // Optionally redirect to home or login page
+    window.location.href = '/lms';
+  };
+      // <Navbar userType={userType} onLogout={handleLogout} />
+  const checkAuthStatus = async () => {
+    try {
+      // Check for SCM-AUTH in localStorage following project conventions
+      const authToken = localStorage.getItem('SCM-AUTH');
+
+      if (!authToken) {
+        setUserType('guest');
+        setIsLoading(false);
+        return;
+      }
+
+      // Parse the stored auth data
+      const authData = JSON.parse(authToken);
+
+      if (authData && authData.accessToken) {
+        // User is authenticated
+        const user = userDetails.getUser();
+        const accountId = userDetails.getAccountId();
+
+        if (user && accountId) {
+          await checkUserEnrollments(accountId, user.id);
+        } else {
+          setUserType('user');
+        }
+      } else {
+        setUserType('guest');
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setUserType('guest');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <Box>
-      {/* Navigation Header */}
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={() => navigate('/lms')}
-            sx={{ mr: 2 }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <SchoolIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            About SCM LMS
-          </Typography>
-          <Button color="inherit" onClick={() => navigate('/login')}>
-            Login
-          </Button>
-        </Toolbar>
-      </AppBar>
+<LMSLayout>
 
       {/* Hero Section */}
       <Box
@@ -279,7 +309,7 @@ const LMSAbout = () => {
         </Box>
 
         {/* Contact Section */}
-        <Card sx={{ p: 4, textAlign: 'center', backgroundColor: theme.palette.grey[50] }}>
+        {/* <Card sx={{ p: 4, textAlign: 'center', backgroundColor: theme.palette.grey[50] }}>
           <Typography variant="h4" component="h2" gutterBottom>
             Get in Touch
           </Typography>
@@ -323,9 +353,9 @@ const LMSAbout = () => {
               Browse Courses
             </Button>
           </Box>
-        </Card>
+        </Card> */}
       </Container>
-    </Box>
+    </LMSLayout>
   );
 };
 

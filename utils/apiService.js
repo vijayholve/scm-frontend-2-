@@ -31,19 +31,11 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // // Add userId as the last request param if available
-    // if (userId) {
-    //   // Ensure params exists
-    //   config.params = config.params || {};
-
-    //   // Add userId as a param, possibly overwriting if already present
-    //   config.params.userId = userId;
-    // }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
+
 export const getUserSchoolClassDivision = () => {
   const user = userDetails.getUser();
   console.log('User Details:', user);
@@ -77,19 +69,52 @@ apiClient.interceptors.response.use(
 export const userDetails = {
   getUser: () => getAuthData()?.data || null,
   getAccountId: () => getAuthData()?.data?.accountId || null,
-  getPermissions: () => getAuthData()?.data?.role?.permissions || []
+  getPermissions: () => getAuthData()?.data?.role?.permissions || [] ,
+  getUserType: () => getAuthData()?.data?.type || 'GUEST',
+  isLoggedIn: () => !!getAuthData()?.accessToken
 };
 
 // NEW: document helpers
 export const getDocumentsByAccountAndUser = (accountId, userId) => {
-  // GET /api/documents/{accountId}/{userId} - returns array or paged result
   return apiClient.get(`/api/documents/${accountId}/${userId}`);
 };
 
 export const downloadUserDocument = (accountId, userId, documentId) => {
-  // Returns a blob response
   return apiClient.get(`/api/documents/download/${accountId}/${userId}/${documentId}`, { responseType: 'blob' });
 };
+
+// Add this helper function to check enrollment status for a specific course
+export const checkCourseEnrollmentStatus = async (accountId, courseId, studentId) => {
+  try {
+    const response = await apiClient.get(`/api/lms/courses/${accountId}/${courseId}/enroll/${studentId}/status`);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to check enrollment for course ${courseId}:`, error);
+    return { enrolled: false };
+  }
+};
+
+// Helper function to check enrollment status across multiple courses
+export const checkMultipleCourseEnrollments = async (accountId, courseIds, studentId) => {
+  try {
+    const enrollmentChecks = courseIds.map((courseId) => checkCourseEnrollmentStatus(accountId, courseId, studentId));
+
+    const results = await Promise.all(enrollmentChecks);
+
+    return courseIds
+      .map((courseId, index) => ({
+        courseId,
+        enrollmentStatus: results[index]
+      }))
+      .filter((result) => result.enrollmentStatus.enrolled);
+  } catch (error) {
+    console.error('Failed to check multiple course enrollments:', error);
+    return [];
+  }
+};
+
+// --- Named export for 'api' (alias for apiClient) ---
+export const api = apiClient;
 
 // --- Default export ---
 export default apiClient;

@@ -23,7 +23,7 @@ const LogoSection = () => {
       to={config.defaultPath}
     >
       {/* <Logo /> // TODO: will place our logo here */}
-      <div style={{ marginLeft: '60px' }}><h2>SCM</h2></div>
+      <div style={{ marginLeft: '60px' }}><h2>KoolERP</h2></div>
     </ButtonBase>
   );
 };

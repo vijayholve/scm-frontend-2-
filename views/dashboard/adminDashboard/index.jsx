@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, Card, CardContent, Typography, Box, Divider, List, ListItem, ListItemText, CircularProgress, Alert, Button } from '@mui/material';
+import {
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  CircularProgress,
+  Alert,
+  Button
+} from '@mui/material';
 import { useSelector } from 'react-redux';
 import MainCard from 'ui-component/cards/MainCard';
 import api, { userDetails } from 'utils/apiService';
@@ -15,7 +28,7 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 // Fee Dashboard Component
 import FeeDashboard from './FeeDashboard';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
-
+import { useTranslation } from 'react-i18next'; // <-- ADDED
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
@@ -26,7 +39,7 @@ const AdminDashboard = () => {
   });
 
   const accountId = userDetails.getAccountId();
-
+const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
   useEffect(() => {
     const fetchData = async () => {
       if (!accountId) {
@@ -44,7 +57,7 @@ const AdminDashboard = () => {
         console.log(totalStaffRes.data);
         const studentCount = totalStudentsRes.data?.nameVsValue?.StudentCount || 0;
         const staffCount = totalStaffRes.data?.nameVsValue?.TeacherCount || 0;
-        
+
         // Use dummy data for other sections as requested
         const dummyNotifications = [
           { id: 1, title: 'New policy update on attendance', user: 'Admin', action: 'update', entityType: 'POLICY' },
@@ -74,29 +87,25 @@ const AdminDashboard = () => {
           const attendanceArr = attendanceRes.data || [];
           if (attendanceArr.length > 0) {
             // Find the entry for today (endDateStr)
-            const todayEntry = attendanceArr.find(
-              (item) => item.date === endDateStr
-            ) || attendanceArr[attendanceArr.length - 1];
+            const todayEntry = attendanceArr.find((item) => item.date === endDateStr) || attendanceArr[attendanceArr.length - 1];
             dummyAttendance.present = todayEntry?.count || 0;
             dummyAttendance.absent = todayEntry?.failCount || 0;
           }
         } catch (err) {
-          console.error("Error fetching attendance trend:", err);
+          console.error('Error fetching attendance trend:', err);
         }
 
-        
         setData({
           totalStudents: studentCount,
           totalStaff: staffCount,
           attendanceSummary: {
             present: dummyAttendance.present,
-            absent: dummyAttendance.absent,
+            absent: dummyAttendance.absent
           },
-          latestNotifications: dummyNotifications,
+          latestNotifications: dummyNotifications
         });
-
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -110,15 +119,15 @@ const AdminDashboard = () => {
       <CardContent>
         <Grid container spacing={2} alignItems="center">
           <Grid item>
-            <Box sx={{ color: color }}>
-              {icon}
-            </Box>
+            <Box sx={{ color: color }}>{icon}</Box>
           </Grid>
           <Grid item>
             <Typography variant="h6" color="text.secondary" gutterBottom>
               {title}
             </Typography>
-            <Typography variant="h4" component="div">{value}</Typography>
+            <Typography variant="h4" component="div">
+              {value}
+            </Typography>
           </Grid>
         </Grid>
       </CardContent>
@@ -126,19 +135,17 @@ const AdminDashboard = () => {
   );
 
   if (loading) {
-    return <ReusableLoader message="Loading Dashboard..." ></ReusableLoader>;
-    }
+return <ReusableLoader message={t('admin.loadingDashboard')} ></ReusableLoader>;  }
 
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
       <Grid container spacing={gridSpacing}>
-
         {/* Student & Staff Summary and Today's Attendance */}
         <Grid item xs={12}>
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} md={6} lg={3}>
               <SummaryCard
-                title="Total Students"
+          title={t('admin.totalStudents')}
                 value={data.totalStudents}
                 icon={<SchoolOutlinedIcon sx={{ fontSize: 40 }} />}
                 color="#4caf50" // Green
@@ -146,7 +153,7 @@ const AdminDashboard = () => {
             </Grid>
             <Grid item xs={12} md={6} lg={3}>
               <SummaryCard
-                title="Total Staff"
+  title={t('admin.totalStaff')}
                 value={data.totalStaff}
                 icon={<PeopleAltOutlinedIcon sx={{ fontSize: 40 }} />}
                 color="#2196f3" // Blue
@@ -154,7 +161,7 @@ const AdminDashboard = () => {
             </Grid>
             <Grid item xs={12} md={6} lg={3}>
               <SummaryCard
-                title="Today's Present"
+             title={t('admin.todayPresent')}
                 value={data.attendanceSummary.present}
                 icon={<CheckCircleOutlineOutlinedIcon sx={{ fontSize: 40 }} />}
                 color="#ff9800" // Orange
@@ -162,7 +169,7 @@ const AdminDashboard = () => {
             </Grid>
             <Grid item xs={12} md={6} lg={3}>
               <SummaryCard
-                title="Today's Absent"
+                title={t('admin.todayAbsent')} // <-- TRANSLATED
                 value={data.attendanceSummary.absent}
                 icon={<CancelOutlinedIcon sx={{ fontSize: 40 }} />}
                 color="#f44336" // Red
@@ -173,13 +180,12 @@ const AdminDashboard = () => {
 
         {/* Fee Dashboard - Summary Cards & Filters */}
         <Grid item xs={12}>
-          <FeeDashboard 
-          />
+          <FeeDashboard />
         </Grid>
 
         {/* Latest Notifications Section */}
         <Grid item xs={12}>
-          <MainCard title="Latest Notifications">
+        <MainCard title={t('admin.latestNotifications')}>
             {data.latestNotifications.length > 0 ? (
               <List>
                 {data.latestNotifications.map((notification) => (
@@ -189,7 +195,8 @@ const AdminDashboard = () => {
                         primary={notification.title || notification.entityName}
                         secondary={
                           <Typography variant="body2" color="text.secondary">
-                            {notification.message || `${notification.user || 'A user'} ${notification.action.toLowerCase()} a ${notification.entityType}.`}
+                            {notification.message ||
+                              `${notification.user || 'A user'} ${notification.action.toLowerCase()} a ${notification.entityType}.`}
                           </Typography>
                         }
                       />
@@ -199,11 +206,11 @@ const AdminDashboard = () => {
                 ))}
               </List>
             ) : (
-              <Alert severity="info">No new notifications.</Alert>
+              <Alert severity="info">{t('admin.noNewNotifications')}</Alert>
             )}
             <Box sx={{ mt: 2, textAlign: 'right' }}>
               <Button component={Link} to="/masters/notifications" variant="text">
-                View All Notifications
+                {t('admin.viewAllNotifications')}
               </Button>
             </Box>
           </MainCard>

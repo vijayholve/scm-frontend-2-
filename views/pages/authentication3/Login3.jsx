@@ -29,7 +29,7 @@ const Login = () => {
                 <Grid container spacing={2} alignItems="center" justifyContent="center">
                   <Grid item sx={{ mb: 3 }}>
                     <Link to="#" aria-label="logo">
-                      SCM
+                      KoolERP
                     </Link>
                   </Grid>
                   <Grid item xs={12}>

@@ -1,15 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid, Stack, Typography } from '@mui/material';
-import MainCard from '../../ui-component/cards/MainCard'; // Corrected import path
+import MainCard from '../../ui-component/cards/MainCard';
+import AssociatedTeachersSection from './AssociatedTeachersSection';
 
 // assets
-import {
-  IconBriefcase,
-  IconLock,
-  IconBug,
-  IconBook,
-} from '@tabler/icons-react';
+import { IconBriefcase, IconLock, IconBug, IconBook } from '@tabler/icons-react';
 
 /**
  * ActivitySection Component
@@ -19,26 +15,23 @@ import {
  * @param {object} props.user - The user object containing the timeSpentOn array.
  */
 const ActivitySection = ({ user }) => {
+  console.log('ActivitySection user prop:', user);
+
   return (
-    user.timeSpentOn && user.timeSpentOn.length > 0 && (
-      <MainCard title={`${user.firstName} spends most of their time on...`} sx={{ mb: 4 }}>
-        <Grid container spacing={1}>
-          {user.timeSpentOn.map((item, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                {item.icon}
-                <Typography variant="body2">{item.text}</Typography>
-              </Stack>
-            </Grid>
-          ))}
-        </Grid>
-      </MainCard>
-    )
+    <>
+      {/* Associated Teachers Section - Only show for students */}
+      {user.type === 'STUDENT' && <AssociatedTeachersSection student={user} />}
+
+      {/* Original Activity Section */}
+      {user.timeSpentOn && user.timeSpentOn.length > 0 && (
+       <></>
+      )}
+    </>
   );
 };
 
 ActivitySection.propTypes = {
-  user: PropTypes.object.isRequired,
+  user: PropTypes.object.isRequired
 };
 
 export default ActivitySection;

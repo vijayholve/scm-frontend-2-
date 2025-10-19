@@ -42,6 +42,7 @@ import { hasPermission } from 'utils/permissionUtils';
 import { useSelector } from 'react-redux';
 import ListGridFiltersContainer from './ListGridFiltersContainer';
 import { useSCDData } from 'contexts/SCDProvider'; // add SCD hook
+import { useTranslation } from 'react-i18next'; // <-- add
 
 const ActionWrapper = styled(Box)({
   display: 'flex',
@@ -65,6 +66,89 @@ const HeaderSearchWrapper = styled(Box)({
   }
 });
 
+// Replace old DataGridMobileCard with a column/field-aware version
+const DataGridMobileCard = ({ row, columns, onView, onEdit, onDelete, onEnroll, hasActions, t }) => {
+  const getCellValue = (col) => {
+    // mimic DataGrid valueGetter
+    try {
+      if (typeof col.valueGetter === 'function') {
+        return col.valueGetter({ row, value: row?.[col.field] });
+      }
+    } catch (e) {}
+    return row?.[col.field] ?? '';
+  };
+
+  const displayColumns = columns.filter((c) => c.field !== 'actions');
+
+  return (
+    <Box
+      sx={{
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1,
+        p: 1.5,
+        mb: 1.5,
+        bgcolor: 'background.paper'
+      }}
+    >
+      {displayColumns.map((col) => (
+        <Box
+          key={col.field}
+          sx={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            gap: 1,
+            py: 0.5
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{ minWidth: 110 }}>
+            {col.headerName || col.field}
+          </Typography>
+          <Typography variant="body2" sx={{ textAlign: 'right', flex: 1 }}>
+            {String(getCellValue(col) ?? '')}
+          </Typography>
+        </Box>
+      ))}
+
+      {hasActions && (
+        <ActionWrapper sx={{ justifyContent: 'flex-end', pt: 0.5 }}>
+          {onView && (
+            <Tooltip title={t ? t('tooltip.viewDetails') : 'View'}>
+              <IconButton size="small" color="info" onClick={onView}>
+                <ViewIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onEnroll && (
+            <Tooltip title={t ? t('tooltip.enroll') : 'Enroll'}>
+              <IconButton size="small" color="secondary" onClick={onEnroll}>
+                <PersonAddIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onEdit && (
+            <Tooltip title={t ? t('tooltip.edit') : 'Edit'}>
+              <IconButton size="small" color="primary" onClick={onEdit}>
+                <EditIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onDelete && (
+            <Tooltip title={t ? t('tooltip.delete') : 'Delete'}>
+              <IconButton size="small" color="error" onClick={onDelete}>
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </ActionWrapper>
+      )}
+    </Box>
+  );
+};
+
+// Remove the broken isMobile init. Add a safe breakpoint watcher.
+const MOBILE_BREAKPOINT = 768;
 const ReusableDataGrid = ({
   title,
   fetchUrl,
@@ -112,7 +196,16 @@ const ReusableDataGrid = ({
 }) => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
+  const { t } = useTranslation('datagrid'); // <-- add
   // const [searchText, setSearchText] = useState(''); // Corrected variable name
+  // const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false));
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
@@ -166,7 +259,6 @@ const ReusableDataGrid = ({
 
   // Memoized function to fetch data, preventing infinite loops
   const fetchData = useCallback(async () => {
-    // Return early if no fetch URL is provided
     if (!fetchUrl) {
       // Client-side filtering fallback
       const filteredData = clientSideData.filter((item) => {
@@ -188,8 +280,7 @@ const ReusableDataGrid = ({
       const transformedData = transformData ? filteredData.map(transformData) : filteredData;
       setGridData(transformedData);
       setRowCount(transformedData.length);
-      
-      // Notify parent of data changes
+
       if (onDataChange) {
         onDataChange(transformedData);
       }
@@ -200,11 +291,10 @@ const ReusableDataGrid = ({
     try {
       let response;
       const method = (requestMethod || (isPostRequest ? 'POST' : 'GET')).toUpperCase();
-      // Merge latest filters with student defaults and role-based enforced filters
+
       const studentDefaults = getUserSchoolClassDivision() || {};
       const enforcedFilters = {};
 
-      // If student, enforce their IDs (these should override any UI filters)
       if (isStudent) {
         if (studentDefaults.schoolId != null) {
           enforcedFilters.schoolId = studentDefaults.schoolId;
@@ -217,7 +307,6 @@ const ReusableDataGrid = ({
         }
       }
 
-      // If teacher, we'll send their schoolId and allocated class/division lists
       let teacherClassList = [];
       let teacherDivisionList = [];
       if (isTeacher && Array.isArray(user?.allocatedClasses)) {
@@ -228,11 +317,9 @@ const ReusableDataGrid = ({
         }
       }
 
-      // Determine which UI filters should be sent. Admin: on initial load do NOT send UI filters.
       const isInitialLoad = isInitialLoadRef.current;
       const uiFilters = {};
       if (!(isAdmin && isInitialLoad)) {
-        // send latest UI filters when not initial admin landing
         Object.assign(uiFilters, latestFilters.current);
       }
 
@@ -244,9 +331,13 @@ const ReusableDataGrid = ({
         search: searchText
       };
 
-      // Build final payload in order: base -> uiFilters -> role enforced filters -> teacher lists
       const payload = { ...basePayload, ...uiFilters, ...enforcedFilters };
-      if (isTeacher) {
+
+      // Remove classList and divisionList if classId or divisionId is selected
+      if (uiFilters.classId || uiFilters.divisionId) {
+        delete payload.classList;
+        delete payload.divisionList;
+      } else if (isTeacher) {
         if (teacherClassList.length) {
           payload.classList = teacherClassList;
         }
@@ -275,19 +366,17 @@ const ReusableDataGrid = ({
 
       setGridData(transformedData);
       setRowCount(response.data.totalElements || response.data.length || 0);
-      
-      // Notify parent of data changes
+
       if (onDataChange) {
         onDataChange(transformedData);
       }
     } catch (err) {
       console.error(`Failed to fetch data from ${fetchUrl}:`, err);
-      toast.error('Could not fetch data.');
+      toast.error(t('toast.fetchFail')); // <-- localized
       setGridData([]);
       setRowCount(0);
     } finally {
       setLoading(false);
-      // we completed the first load attempt
       if (isInitialLoadRef.current) {
         isInitialLoadRef.current = false;
       }
@@ -307,7 +396,8 @@ const ReusableDataGrid = ({
     sortBy,
     teacherSchoolId,
     user?.allocatedClasses,
-    onDataChange
+    onDataChange,
+    t // <-- add
   ]);
 
   // Handle filter changes from ListGridFilters
@@ -317,22 +407,24 @@ const ReusableDataGrid = ({
   }, []);
 
   useEffect(() => {
+    if (!fetchUrl) return;
     fetchData();
-  }, [ paginationModel.page, paginationModel.pageSize, searchText, gridFilters]);
+  }, [fetchUrl, paginationModel.page, paginationModel.pageSize, searchText, gridFilters]);
   const handleSearchChange = (event) => {
     const newSearchText = event.target.value;
     setSearchText(newSearchText);
   };
 
   const handleOnClickDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
+    if (window.confirm(t('confirm.deleteItem'))) {
+      // <-- localized confirm
       try {
         await api.delete(`${deleteUrl}/${accountId}/${id}`);
-        toast.success('Item deleted successfully!');
+        toast.success(t('toast.deleteSuccess')); // <-- localized
         fetchData();
       } catch (err) {
         console.error(err);
-        toast.error('Failed to delete item.');
+        toast.error(t('toast.deleteFail')); // <-- localized
       }
     }
   };
@@ -366,7 +458,7 @@ const ReusableDataGrid = ({
   const actionsColumn = hasActions
     ? {
         field: 'actions',
-        headerName: 'Actions',
+        headerName: t('header.actions'), // <-- localized header
         width: 160,
         sortable: false,
         filterable: false,
@@ -414,7 +506,7 @@ const ReusableDataGrid = ({
           return (
             <ActionWrapper>
               {viewUrl && hasPermission(permissions, entityName, 'view') && (
-                <Tooltip title="View Details">
+                <Tooltip title={t('tooltip.viewDetails')}>
                   <IconButton
                     size="small"
                     color="info"
@@ -431,7 +523,7 @@ const ReusableDataGrid = ({
                 </Tooltip>
               )}
               {EnrollActionUrl && hasPermission(permissions, entityName, 'view') && (
-                <Tooltip title="Enroll">
+                <Tooltip title={t('tooltip.enroll')}>
                   <IconButton
                     size="small"
                     color="secondary"
@@ -448,7 +540,7 @@ const ReusableDataGrid = ({
                 </Tooltip>
               )}
               {editUrl && hasPermission(permissions, entityName, 'edit') && (
-                <Tooltip title="Edit">
+                <Tooltip title={t('tooltip.edit')}>
                   <IconButton
                     size="small"
                     color="primary"
@@ -465,7 +557,7 @@ const ReusableDataGrid = ({
                 </Tooltip>
               )}
               {deleteUrl && hasPermission(permissions, entityName, 'delete') && (
-                <Tooltip title="Delete">
+                <Tooltip title={t('tooltip.delete')}>
                   <IconButton
                     size="small"
                     color="error"
@@ -486,6 +578,7 @@ const ReusableDataGrid = ({
         }
       }
     : null;
+
   // Function to get the correct name for a given ID
   const getNameForId = (id, map) => map[id] || 'N/A';
 
@@ -498,14 +591,14 @@ const ReusableDataGrid = ({
       return {
         ...col,
         valueFormatter: (params) => getNameForId(params.value, schoolNameMap),
-        headerName: col.headerName || 'School'
+        headerName: col.headerName || t('columnHeader.school') // <-- localized
       };
     }
     // Resolve school/class/division names using SCD data when available
     if (col.field === 'schoolId') {
       return {
         ...col,
-        headerName: col.headerName || 'School',
+        headerName: col.headerName || t('columnHeader.school'), // <-- localized
         valueGetter: (params) => {
           // defensive guards: params may be null during some grid lifecycle phases
           const idFromParam = params?.value;
@@ -515,7 +608,6 @@ const ReusableDataGrid = ({
           if (!id) {
             return '';
           }
-          // prefer mapped names if provided; fall back to SCD lookup
           if (schoolNameMap && schoolNameMap[id]) {
             return schoolNameMap[id];
           }
@@ -536,7 +628,7 @@ const ReusableDataGrid = ({
     if (col.field === 'classId') {
       return {
         ...col,
-        headerName: col.headerName || 'Class',
+        headerName: col.headerName || t('columnHeader.class'), // <-- localized
         valueGetter: (params) => {
           const idFromParam = params?.value;
           const row = params?.row || {};
@@ -565,7 +657,7 @@ const ReusableDataGrid = ({
     if (col.field === 'divisionId') {
       return {
         ...col,
-        headerName: col.headerName || 'Division',
+        headerName: col.headerName || t('columnHeader.division'), // <-- localized
         valueGetter: (params) => {
           const idFromParam = params?.value;
           const row = params?.row || {};
@@ -601,12 +693,13 @@ const ReusableDataGrid = ({
     </Grid>
   );
   // Header content to be passed to MainCard's secondary prop
+  const searchPlaceholderText = searchPlaceholder || t('search.placeholder'); // <-- localized placeholder
   const headerSearchControls = (
     <HeaderSearchWrapper>
       {showSearch && (
         <TextField
           size="small"
-          placeholder={searchPlaceholder}
+          placeholder={searchPlaceholderText}
           value={searchText}
           onChange={handleSearch}
           InputProps={{
@@ -621,11 +714,16 @@ const ReusableDataGrid = ({
       )}
       {showRefresh && (
         <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
-          Refresh
+          {t('action.refresh')}
         </Button>
       )}
       {showFilters && Object.keys(gridFilters).length > 0 && (
-        <Chip icon={<FilterListIcon />} label={`${Object.keys(gridFilters).length} filters active`} variant="outlined" color="primary" />
+        <Chip
+          icon={<FilterListIcon />}
+          label={`${Object.keys(gridFilters).length} ${t('search.filtersActive')}`}
+          variant="outlined"
+          color="primary"
+        />
       )}
       {addActionUrl && hasPermission(permissions, entityName, 'add') && <SecondaryAction icon={<AddIcon />} link={addActionUrl} />}
     </HeaderSearchWrapper>
@@ -642,11 +740,11 @@ const ReusableDataGrid = ({
         </Box>
       }
       secondary={secondaryHeader}
-      contentSX={{ p: 1 }} // Small padding to make space for filters
+      contentSX={{ p: 1 }}
     >
       {customToolbar && customToolbar()}
 
-      {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && !isTeacher && !isStudent && (
+      {enableFilters && (showSchoolFilter || showClassFilter || showDivisionFilter) && !isStudent && (
         <ListGridFiltersContainer
           filters={gridFilters}
           onFiltersChange={handleFiltersChange}
@@ -664,39 +762,80 @@ const ReusableDataGrid = ({
 
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
-          <Box sx={{ height, width: '100%' }}>
-            <DataGrid
-              rows={gridData}
-              columns={columns}
-              loading={loading}
-              rowCount={rowCount}
-              pageSizeOptions={pageSizeOptions}
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              paginationMode={fetchUrl ? 'server' : 'client'}
-              getRowId={getRowIdProp}
-              onRowClick={onRowClick || handleRowClick}
-              selectionModel={selectionModel}
-              onSelectionModelChange={onSelectionModelChange}
-              checkboxSelection={checkboxSelection}
-              disableSelectionOnClick={disableSelectionOnClick}
-              getRowClassName={getRowClassName}
-              loadingOverlay={loadingOverlay}
-              errorOverlay={errorOverlay}
-              sx={{
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                  cursor: onRowClick ? 'pointer' : 'default'
-                },
-                '& .MuiDataGrid-row.Mui-selected': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.08)'
-                },
-                '& .MuiDataGrid-row.Mui-selected:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.12)'
-                }
-              }}
-            />
-          </Box>
+          {isMobile ? (
+            // Mobile: card list view
+            <Box>
+              {gridData.map((row) => (
+                <DataGridMobileCard
+                  key={getRowIdProp(row)}
+                  row={row}
+                  columns={columns}
+                  hasActions={hasActions}
+                  onView={viewUrl ? () => handleOnClickView(row.id) : undefined}
+                  onEdit={editUrl ? () => navigate(`${editUrl}/${row.id}`) : undefined}
+                  onDelete={deleteUrl ? () => handleOnClickDelete(row.id) : undefined}
+                  onEnroll={EnrollActionUrl ? () => handleOnClickEnrollActionUrl(row.id) : undefined}
+                  t={t} // <-- pass translator to mobile card tooltips
+                />
+              ))}
+
+              {/* Simple pager for mobile */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={paginationModel.page === 0 || loading}
+                  onClick={() => setPaginationModel((p) => ({ ...p, page: Math.max(0, p.page - 1) }))}
+                >
+                  Prev
+                </Button>
+                <Typography variant="caption">Page {paginationModel.page + 1}</Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={loading || (rowCount !== 0 && (paginationModel.page + 1) * paginationModel.pageSize >= rowCount)}
+                  onClick={() => setPaginationModel((p) => ({ ...p, page: p.page + 1 }))}
+                >
+                  Next
+                </Button>
+              </Box>
+            </Box>
+          ) : (
+            // Desktop: DataGrid table
+            <Box sx={{ height, width: '100%' }}>
+              <DataGrid
+                rows={gridData}
+                columns={columns}
+                loading={loading}
+                rowCount={rowCount}
+                pageSizeOptions={pageSizeOptions}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                paginationMode={fetchUrl ? 'server' : 'client'}
+                getRowId={getRowIdProp}
+                onRowClick={onRowClick || handleRowClick}
+                selectionModel={selectionModel}
+                onSelectionModelChange={onSelectionModelChange}
+                checkboxSelection={checkboxSelection}
+                disableSelectionOnClick={disableSelectionOnClick}
+                getRowClassName={getRowClassName}
+                loadingOverlay={loadingOverlay}
+                errorOverlay={errorOverlay}
+                sx={{
+                  '& .MuiDataGrid-row:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                    cursor: onRowClick ? 'pointer' : 'default'
+                  },
+                  '& .MuiDataGrid-row.Mui-selected': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                  },
+                  '& .MuiDataGrid-row.Mui-selected:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.12)'
+                  }
+                }}
+              />
+            </Box>
+          )}
         </Grid>
       </Grid>
     </MainCard>

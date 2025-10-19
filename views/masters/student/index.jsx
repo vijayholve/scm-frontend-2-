@@ -103,7 +103,7 @@ const Students = () => {
           <ReusableDataGrid
             // viewScreenIs={true}
             title="STUDENTS"
-            fetchUrl={`/api/users/getAllBy/${accountId}?type=STUDENT`}
+            fetchUrl={`/api/users/getAllBy/${accountId}?type=${type}}`}
             isPostRequest={true}
             columns={columnsConfig}
             addActionUrl={'/masters/student/add'}

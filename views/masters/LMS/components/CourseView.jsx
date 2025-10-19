@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -18,14 +17,14 @@ import {
   Button,
   Accordion,
   AccordionSummary,
-  AccordionDetails,
-} from "@mui/material";
-import { useParams } from "react-router-dom";
-import api from "../../../../utils/apiService";
-import { useSelector } from "react-redux";
-import { toast } from "react-hot-toast";
-import { GridExpandMoreIcon } from "@mui/x-data-grid";
-import StudentLmsDashboard from "views/dashboard/studentDashboard/StudentLmsDashboard";
+  AccordionDetails
+} from '@mui/material';
+import { useParams } from 'react-router-dom';
+import api from '../../../../utils/apiService';
+import { useSelector } from 'react-redux';
+import { toast } from 'react-hot-toast';
+import { GridExpandMoreIcon } from '@mui/x-data-grid';
+import StudentLmsDashboard from 'views/dashboard/studentDashboard/StudentLmsDashboard';
 
 // VideoRenderer: Simple video player for video lessons
 const VideoRenderer = ({ url }) => {
@@ -38,12 +37,10 @@ const VideoRenderer = ({ url }) => {
     );
   }
   // YouTube embed
-  const ytMatch = url.match(
-    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/
-  );
+  const ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
   if (ytMatch) {
     return (
-      <Box sx={{ width: "100%", textAlign: "center", mt: 2 }}>
+      <Box sx={{ width: '100%', textAlign: 'center', mt: 2 }}>
         <iframe
           width="100%"
           height="360"
@@ -58,7 +55,7 @@ const VideoRenderer = ({ url }) => {
   }
   // Direct video
   return (
-    <Box sx={{ width: "100%", textAlign: "center", mt: 2 }}>
+    <Box sx={{ width: '100%', textAlign: 'center', mt: 2 }}>
       <video width="100%" height="360" controls>
         <source src={url} />
         Your browser does not support the video tag.
@@ -77,14 +74,8 @@ const DocumentRenderer = ({ url }) => {
     );
   }
   return (
-    <Box sx={{ width: "100%", textAlign: "center", mt: 2 }}>
-      <iframe
-        src={url}
-        title="Document"
-        width="100%"
-        height="500px"
-        style={{ border: "none" }}
-      />
+    <Box sx={{ width: '100%', textAlign: 'center', mt: 2 }}>
+      <iframe src={url} title="Document" width="100%" height="500px" style={{ border: 'none' }} />
     </Box>
   );
 };
@@ -92,13 +83,13 @@ const DocumentRenderer = ({ url }) => {
 const CourseView = () => {
   // Expecting route: /course/:accountId/:courseId
   const { courseId } = useParams();
-    const [expandedModules, setExpandedModules] = useState([]);
+  const [expandedModules, setExpandedModules] = useState([]);
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [students, setStudents] = useState([]);
-  const user = useSelector(state => state.user.user?.data) || useSelector(state => state.user.user);
+  const user = useSelector((state) => state.user.user?.data) || useSelector((state) => state.user.user);
   const accountId = user?.accountId;
   const studentId = user?.id;
   const userType = user?.type;
@@ -115,25 +106,19 @@ const CourseView = () => {
       setLoading(true);
       try {
         // Fetch course
-        const courseRes = await api.get(
-          `/api/lms/courses/${accountId}/${courseId}`
-        );
+        const courseRes = await api.get(`/api/lms/courses/${accountId}/${courseId}`);
         setCourse(courseRes.data);
 
         // Fetch enrolled students (API assumed, fallback to empty)
         try {
-          const studentsRes = await api.post(
-            `/api/lms/courses/${accountId}/${courseId}/enroll/${studentId}/status`,
-            {
-              accountId: accountId,
-              courseId: courseId,
-              studentId: studentId
-            }
-          );
-          if( studentsRes.data == null || studentsRes.data == undefined || studentsRes.data == "") {
+          const studentsRes = await api.post(`/api/lms/courses/${accountId}/${courseId}/enroll/${studentId}/status`, {
+            accountId: accountId,
+            courseId: courseId,
+            studentId: studentId
+          });
+          if (studentsRes.data == null || studentsRes.data == undefined || studentsRes.data == '') {
             setIsEnrolled(false);
-          }
-          else {
+          } else {
             setIsEnrolled(true);
           }
         } catch {
@@ -143,32 +128,29 @@ const CourseView = () => {
         // Fetch lesson progress for current student
         if (studentId) {
           try {
-            
-            const progRes = await api.get(
-              `/api/lms/courses/${accountId}/${courseId}/progress/${studentId}`,
-              { params: { accountId, courseId, studentId } }
-            );
-            if( progRes.data == null || progRes.data == undefined || progRes.data == "") {
+            const progRes = await api.get(`/api/lms/courses/${accountId}/${courseId}/progress/${studentId}`, {
+              params: { accountId, courseId, studentId }
+            });
+            if (progRes.data == null || progRes.data == undefined || progRes.data == '') {
               setProgressByLessonId(new Set());
-            }
-            else {
+            } else {
               const entries = Array.isArray(progRes.data) ? progRes.data : [];
-              const completedIds = new Set(entries.filter(e => e.completed).map(e => e.lessonId));
+              const completedIds = new Set(entries.filter((e) => e.completed).map((e) => e.lessonId));
               setProgressByLessonId(completedIds);
             }
           } catch {
             // fallback: derive from lesson.status in course payload if present
             const modulesFromCourse = courseRes.data?.modules || [];
-            const allLessonsFromCourse = modulesFromCourse.flatMap(m => m.lessons || []);
+            const allLessonsFromCourse = modulesFromCourse.flatMap((m) => m.lessons || []);
             const completedIds = new Set(
               allLessonsFromCourse
-                .filter(l => l.status === true || l.status === "true" || l.status === 1 || l.status === "1")
-                .map(l => l.id)
+                .filter((l) => l.status === true || l.status === 'true' || l.status === 1 || l.status === '1')
+                .map((l) => l.id)
             );
             setProgressByLessonId(completedIds);
           }
         }
-        if(userType==="TEACHER" || userType==="ADMIN") {
+        if (userType === 'TEACHER' || userType === 'ADMIN') {
           const studentsRes = await api.get(`/api/lms/courses/${accountId}/${courseId}/enrollments`);
           setStudents(studentsRes.data || []);
         }
@@ -188,23 +170,15 @@ const CourseView = () => {
   const totalModules = modules.length;
   const allLessons = modules.flatMap((mod) => mod.lessons || []);
   const totalLessons = allLessons.length;
-  const completedLessons = progressByLessonId.size > 0
-    ? allLessons.filter((l) => progressByLessonId.has(l.id)).length
-    : allLessons.filter(
-        (l) =>
-          l.status === true ||
-          l.status === "true" ||
-          l.status === 1 ||
-          l.status === "1"
-      ).length;
-  const completionPercent =
-    totalLessons === 0
-      ? 0
-      : Math.round((completedLessons / totalLessons) * 100);
+  const completedLessons =
+    progressByLessonId.size > 0
+      ? allLessons.filter((l) => progressByLessonId.has(l.id)).length
+      : allLessons.filter((l) => l.status === true || l.status === 'true' || l.status === 1 || l.status === '1').length;
+  const completionPercent = totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
 
   // Handle lesson click
-  const handleLessonClick = async (lesson,modId) => {
-    console.log(lesson,modId);
+  const handleLessonClick = async (lesson, modId) => {
+    console.log(lesson, modId);
     // Gate for students: must be enrolled
     if (userType === 'STUDENT' && !isEnrolled) {
       toast.error('Please enroll to preview this course.');
@@ -222,7 +196,7 @@ const CourseView = () => {
           studentId,
           completed: true
         });
-        setProgressByLessonId(prev => new Set(prev).add(lesson.id));
+        setProgressByLessonId((prev) => new Set(prev).add(lesson.id));
       } catch (e) {
         // Non-blocking
       }
@@ -261,55 +235,45 @@ const CourseView = () => {
           sx={{
             p: 3,
             minHeight: 300,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
-          <Typography color="text.secondary">
-            Select a lesson to view its content.
-          </Typography>
+          <Typography color="text.secondary">Select a lesson to view its content.</Typography>
         </Paper>
       );
     }
-    if (
-      selectedLesson.type === "video" &&
-      (selectedLesson.link || selectedLesson.url)
-    ) {
+    if (selectedLesson.type === 'video' && (selectedLesson.link || selectedLesson.url)) {
       return (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             {selectedLesson.title}
           </Typography>
           <VideoRenderer url={selectedLesson.link || selectedLesson.url} />
-          {selectedLesson.content && (
-            <Typography sx={{ mt: 2 }}>{selectedLesson.content}</Typography>
-          )}
+          {selectedLesson.content && <Typography sx={{ mt: 2 }}>{selectedLesson.content}</Typography>}
         </Paper>
       );
     }
-    if (
-      selectedLesson.type === "document" &&
-      (selectedLesson.documentId || selectedLesson.url)
-    ) {
-
+    if (selectedLesson.type === 'document' && (selectedLesson.documentId || selectedLesson.url)) {
       console.log(selectedLesson);
 
       return (
-        <Paper sx={{ p: 3 ,
-          maxHeight: '80vh', overflowY: 'auto',
-          
-          width: '100%'
+        <Paper
+          sx={{
+            p: 3,
+            maxHeight: '80vh',
+            overflowY: 'auto',
 
-        }}>
+            width: '100%'
+          }}
+        >
           <Typography variant="h6" sx={{ mb: 2 }}>
             {selectedLesson.title}
           </Typography>
-          {selectedLesson.documentName && (
-            <Typography sx={{ mb: 2 }}>{selectedLesson.documentName}</Typography>
-          )}
+          {selectedLesson.documentName && <Typography sx={{ mb: 2 }}>{selectedLesson.documentName}</Typography>}
           {selectedLesson.documentId && (
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
               <Typography>{selectedLesson.documentId}</Typography>
               <Button
                 variant="outlined"
@@ -318,12 +282,11 @@ const CourseView = () => {
                   try {
                     // Call the document download API
                     // Adjust the API endpoint as per your backend
-                    const response = await api.get(
-                      `/api/documents/download/${accountId}/${selectedLesson.documentId}`,
-                      { responseType: "blob" }
-                    );
+                    const response = await api.get(`/api/documents/download/${accountId}/${selectedLesson.documentId}`, {
+                      responseType: 'blob'
+                    });
                     // Get filename from response headers or fallback
-                    let filename = selectedLesson.documentName || "document";
+                    let filename = selectedLesson.documentName || 'document';
                     const disposition = response.headers['content-disposition'];
                     if (disposition && disposition.indexOf('filename=') !== -1) {
                       const match = disposition.match(/filename="?([^"]+)"?/);
@@ -340,7 +303,7 @@ const CourseView = () => {
                     window.URL.revokeObjectURL(url);
                   } catch (err) {
                     // Optionally show error to user
-                    alert("Failed to download document.");
+                    alert('Failed to download document.');
                   }
                 }}
               >
@@ -349,9 +312,7 @@ const CourseView = () => {
             </Box>
           )}
           {/* <DocumentRenderer url={selectedLesson.documentId || selectedLesson.url} /> */}
-          {selectedLesson.content && (
-            <Typography sx={{ mt: 2 }}>{selectedLesson.content}</Typography>
-          )}
+          {selectedLesson.content && <Typography sx={{ mt: 2 }}>{selectedLesson.content}</Typography>}
         </Paper>
       );
     }
@@ -361,18 +322,14 @@ const CourseView = () => {
         <Typography variant="h6" sx={{ mb: 2 }}>
           {selectedLesson.title}
         </Typography>
-        <Typography>
-          {selectedLesson.content ||
-            selectedLesson.description ||
-            "No content available for this lesson."}
-        </Typography>
+        <Typography>{selectedLesson.content || selectedLesson.description || 'No content available for this lesson.'}</Typography>
       </Paper>
     );
   };
 
   if (loading) {
     return (
-      <Box sx={{ maxWidth: 1200, mx: "auto", mt: 6 }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 6 }}>
         <Typography>Loading...</Typography>
       </Box>
     );
@@ -380,23 +337,23 @@ const CourseView = () => {
 
   if (!course) {
     return (
-      <Box sx={{ maxWidth: 1200, mx: "auto", mt: 6 }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 6 }}>
         <Typography color="error">Course not found.</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 1200}}>
+    <Box sx={{ maxWidth: 1200 }}>
       {/* Header */}
       <Paper
         sx={{
           p: 3,
           mb: 3,
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          alignItems: { md: "center" },
-          justifyContent: "space-between",
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { md: 'center' },
+          justifyContent: 'space-between'
         }}
       >
         <Box>
@@ -406,20 +363,31 @@ const CourseView = () => {
           <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
             {course.description}
           </Typography>
-       
-          <Box sx={{ mt: 2 }}>
-            <Stack direction="row" spacing={2}
-            sx={{ mt: { xs: 2, md: 0 } }}
-            alignItems="center"
 
-             flexWrap="wrap"
-             
-             >
-              <Chip
-               label={`Modules: ${totalModules}`} color="primary" />
-              <Chip label={`Lessons: ${totalLessons}`} color="secondary" />
-              <Chip label={`Status: ${course.status || "N/A"}`} />
-              <Chip label={`Enrolled: ${students.length}`} />
+          <Box sx={{ mt: 2 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={{ xs: 1, sm: 1.5, md: 2 }}
+              sx={{
+                mt: { xs: 1, md: 0 },
+                flexWrap: 'wrap',
+                rowGap: { xs: 1, sm: 1.5 },
+                columnGap: { xs: 1, sm: 1.5, md: 2 },
+                // compact chips on small screens
+                '& .MuiChip-root': {
+                  height: { xs: 24, sm: 28, md: 32 },
+                  fontSize: { xs: 12, sm: 13, md: 14 }
+                },
+                '& .MuiChip-label': {
+                  px: { xs: 1, sm: 1.25, md: 1.5 }
+                }
+              }}
+            >
+              <Chip size="small" label={`Modules: ${totalModules}`} color="primary" />
+              <Chip size="small" label={`Lessons: ${totalLessons}`} color="secondary" />
+              <Chip size="small" label={`Status: ${course.status || 'N/A'}`} />
+              <Chip size="small" label={`Enrolled: ${students.length}`} />
             </Stack>
           </Box>
         </Box>
@@ -427,58 +395,47 @@ const CourseView = () => {
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Completion: {completionPercent}%
           </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={completionPercent}
-            sx={{ height: 12, borderRadius: 2 }}
-          />
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ mt: 1, display: "block" }}
-          >
+          <LinearProgress variant="determinate" value={completionPercent} sx={{ height: 12, borderRadius: 2 }} />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
             {completedLessons} of {totalLessons} lessons completed
           </Typography>
         </Box>
       </Paper>
-              {/* <Grid item xs={12}> */}
-                {/* <StudentLmsDashboard /> */}
-            {/* </Grid> */}
-
+      {/* <Grid item xs={12}> */}
+      {/* <StudentLmsDashboard /> */}
+      {/* </Grid> */}
 
       {userType === 'STUDENT' && !isEnrolled && (
         <>
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6">Enrollment required</Typography>
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            You must enroll to access this course content.
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Chip label={`Current enrollments: ${students.length}`} sx={{ mr: 2 }} />
-            <Chip label={`Course ID: ${courseId}`} />
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            <button
-              onClick={handleEnrollNow}
-              disabled={enrollLoading}
-              style={{
-                padding: '8px 16px',
-                background: '#1976d2',
-                color: 'white',
-                border: 'none',
-                borderRadius: 4,
-                cursor: enrollLoading ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {enrollLoading ? 'Enrolling...' : 'Enroll Now'}
-            </button>
-          </Box>
-        </Paper>
-              
-
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6">Enrollment required</Typography>
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              You must enroll to access this course content.
+            </Typography>
+            <Box sx={{ mt: 2 }}>
+              <Chip label={`Current enrollments: ${students.length}`} sx={{ mr: 2 }} />
+              <Chip label={`Course ID: ${courseId}`} />
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <button
+                onClick={handleEnrollNow}
+                disabled={enrollLoading}
+                style={{
+                  padding: '8px 16px',
+                  background: '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: enrollLoading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {enrollLoading ? 'Enrolling...' : 'Enroll Now'}
+              </button>
+            </Box>
+          </Paper>
         </>
       )}
- 
+
       <Grid container spacing={3}>
         {/* Left: Modules & Lessons */}
         <Grid item xs={12} md={4}>
@@ -487,17 +444,11 @@ const CourseView = () => {
               Modules & Lessons
             </Typography>
             {modules.length === 0 ? (
-              <Typography color="text.secondary">
-                No modules found for this course.
-              </Typography>
+              <Typography color="text.secondary">No modules found for this course.</Typography>
             ) : (
-        <List>
+              <List>
                 {modules.map((mod, mIdx) => (
-                  <Accordion
-                    key={mod.id || mIdx} 
-                    expanded={expandedModules.includes(mod.id)} 
-                    onChange={handleAccordionChange(mod.id)}
-                  >
+                  <Accordion key={mod.id || mIdx} expanded={expandedModules.includes(mod.id)} onChange={handleAccordionChange(mod.id)}>
                     <AccordionSummary
                       expandIcon={<GridExpandMoreIcon />}
                       aria-controls={`panel-${mod.id}-content`}
@@ -532,58 +483,38 @@ const CourseView = () => {
                           </ListItem>
                         ) : (
                           mod.lessons.map((lesson, lIdx) => {
-                            const isCompleted = progressByLessonId.has(lesson.id) ||
+                            const isCompleted =
+                              progressByLessonId.has(lesson.id) ||
                               lesson.status === true ||
-                              lesson.status === "true" ||
+                              lesson.status === 'true' ||
                               lesson.status === 1 ||
-                              lesson.status === "1";
+                              lesson.status === '1';
                             return (
                               <ListItem
                                 key={lesson.id || lIdx || mod.id || mIdx}
                                 button
-                                selected={
-                                  selectedLesson && selectedLesson.id === lesson.id
-                                }
-                                onClick={() => handleLessonClick(lesson,mod.id)}
+                                selected={selectedLesson && selectedLesson.id === lesson.id}
+                                onClick={() => handleLessonClick(lesson, mod.id)}
                                 sx={{
-                                  borderLeft: isCompleted
-                                    ? "4px solid #4caf50"
-                                    : "4px solid transparent",
-                                  bgcolor:
-                                    selectedLesson &&
-                                    selectedLesson.id === lesson.id
-                                      ? "action.selected"
-                                      : "inherit",
-                                  pointerEvents: (userType === 'STUDENT' && !isEnrolled) ? 'none' : 'auto',
-                                  opacity: (userType === 'STUDENT' && !isEnrolled) ? 0.6 : 1
+                                  borderLeft: isCompleted ? '4px solid #4caf50' : '4px solid transparent',
+                                  bgcolor: selectedLesson && selectedLesson.id === lesson.id ? 'action.selected' : 'inherit',
+                                  pointerEvents: userType === 'STUDENT' && !isEnrolled ? 'none' : 'auto',
+                                  opacity: userType === 'STUDENT' && !isEnrolled ? 0.6 : 1
                                 }}
                               >
                                 <ListItemText
                                   primary={
-                                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                                      <Typography sx={{ fontWeight: 500, mr: 1 }}>
-                                        {lesson.title}
-                                      </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                      <Typography sx={{ fontWeight: 500, mr: 1 }}>{lesson.title}</Typography>
                                       <Chip
                                         size="small"
                                         label={lesson.type}
-                                        color={
-                                          lesson.type === "video"
-                                            ? "primary"
-                                            : lesson.type === "document"
-                                            ? "secondary"
-                                            : "default"
-                                        }
+                                        color={lesson.type === 'video' ? 'primary' : lesson.type === 'document' ? 'secondary' : 'default'}
                                         sx={{ ml: 1 }}
                                       />
                                       {isCompleted && (
                                         <Tooltip title="Completed">
-                                          <Chip
-                                            size="small"
-                                            label="✓"
-                                            color="success"
-                                            sx={{ ml: 1 }}
-                                          />
+                                          <Chip size="small" label="✓" color="success" sx={{ ml: 1 }} />
                                         </Tooltip>
                                       )}
                                       {userType === 'STUDENT' && !isEnrolled && (
@@ -612,22 +543,15 @@ const CourseView = () => {
               Enrolled Students
             </Typography>
             {students.length === 0 ? (
-              <Typography color="text.secondary">
-                No students enrolled.
-              </Typography>
+              <Typography color="text.secondary">No students enrolled.</Typography>
             ) : (
               <List dense>
                 {students.map((student, idx) => (
                   <ListItem key={student.id || idx}>
                     <ListItemAvatar>
-                      <Avatar src={student.avatarUrl || undefined}>
-                        {student.studentName ? student.studentName : "S"}
-                      </Avatar>
+                      <Avatar src={student.avatarUrl || undefined}>{student.studentName ? student.studentName : 'S'}</Avatar>
                     </ListItemAvatar>
-                    <ListItemText
-                      primary={student.studentName || student.studentEmail || "Student"}
-                      secondary={student.studentEmail}
-                    />
+                    <ListItemText primary={student.studentName || student.studentEmail || 'Student'} secondary={student.studentEmail} />
                   </ListItem>
                 ))}
               </List>

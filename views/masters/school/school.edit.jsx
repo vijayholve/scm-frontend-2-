@@ -101,7 +101,7 @@ const EditSchool = ({ ...others }) => {
     try {
       const apiCall = schoolId
         ? api.put(`/api/schoolBranches/update`, schoolPayload)
-        : api.post(`/api/schoolBranches/create`, schoolPayload);
+        : api.post(`/api/schoolBranches/save`, schoolPayload);
 
       await apiCall;
 
@@ -339,7 +339,6 @@ const EditSchool = ({ ...others }) => {
               {/* Submit Button */}
               <Grid item xs={12}>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                  <AnimateButton>
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
                       <BackButton backUrl="/masters/institutes" />
                       <SaveButton
@@ -349,7 +348,6 @@ const EditSchool = ({ ...others }) => {
                         disabled={isSubmitting} // Disable if no file selected
                       />
                     </Box>
-                  </AnimateButton>
                 </Box>
               </Grid>
             </Grid>

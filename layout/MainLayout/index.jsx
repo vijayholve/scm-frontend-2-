@@ -74,7 +74,7 @@ const MainLayout = () => {
     const authData = JSON.parse(localStorage.getItem('SCM-AUTH'));
     const isUserLoggedIn = authData?.accessToken ? true : false;
     if (!isUserLoggedIn) {
-      navigate('/login');
+      navigate('/lms');
     }
   }, []);
 
@@ -107,16 +107,37 @@ const MainLayout = () => {
         <Outlet />
       </Main>
 
-      {/* Floating Chat Button */}
+      {/* Floating Chat Button (right-docked) */}
       {!chatOpen && (
-        <Fab
-          color="primary"
-          aria-label="chat"
-          sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 2000 }}
-          onClick={() => setChatOpen(true)}
+        <Box
+          sx={{
+            position: 'fixed',
+            top: { xs: 'auto', md: '50%' },
+            bottom: { xs: 24, md: 'auto' },
+            right: 0,
+            transform: { md: 'translateY(-50%)' },
+            zIndex: 2000,
+            pointerEvents: 'none' // container doesn't block page clicks
+          }}
         >
-          <ChatIcon />
-        </Fab>
+          <Fab
+            color="primary"
+            aria-label="chat"
+            size="medium"
+            onClick={() => setChatOpen(true)}
+            sx={{
+              pointerEvents: 'auto',
+              borderTopLeftRadius: 24,
+              borderBottomLeftRadius: 24,
+              borderTopRightRadius: 0,
+              borderBottomRightRadius: 0,
+              pr: 1,
+              pl: 1.5
+            }}
+          >
+            <ChatIcon />
+          </Fab>
+        </Box>
       )}
 
       {/* Chat Modal */}
@@ -132,7 +153,8 @@ const MainLayout = () => {
             bgcolor: 'background.paper',
             boxShadow: 24,
             borderRadius: 2,
-            m: 2,
+            m: { xs: 0, sm: 2 }, // snug to edges on phone
+            mr: { xs: 0, sm: 2 }, // keep to far right on larger screens
             position: 'relative',
             display: 'flex',
             flexDirection: 'column'

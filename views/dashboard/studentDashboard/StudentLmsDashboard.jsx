@@ -14,8 +14,9 @@ const CourseProgressCard = ({ course }) => {
     const progressColor = isCompleted ? 'success' : 'primary';
 
     const handleViewCourse = () => {
+        console.log("Navigating to course:", course.id);
         // Assuming there's a view route for a specific course
-        navigate(`/masters/lms/course/view/${course.id}`);
+        navigate(`/masters/lms/course/view/${course.courseId}`);
     };
 
     return (
@@ -65,25 +66,23 @@ const CourseProgressCard = ({ course }) => {
     );
 };
 
-const StudentLmsDashboard = () => {
+const StudentLmsDashboard = ({studentId}) => {
     const { user } = useSelector((state) => state.user);
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const accountId = user?.accountId;
-    const studentId = user?.id;
-
+    const accountId = user.accountId ; 
+    
+    
     useEffect(() => {
         const fetchEnrolledCourses = async () => {
-            if (!accountId || !studentId) {
-                setError('User not authenticated.');
-                setLoading(false);
-                return;
-            }
+          
 
             try {
                 setLoading(true);
+                console.log("Fetching courses for studentId:", studentId, "and accountId:", accountId);
                 const response = await api.get(`/api/lms/courses/${accountId}/get/enrollFor/${studentId}`);
+                console.log("Enrolled courses response:", response.data);
                 setCourses(response.data || []);
             } catch (err) {
                 console.error("Error fetching enrolled courses:", err);

@@ -5,7 +5,7 @@ const endpoints = {
   auth: {
     login: 'api/users/login',
     refresh: 'api/auth/refresh',
-     forgotPasswordRequest: 'api/auth/forgot-password-request',
+    forgotPasswordRequest: 'api/auth/forgot-password-request',
     resetPassword: 'api/auth/reset-password'
   },
   users: {
@@ -62,6 +62,12 @@ const endpoints = {
   },
   lms: {
     course: {
+      getAll: '/api/lms/course/getAll',
+      getById: '/api/lms/courses',
+      enrollment: {
+        status: '/api/lms/courses', // Usage: `${endpoints.lms.courses.enrollment.status}/${accountId}/${courseId}/enroll/${studentId}/status`
+        enroll: '/api/lms/courses' // Usage: `${endpoints.lms.courses.enrollment.enroll}/${accountId}/${courseId}/enroll`
+      },
       save: 'api/lms/course/save',
       delete: 'api/lms/course/delete'
     }
@@ -83,8 +89,9 @@ const endpoints = {
   students: {
     sampleExcel: 'api/students/download-sample-excel',
     bulkUpload: 'api/students/bulk-upload'
-  }
-  ,  notifications: { // New endpoints for notifications
+  },
+  notifications: {
+    // New endpoints for notifications
     create: 'api/notifications',
     search: 'api/notifications/search',
     getById: 'api/notifications/getById',
@@ -92,10 +99,19 @@ const endpoints = {
     delete: 'api/notifications/delete',
     getByUser: 'api/notifications/user',
     getActive: 'api/notifications/active'
+  },
+  accounts: {
+    getAll: '/api/accounts/getAll' // Replace with the actual endpoint
+  },
+  features: {
+    getAllByAccountId: '/api/features/getAllByAccountId'
   }
 };
 
+// Add documentation endpoints if needed (optional)
+export const documentation = {
+  masters: '/api/documentation/masters',
+  help: '/api/documentation/help'
+};
 
 export default endpoints;
-
-

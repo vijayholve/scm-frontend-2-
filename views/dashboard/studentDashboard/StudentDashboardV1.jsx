@@ -41,10 +41,12 @@ const StudentTimetable = () => {
                 const response = await api.post(`/api/timetable/getAllBy/${user.accountId}`, payload);
                 
                 // Find the timetable for the current day
-                const todaySchedule = response.data.content
-                    .flatMap(tt => tt.dayTimeTable)
-                    .filter(day => day.dayName === dayName);
-                
+                // Error fetching timetable: TypeError: can't access property "dayName", day is undefined solve this issue 
+
+                    const todaySchedule = response.data.content
+                        .flatMap(tt => Array.isArray(tt.dayTimeTable) ? tt.dayTimeTable : [])
+                        .filter(day => day && typeof day.dayName === 'string' && day.dayName === dayName);
+                    
                 const formattedTimetable = todaySchedule.length > 0 ? todaySchedule[0].tsd : [];
                 
                 setTimetable(formattedTimetable || []);
@@ -409,7 +411,7 @@ const StudentDashboardV1 = () => {
                 <StudentQuickLinks />
             </Grid>
             <Grid item xs={12}>
-                <StudentLmsDashboard />
+                <StudentLmsDashboard studentId={user?.id} />
             </Grid>
 
             <Grid item xs={12} md={6}>

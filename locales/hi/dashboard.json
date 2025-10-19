@@ -1,0 +1,81 @@
+{
+  "admin": {
+    "summaryFilters": "सारांश फ़िल्टर",
+    "totalStudents": "कुल छात्र",
+    "totalStaff": "कुल कर्मचारी",
+    "todayPresent": "आज उपस्थित",
+    "todayAbsent": "आज अनुपस्थित",
+    "totalDue": "कुल देय",
+    "totalCollected": "कुल एकत्रित",
+    "pendingFees": "लंबित शुल्क",
+    "latestNotifications": "नवीनतम सूचनाएं",
+    "noNewNotifications": "कोई नई सूचना नहीं।",
+    "viewAllNotifications": "सभी सूचनाएं देखें",
+    "addNewFee": "नया शुल्क जोड़ें",
+    "loadingDashboard": "डैशबोर्ड लोड हो रहा है...",
+    "fromYearFilter": "से वर्ष",
+    "toYearFilter": "तक वर्ष",
+    "feeStructures": "शुल्क संरचनाएँ"
+  },
+  "teacher": {
+    "todaysTimetable": "आज का समय सारणी",
+    "noClassesScheduled": "आज कोई कक्षा निर्धारित नहीं है।",
+    "quickActions": "त्वरित कार्य",
+    "addNewAssignment": "नया असाइनमेंट जोड़ें",
+    "takeAttendance": "उपस्थिति दर्ज करें",
+    "createQuiz": "क्विज़ बनाएं",
+    "assignmentStatus": "असाइनमेंट सबमिशन स्थिति",
+    "assignmentCompleted": "पूर्ण",
+    "assignmentPending": "लंबित",
+    "loadingTimetable": "समय सारणी प्राप्त करने में त्रुटि।",
+    "loadingAssignment": "असाइनमेंट डेटा प्राप्त करने में त्रुटि।",
+    "yAxisTitle": "छात्रों की संख्या"
+  },
+  "common": {
+    "allSchools": "सभी स्कूल",
+    "allClasses": "सभी कक्षाएं",
+    "allDivisions": "सभी विभाग",
+    "schoolFilter": "स्कूल",
+    "classFilter": "कक्षा",
+    "divisionFilter": "विभाग",
+    "all": "सभी",
+    "active": "सक्रिय",
+    "draft": "मसौदा",
+    "expired": "समाप्त"
+  },
+  "studentDashboard": {
+    "title": "छात्र डैशबोर्ड - शिक्षक दृश्य",
+    "noAllocatedClasses": "इस शिक्षक के लिए कोई आवंटित कक्षा नहीं मिली। कृपया व्यवस्थापक से संपर्क करें।",
+    "selectClass": "कक्षा चुनें",
+    "selectDivision": "डिवीजन चुनें",
+    "summary": {
+      "totalStudents": "कुल छात्र",
+      "attendanceToday": "आज की उपस्थिति",
+      "averageGrade": "औसत ग्रेड",
+      "pendingTasks": "लंबित कार्य"
+    },
+    "tabs": {
+      "studentList": "छात्र सूची",
+      "performance": "प्रदर्शन अवलोकन",
+      "attendance": "उपस्थिति ट्रैकिंग"
+    },
+    "studentList": {
+      "noData": "चयनित कक्षा व डिवीजन के लिए कोई छात्र नहीं मिला।",
+      "roll": "रोल",
+      "unknown": "अज्ञात",
+      "grade": "ग्रेड: {{value}}"
+    },
+    "performance": {
+      "title": "कक्षा प्रदर्शन विश्लेषण",
+      "noData": "प्रदर्शन विश्लेषण के लिए कोई छात्र नहीं मिला।",
+      "overallGrade": "समग्र ग्रेड: {{value}}"
+    },
+    "attendance": {
+      "title": "उपस्थिति अवलोकन",
+      "noData": "उपस्थिति ट्रैकिंग के लिए कोई छात्र नहीं मिला।",
+      "attendance": "उपस्थिति: {{value}}%",
+      "present": "उपस्थित: {{value}}",
+      "absent": "अनुपस्थित: {{value}}"
+    }
+  }
+}

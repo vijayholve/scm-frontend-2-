@@ -16,8 +16,8 @@ const RolesList = () => {
     const accountId = userDetails.getAccountId();
     
     return (
-        <Grid container spacing={gridSpacing}>
-          <Grid item xs={12}>
+          <Grid container spacing={gridSpacing}>
+            <Grid item xs={12}>
             <ReusableDataGrid
               title="Manage Roles"
               fetchUrl={`/api/roles/getAll/${accountId}`}

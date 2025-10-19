@@ -55,9 +55,19 @@ const ListGridFiltersContainer = ({
           divisionId: studentDefaults.divisionId ?? payload.divisionId ?? ''
         };
       } else if (isTeacher) {
-        payload = { schoolId: teacherSchoolId ?? payload.schoolId ?? '' };
+        // If teacher selects a class or division, include them in the payload
+        payload = {
+          schoolId: teacherSchoolId ?? payload.schoolId ?? '',
+          classId: payload.classId ?? '',
+          divisionId: payload.divisionId ?? ''
+        };
       }
 
+      // Remove classList and divisionList from the payload
+      delete payload.classList;
+      delete payload.divisionList;
+
+      // Remove empty or null values from the payload
       Object.keys(payload).forEach((k) => {
         if (payload[k] === '' || payload[k] == null) delete payload[k];
       });

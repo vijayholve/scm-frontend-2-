@@ -23,15 +23,14 @@ const EditClass = ({ ...others }) => {
     id: undefined,
     name: '',
     schoolbranchId: '',
-    instituteId: '',
-    divisionId: ''
+    instituteId: ''
   });
 
   const Title = classId ? 'Edit Class' : 'Add Class';
   const isEditMode = !!classId;
 
-  // Get SCD data from context instead of API calls
-  const { schools = [], classes = [], divisions = [], loading: scdLoading } = useSCDData();
+  // Get SCD data from context (schools only)
+  const { schools = [] } = useSCDData();
 
   const [institutes, setInstitutes] = useState([]);
   const [allClasses, setAllClasses] = useState([]); // For uniqueness validation
@@ -115,12 +114,12 @@ const EditClass = ({ ...others }) => {
           name: Yup.string()
             .max(255)
             .required('Name is required')
-            .test('is-unique', 'This class name already exists for the selected school and division.', function (value) {
-              const { schoolbranchId, divisionId } = this.parent;
-              if (!value || !schoolbranchId || !divisionId) return true;
+            .test('is-unique', 'This class name already exists for the selected school.', function (value) {
+              const { schoolbranchId } = this.parent;
+              if (!value || !schoolbranchId) return true;
 
               const existingClass = allClasses.find(
-                (c) => c.name.toLowerCase() === value.toLowerCase() && c.schoolbranchId === schoolbranchId && c.divisionId === divisionId
+                (c) => c.name.toLowerCase() === value.toLowerCase() && c.schoolbranchId === schoolbranchId
               );
 
               if (isEditMode && existingClass && existingClass.id === parseInt(classId, 10)) {
@@ -130,8 +129,7 @@ const EditClass = ({ ...others }) => {
               return !existingClass;
             }),
           instituteId: Yup.string().required('Institute is required'),
-          schoolbranchId: Yup.string().required('School is required'),
-          divisionId: Yup.string().required('Division is required')
+          schoolbranchId: Yup.string().required('School is required')
         })}
         onSubmit={handleSubmit}
       >
@@ -191,27 +189,6 @@ const EditClass = ({ ...others }) => {
                       label="School"
                       error={Boolean(touched.schoolbranchId && errors.schoolbranchId)}
                       helperText={touched.schoolbranchId && errors.schoolbranchId}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Division Dropdown */}
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                  disablePortal
-                  value={divisions.find((div) => div.id === values.divisionId) || null}
-                  options={divisions}
-                  getOptionLabel={(option) => option.name}
-                  onChange={(event, newValue) => {
-                    setFieldValue('divisionId', newValue ? newValue.id : '');
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Division"
-                      error={Boolean(touched.divisionId && errors.divisionId)}
-                      helperText={touched.divisionId && errors.divisionId}
                     />
                   )}
                 />

@@ -4,8 +4,9 @@ import { useSelector } from 'react-redux';
 import api from 'utils/apiService';
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
-
+import { useTranslation } from 'react-i18next'; // <-- ADDED
 const TeacherTimetableCard = () => {
+    const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
     const { user } = useSelector((state) => state.user);
     const [timetable, setTimetable] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -40,7 +41,7 @@ const TeacherTimetableCard = () => {
     }, [user]);
 
     return (
-        <MainCard title="Today's Timetable">
+        <MainCard title={t('teacher.todaysTimetable')}>
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                     <CircularProgress />
@@ -70,8 +71,8 @@ const TeacherTimetableCard = () => {
                     ))}
                 </List>
             ) : (
-                <Typography variant="body1" align="center" color="text.secondary">
-                    No classes scheduled for today.
+<Typography variant="body1" align="center" color="text.secondary">         
+{t('teacher.noClassesScheduled')} 
                 </Typography>
             )}
         </MainCard>

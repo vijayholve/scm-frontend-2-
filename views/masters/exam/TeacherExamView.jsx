@@ -24,6 +24,7 @@ import api from 'utils/apiService';
 import QuizResult from '../test/QuizResult';
 import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 import { useSCDData } from 'contexts/SCDProvider';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 // --- New Dummy Data for Questions and Answers ---
 const dummyQuestions = {
@@ -153,9 +154,7 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
             <Button variant="contained" color="primary" onClick={() => onSave(student.studentId)} sx={{ mr: 1 }}>
               Save Marks
             </Button>
-            <Button variant="outlined" onClick={onBack}>
-              Back to List
-            </Button>
+            {/* Back button moved to persistent footer */}
           </Box>
         </Box>
       )}
@@ -173,9 +172,7 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
               {student.studentName}'s Answer: {studentAnswer}
             </Typography>
           </Box>
-          <Button variant="outlined" onClick={onBack} sx={{ mt: 3 }}>
-            Back to List
-          </Button>
+          {/* Back button moved to persistent footer */}
         </Box>
       )}
       {tabValue === 2 && <QuizResultTab quizId={subject.quizId} studentId={student.studentId} />}
@@ -208,6 +205,30 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
           </Grid>
         </Box>
       )}
+
+      {/* Persistent bottom bar visible for all tabs */}
+      <Box
+        sx={{
+          position: 'sticky',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          mt: 2,
+          px: 2,
+          py: 1.5,
+          bgcolor: 'background.paper',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 1,
+          zIndex: 1
+        }}
+      >
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={onBack}>
+          Back
+        </Button>
+      </Box>
     </Paper>
   );
 };

@@ -89,7 +89,7 @@ const TimetableGrid = () => {
     }
 
     return (
-        <MainCard title="StudentParents" secondary={<SecondaryAction icon={<AddIcon onClick={(e) => navigate(`/masters/timetable/add`)} />} />}>
+        <MainCard title="Timetables" secondary={<SecondaryAction icon={<AddIcon onClick={(e) => navigate(`/masters/timetable/add`)} />} />}>
 
             <Box sx={{ maxWidth: 1200, margin: 'auto', mt: 4, p: 2 }}>
                 <Typography variant="h3" gutterBottom sx={{ mb: 4, textAlign: 'center' }}>
@@ -102,7 +102,7 @@ const TimetableGrid = () => {
                             <Accordion key={classObject.id} elevation={2} sx={{ mb: 2 }}>
                                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                     <Typography variant="h5" component="span">
-                                        Timetable for {classObject.className || 'Unknown Class'} (ID: {classObject.id})
+                                        Timetable for {classObject.className || 'Unknown Class'}  {classObject.divisionName ? ` - ${classObject.divisionName}` : ''}
                                     </Typography>
                                 </AccordionSummary>
                                 <AccordionDetails>
@@ -143,12 +143,12 @@ const TimetableGrid = () => {
                         <Accordion key={classObject.id} defaultExpanded elevation={2} sx={{ mb: 3 }}>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                 <Typography variant="h5" component="span">
-                                    Timetable for {classObject.className || 'Unknown Class'}
+                                    Timetable for {classObject.className || 'Unknown Class'} {classObject.divisionName ? ` - ${classObject.divisionName}` : ''}
                                 </Typography>
                             </AccordionSummary>
                             <AccordionDetails sx={{ p: 0 }}> {/* Remove default padding to let TableContainer handle it */}
                                 <TableContainer component={Paper} sx={{ boxShadow: 'none' }}> {/* Remove shadow to avoid double shadow */}
-                                    <Table size="small" aria-label={`Timetable for ${classObject.className}`}>
+                                    <Table size="small" aria-label={`Timetable for ${classObject.className} ${classObject.divisionName || ''}`}>
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell sx={{ fontWeight: 'bold', width: '120px' }}>Day / Time</TableCell>

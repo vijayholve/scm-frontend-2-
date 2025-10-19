@@ -1,12 +1,10 @@
-//import dashboard from './dashboard';
-//import pages from './pages';
 import utilities from './utilities';
-//import other from './other';
+// import backOfficeUtilities from './BackOfficeUtilities';
 
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [utilities]
+  items: [utilities,]
 };
 
 export default menuItems;

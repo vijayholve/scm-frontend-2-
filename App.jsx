@@ -22,7 +22,7 @@ import { SelectorProvider } from './contexts/SelectorContext'; // Use this inste
 import { SCDProvider } from 'contexts/SCDProvider';
 import { fetchScdData } from 'store/scdSlice';
 import { userDetails } from 'utils/apiService';
-
+import './i18n';
 const App = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user?.user);

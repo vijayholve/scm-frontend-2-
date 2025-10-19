@@ -4,21 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import MainCard from 'ui-component/cards/MainCard';
 import { IconBook2, IconCalendarEvent, IconClipboardList, IconPencil } from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
-
+import { useTranslation } from 'react-i18next'; // <-- ADDED
 const TeacherQuickActionsCard = () => {
+    const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
     const navigate = useNavigate();
     const theme = useTheme();
 
     const actions = [
         {
-            label: "Add New Assignment",
+            label: t('teacher.addNewAssignment'), // <-- MODIFIED
             icon: <IconClipboardList stroke={1.5} size="1.3rem" />,
             color: theme.palette.primary.main,
             bgcolor: theme.palette.primary.light,
             route: '/masters/assignment/add'
         },
         {
-            label: "Take Attendance",
+            label: t('teacher.takeAttendance'), // <-- MODIFIED
             icon: <IconCalendarEvent stroke={1.5} size="1.3rem" />,
             color: theme.palette.secondary.main,
             bgcolor: theme.palette.secondary.light,
@@ -26,7 +27,7 @@ const TeacherQuickActionsCard = () => {
         },
         
         {
-            label: "Create a Quiz",
+         label: t('teacher.createQuiz'),
             icon: <IconBook2 stroke={1.5} size="1.3rem" />,
             color: theme.palette.success.dark,
             bgcolor: theme.palette.success.light,
@@ -35,7 +36,7 @@ const TeacherQuickActionsCard = () => {
     ];
 
     return (
-        <MainCard title="Quick Actions">
+        <MainCard title={t('teacher.quickActions')}>
             <Grid container spacing={1} justifyContent="space-around">
                 {actions.map((action, index) => (
                     <Grid item xs={2} sm={1} md={3} key={index}>

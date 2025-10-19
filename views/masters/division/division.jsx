@@ -27,7 +27,7 @@ const Devision = () => {
           isPostRequest={true}
           columns={columns}
           editUrl="/masters/division/edit"
-          addActionUrl="/masters/division/edit"
+          addActionUrl="/masters/division/add"
           deleteUrl="/api/devisions/delete"
           enableFilters={true}
           showSchoolFilter={true}

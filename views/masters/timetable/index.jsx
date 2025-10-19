@@ -30,15 +30,15 @@ const columns = [
     width: 120,
     flex: 0.6
   },
-  {
-    field: 'createdDate',
-    headerName: 'Created Date',
-    width: 120,
-    flex: 0.7,
-    renderCell: (params) => {
-      return params.value ? new Date(params.value).toLocaleDateString() : 'N/A';
-    }
-  }
+  // {
+  //   field: 'createdDate',
+  //   headerName: 'Created Date',
+  //   width: 120,
+  //   flex: 0.7,
+  //   renderCell: (params) => {
+  //     return params.value ? new Date(params.value).toLocaleDateString() : 'N/A';
+  //   }
+  // }
 ];
 
 const Timetables = () => {

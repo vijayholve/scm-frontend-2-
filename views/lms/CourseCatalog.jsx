@@ -28,10 +28,15 @@ import {
   MenuBook as CourseIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+// Add these imports for API calls
+import { useDataCache } from '../../contexts/DataCacheContext';
+import { userDetails } from '../../utils/apiService';
+import LMSLayout from 'ui-component/lms/LMSLayout';
 
 const CourseCatalog = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { fetchData } = useDataCache(); // Use DataCacheContext for consistent caching
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,16 +47,10 @@ const CourseCatalog = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 9;
 
-  const categories = [
-    'Web Development',
-    'Data Science',
-    'Digital Marketing',
-    'Design',
-    'Business',
-    'Programming',
-    'Photography',
-    'Music'
-  ];
+  // Get accountId for API calls
+  const accountId = userDetails.getAccountId() || 10;
+
+  const categories = ['Web Development', 'Data Science', 'Digital Marketing', 'Design', 'Business', 'Programming', 'Photography', 'Music'];
 
   const levels = ['Beginner', 'Intermediate', 'Advanced'];
   const priceOptions = ['Free', 'Paid', 'Premium'];
@@ -67,169 +66,171 @@ const CourseCatalog = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      // This would be your actual API call
-      // const response = await api.get('/api/lms/courses');
-      // For now, using mock data
-      const mockCourses = [
-        {
-          id: 1,
-          title: 'Introduction to Web Development',
-          description: 'Learn the basics of HTML, CSS, and JavaScript',
-          category: 'Web Development',
-          level: 'Beginner',
-          instructor: 'John Doe',
-          rating: 4.8,
-          students: 1200,
-          price: 'Free',
-          originalPrice: '$99',
-          duration: '8 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 2,
-          title: 'Advanced React Development',
-          description: 'Master React with hooks, context, and advanced patterns',
-          category: 'Web Development',
-          level: 'Advanced',
-          instructor: 'Jane Smith',
-          rating: 4.9,
-          students: 850,
-          price: '$149',
-          duration: '12 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 3,
-          title: 'Data Science Fundamentals',
-          description: 'Explore data analysis, visualization, and machine learning',
-          category: 'Data Science',
-          level: 'Intermediate',
-          instructor: 'Mike Johnson',
-          rating: 4.7,
-          students: 600,
-          price: '$99',
-          duration: '10 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 4,
-          title: 'Digital Marketing Mastery',
-          description: 'Learn modern digital marketing strategies and tools',
-          category: 'Digital Marketing',
-          level: 'Beginner',
-          instructor: 'Sarah Wilson',
-          rating: 4.6,
-          students: 400,
-          price: '$79',
-          duration: '6 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 5,
-          title: 'UI/UX Design Principles',
-          description: 'Create beautiful and user-friendly interfaces',
-          category: 'Design',
-          level: 'Beginner',
-          instructor: 'Alex Chen',
-          rating: 4.8,
-          students: 750,
-          price: 'Free',
-          originalPrice: '$129',
-          duration: '8 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 6,
-          title: 'Python for Beginners',
-          description: 'Start your programming journey with Python',
-          category: 'Programming',
-          level: 'Beginner',
-          instructor: 'David Brown',
-          rating: 4.9,
-          students: 1500,
-          price: 'Free',
-          duration: '6 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 7,
-          title: 'Business Strategy and Planning',
-          description: 'Develop effective business strategies for growth',
-          category: 'Business',
-          level: 'Intermediate',
-          instructor: 'Lisa Garcia',
-          rating: 4.5,
-          students: 300,
-          price: '$199',
-          duration: '10 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 8,
-          title: 'Photography Masterclass',
-          description: 'Capture stunning photos with professional techniques',
-          category: 'Photography',
-          level: 'Intermediate',
-          instructor: 'Tom Anderson',
-          rating: 4.7,
-          students: 500,
-          price: '$89',
-          duration: '8 weeks',
-          image: '/api/placeholder/300/200'
-        },
-        {
-          id: 9,
-          title: 'Music Production Basics',
-          description: 'Create your own music with digital audio workstations',
-          category: 'Music',
-          level: 'Beginner',
-          instructor: 'Emma Davis',
-          rating: 4.6,
-          students: 200,
-          price: '$119',
-          duration: '12 weeks',
-          image: '/api/placeholder/300/200'
+
+      if (accountId) {
+        // Use real API call with DataCacheContext pattern
+        const result = await fetchData(`/api/lms/course/getAll/${accountId}`, {
+          page: 0,
+          size: 1000, // Get all courses for catalog
+          sortBy: 'id',
+          sortDir: 'desc',
+          search: ''
+        });
+
+        if (result.success && result.data) {
+          // Transform API response to match component expectations
+          const transformedCourses = result.data.map((course) => ({
+            id: course.id,
+            title: course.title || 'Untitled Course',
+            description: course.description || 'No description available',
+            category: course.category || 'General',
+            level: course.level || 'Beginner',
+            instructor: course.instructorName || course.instructor || 'TBD',
+            rating: course.rating || 4.5,
+            students: course.enrolledStudents || course.students || 0,
+            price: course.price || 'Free',
+            originalPrice: course.originalPrice,
+            duration: course.duration || '8 weeks',
+            image: course.courseBanner || course.headerBanner || '/api/placeholder/300/200',
+            status: course.status,
+            schoolName: course.schoolName,
+            className: course.className,
+            divisionName: course.divisionName
+          }));
+
+          setCourses(transformedCourses);
+        } else {
+          console.warn('Failed to fetch courses from API, using fallback');
+          setCourses(getMockCourses());
         }
-      ];
-      
-      setCourses(mockCourses);
+      } else {
+        // Fallback to mock data if no accountId (guest user)
+        setCourses(getMockCourses());
+      }
     } catch (error) {
       console.error('Failed to fetch courses:', error);
+      // Fallback to mock data on error
+      setCourses(getMockCourses());
     } finally {
       setLoading(false);
     }
   };
+
+  // Keep mock data as fallback
+  const getMockCourses = () => [
+    {
+      id: 1,
+      title: 'Introduction to Web Development',
+      description: 'Learn the basics of HTML, CSS, and JavaScript',
+      category: 'Web Development',
+      level: 'Beginner',
+      instructor: 'John Doe',
+      rating: 4.8,
+      students: 1200,
+      price: 'Free',
+      originalPrice: '$99',
+      duration: '8 weeks',
+      image: '/api/placeholder/300/200'
+    },
+    {
+      id: 2,
+      title: 'Advanced React Development',
+      description: 'Master React with hooks, context, and advanced patterns',
+      category: 'Web Development',
+      level: 'Advanced',
+      instructor: 'Jane Smith',
+      rating: 4.9,
+      students: 850,
+      price: '$149',
+      duration: '12 weeks',
+      image: '/api/placeholder/300/200'
+    },
+    {
+      id: 3,
+      title: 'Data Science Fundamentals',
+      description: 'Explore data analysis, visualization, and machine learning',
+      category: 'Data Science',
+      level: 'Intermediate',
+      instructor: 'Mike Johnson',
+      rating: 4.7,
+      students: 600,
+      price: '$99',
+      duration: '10 weeks',
+      image: '/api/placeholder/300/200'
+    },
+    {
+      id: 4,
+      title: 'Digital Marketing Mastery',
+      description: 'Learn modern digital marketing strategies and tools',
+      category: 'Digital Marketing',
+      level: 'Beginner',
+      instructor: 'Sarah Wilson',
+      rating: 4.6,
+      students: 400,
+      price: '$79',
+      duration: '6 weeks',
+      image: '/api/placeholder/300/200'
+    },
+    {
+      id: 5,
+      title: 'UI/UX Design Principles',
+      description: 'Create beautiful and user-friendly interfaces',
+      category: 'Design',
+      level: 'Beginner',
+      instructor: 'Alex Chen',
+      rating: 4.8,
+      students: 750,
+      price: 'Free',
+      originalPrice: '$129',
+      duration: '8 weeks',
+      image: '/api/placeholder/300/200'
+    },
+    {
+      id: 6,
+      title: 'Python for Beginners',
+      description: 'Start your programming journey with Python',
+      category: 'Programming',
+      level: 'Beginner',
+      instructor: 'David Brown',
+      rating: 4.9,
+      students: 1500,
+      price: 'Free',
+      duration: '6 weeks',
+      image: '/api/placeholder/300/200'
+    }
+  ];
 
   const filterCourses = () => {
     let filtered = courses;
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(course =>
-        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (course) =>
+          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Category filter
     if (categoryFilter !== 'all') {
-      filtered = filtered.filter(course => course.category === categoryFilter);
+      filtered = filtered.filter((course) => course.category === categoryFilter);
     }
 
     // Level filter
     if (levelFilter !== 'all') {
-      filtered = filtered.filter(course => course.level === levelFilter);
+      filtered = filtered.filter((course) => course.level === levelFilter);
     }
 
     // Price filter
     if (priceFilter !== 'all') {
       if (priceFilter === 'Free') {
-        filtered = filtered.filter(course => course.price === 'Free');
+        filtered = filtered.filter((course) => course.price === 'Free');
       } else if (priceFilter === 'Paid') {
-        filtered = filtered.filter(course => course.price !== 'Free' && !course.price.includes('$199'));
+        filtered = filtered.filter((course) => course.price !== 'Free' && !course.price.includes('$199'));
       } else if (priceFilter === 'Premium') {
-        filtered = filtered.filter(course => course.price.includes('$199') || parseInt(course.price.replace('$', '')) >= 150);
+        filtered = filtered.filter((course) => course.price.includes('$199') || parseInt(course.price.replace('$', '')) >= 150);
       }
     }
 
@@ -250,19 +251,18 @@ const CourseCatalog = () => {
           backgroundColor: theme.palette.grey[300],
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          backgroundImage: course.image && course.image !== '/api/placeholder/300/200' ? `url(${course.image})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}
       >
-        <CourseIcon sx={{ fontSize: 60, color: theme.palette.grey[500] }} />
+        {(!course.image || course.image === '/api/placeholder/300/200') && (
+          <CourseIcon sx={{ fontSize: 60, color: theme.palette.grey[500] }} />
+        )}
       </CardMedia>
       <CardContent sx={{ flexGrow: 1 }}>
-        <Chip 
-          label={course.category} 
-          size="small" 
-          color="primary" 
-          variant="outlined" 
-          sx={{ mb: 1 }} 
-        />
+        <Chip label={course.category} size="small" color="primary" variant="outlined" sx={{ mb: 1 }} />
         <Typography gutterBottom variant="h6" component="div">
           {course.title}
         </Typography>
@@ -281,27 +281,26 @@ const CourseCatalog = () => {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
           Instructor: {course.instructor}
         </Typography>
+        {/* Show school/class info if available */}
+        {course.schoolName && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            School: {course.schoolName}
+          </Typography>
+        )}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box>
             <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
               {course.price}
             </Typography>
             {course.originalPrice && course.price === 'Free' && (
-              <Typography 
-                variant="body2" 
-                sx={{ textDecoration: 'line-through', color: 'text.secondary' }}
-              >
+              <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
                 {course.originalPrice}
               </Typography>
             )}
           </Box>
           <Chip label={course.level} size="small" />
         </Box>
-        <Button 
-          variant="contained" 
-          fullWidth
-          onClick={() => navigate(`/lms/course/${course.id}`)}
-        >
+        <Button variant="contained" fullWidth onClick={() => navigate(`/lms/course/${course.id}`)}>
           View Details
         </Button>
       </CardContent>
@@ -322,27 +321,7 @@ const CourseCatalog = () => {
   }
 
   return (
-    <Box>
-      {/* Navigation Header */}
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={() => navigate('/lms')}
-            sx={{ mr: 2 }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <SchoolIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Course Catalog
-          </Typography>
-          <Button color="inherit" onClick={() => navigate('/login')}>
-            Login
-          </Button>
-        </Toolbar>
-      </AppBar>
+    <LMSLayout>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Header */}
@@ -371,11 +350,7 @@ const CourseCatalog = () => {
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
                   <InputLabel>Category</InputLabel>
-                  <Select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    label="Category"
-                  >
+                  <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} label="Category">
                     <MenuItem value="all">All Categories</MenuItem>
                     {categories.map((category) => (
                       <MenuItem key={category} value={category}>
@@ -388,11 +363,7 @@ const CourseCatalog = () => {
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
                   <InputLabel>Level</InputLabel>
-                  <Select
-                    value={levelFilter}
-                    onChange={(e) => setLevelFilter(e.target.value)}
-                    label="Level"
-                  >
+                  <Select value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)} label="Level">
                     <MenuItem value="all">All Levels</MenuItem>
                     {levels.map((level) => (
                       <MenuItem key={level} value={level}>
@@ -405,11 +376,7 @@ const CourseCatalog = () => {
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
                   <InputLabel>Price</InputLabel>
-                  <Select
-                    value={priceFilter}
-                    onChange={(e) => setPriceFilter(e.target.value)}
-                    label="Price"
-                  >
+                  <Select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)} label="Price">
                     <MenuItem value="all">All Prices</MenuItem>
                     {priceOptions.map((price) => (
                       <MenuItem key={price} value={price}>
@@ -434,8 +401,8 @@ const CourseCatalog = () => {
             <Typography variant="h6" color="text.secondary">
               No courses found matching your criteria
             </Typography>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               sx={{ mt: 2 }}
               onClick={() => {
                 setSearchTerm('');
@@ -460,19 +427,13 @@ const CourseCatalog = () => {
             {/* Pagination */}
             {totalPages > 1 && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <Pagination 
-                  count={totalPages} 
-                  page={currentPage} 
-                  onChange={handlePageChange}
-                  color="primary"
-                  size="large"
-                />
+                <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} color="primary" size="large" />
               </Box>
             )}
           </>
         )}
       </Container>
-    </Box>
+    </LMSLayout>
   );
 };
 

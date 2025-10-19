@@ -3,14 +3,12 @@ import { useSelector } from 'react-redux';
 import getMainRoutes from './MainRoutes';
 import LoginRoutes from './AuthenticationRoutes';
 import LMSRoutes from './LMSRoutes';
+import BackOfficeRoutes from './BackOfficeRoutes';
 
 const RouterProviderWrapper = () => {
   const permissions = useSelector((state) => state.user.permissions || []);
-  const router = createBrowserRouter([
-    getMainRoutes(permissions), 
-    LoginRoutes, 
-    LMSRoutes
-  ], {
+
+  const router = createBrowserRouter([getMainRoutes(permissions), LoginRoutes, LMSRoutes, BackOfficeRoutes()], {
     basename: import.meta.env.VITE_APP_BASE_NAME
   });
 

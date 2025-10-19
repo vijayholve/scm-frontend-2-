@@ -1,0 +1,48 @@
+{
+  "header": {
+    "actions": "कार्य",
+    "totalOrder": "कुल ऑर्डर",
+    "totalIncome": "कुल आय"
+  },
+  "tooltip": {
+    "viewDetails": "विवरण देखें",
+    "enroll": "नामांकन करें",
+    "edit": "संपादित करें",
+    "delete": "हटाएं",
+    "viewSubjects": "विषय देखें",
+    "viewSchedule": "समय सारणी देखें"
+  },
+  "action": {
+    "refresh": "ताज़ा करें",
+    "viewMore": "और दिखाओ",
+    "viewAll": "सभी देखें",
+    "saveAll": "सभी सहेजें"
+  },
+  "search": {
+    "placeholder": "कुछ भी खोजें...",
+    "filtersActive": "फ़िल्टर सक्रिय"
+  },
+  "filter": {
+    "selectSchool": "स्कूल चुनें",
+    "selectClass": "कक्षा चुनें",
+    "selectDivision": "विभाग चुनें",
+    "allSchools": "सभी स्कूल",
+    "allClasses": "सभी कक्षाएं",
+    "allDivisions": "सभी विभाग",
+    "clear": "साफ़ करें",
+    "all": "सभी"
+  },
+  "columnHeader": {
+    "school": "स्कूल",
+    "class": "कक्षा",
+    "division": "विभाग"
+  },
+  "confirm": {
+    "deleteItem": "क्या आप वाकई इस आइटम को हटाना चाहते हैं?"
+  },
+  "toast": {
+    "deleteSuccess": "आइटम सफलतापूर्वक हटा दिया गया!",
+    "deleteFail": "आइटम हटाने में विफल रहा।",
+    "fetchFail": "डेटा प्राप्त नहीं किया जा सका।"
+  }
+}

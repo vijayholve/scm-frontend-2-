@@ -55,7 +55,7 @@ const AttendenceEdit = () => {
   const [loading, setLoading] = useState(false);
   const [reqData, setReqData] = useState({
     schoolId: null,
-    schooldClassId: null,
+    classId: null,
     divisionId: null,
     subjectId: null,
     date: null,
@@ -98,7 +98,7 @@ const AttendenceEdit = () => {
           setAttendenceData(data);
           setReqData({
             schoolId: data.schoolId,
-            schooldClassId: data.schooldClassId,
+            classId: data.classId,
             divisionId: data.divisionId,
             subjectId: data.subjectId,
             date: dayjs(data.attendanceDate).format('YYYY-MM-DD'),
@@ -115,16 +115,16 @@ const AttendenceEdit = () => {
 
   // Fetch attendance data based on selection
   useEffect(() => {
-    const { schooldClassId, divisionId, subjectId, date } = reqData;
-    if (schooldClassId && divisionId && subjectId && date) {
-      fetchAttendance(schooldClassId, divisionId, subjectId, date);
+    const { classId, divisionId, subjectId, date } = reqData;
+    if (classId && divisionId && subjectId && date) {
+      fetchAttendance(classId, divisionId, subjectId, date);
     }
   }, [reqData]);
 
   // Fetch students based on selected class and division
-  const fetchAttendance = async (schooldClassId, divisionId, subjectId, date) => {
+  const fetchAttendance = async (classId, divisionId, subjectId, date) => {
     setLoading(true);
-    const url = `api/attendance/getAttendanceBy/${userDetails.getAccountId()}?divisionId=${divisionId}&classId=${schooldClassId}&subjectId=${subjectId}&date=${date}`;
+    const url = `api/attendance/getAttendanceBy/${userDetails.getAccountId()}?divisionId=${divisionId}&classId=${classId}&subjectId=${subjectId}&date=${date}`;
     try {
       const response = await api.get(url);
       setAttendenceData(response.data || []);
@@ -137,16 +137,16 @@ const AttendenceEdit = () => {
 
   // SCDSelector adapter for this non-Formik form:
   // SCDSelector calls setFieldValue('schoolId'|'classId'|'divisionId', value)
-  // We map 'classId' -> reqData.schooldClassId to keep existing payload shape.
+  // We map 'classId' -> reqData.classId to keep existing payload shape.
   const scdAdapter = {
     values: {
       schoolId: reqData.schoolId,
-      classId: reqData.schooldClassId,
+      classId: reqData.classId,
       divisionId: reqData.divisionId
     },
     setFieldValue: (field, value) => {
       if (field === 'classId') {
-        setReqData((prev) => ({ ...prev, schooldClassId: value }));
+        setReqData((prev) => ({ ...prev, classId: value }));
       } else {
         setReqData((prev) => ({ ...prev, [field]: value }));
       }
@@ -177,8 +177,8 @@ const AttendenceEdit = () => {
     if (!reqData.schoolId) {
       errors.schoolId = 'School is required';
     }
-    if (!reqData.schooldClassId) {
-      errors.schooldClassId = 'Class is required';
+    if (!reqData.classId) {
+      errors.classId = 'Class is required';
     }
     if (!reqData.divisionId) {
       errors.divisionId = 'Division is required';
@@ -204,12 +204,12 @@ const AttendenceEdit = () => {
       return;
     }
 
-    const { schooldClassId, divisionId, subjectId, date, className, subjectName, divisionName, schoolId, schoolName } = reqData;
+    const { classId, divisionId, subjectId, date, className, subjectName, divisionName, schoolId, schoolName } = reqData;
 
     const payload = {
       attendanceDate: date,
       studentAttendanceMappings: students,
-      schooldClassId: schooldClassId,
+      classId: classId,
       divisionId: divisionId,
       schoolId: schoolId,
       schoolName: schoolName,

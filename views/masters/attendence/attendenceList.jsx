@@ -11,6 +11,8 @@ import { Grid } from '@mui/material';
 
 // Define the columns for the attendance data grid.
 const columns = [
+    { field: 'id', headerName: 'ID', width: 90 },
+
   { field: 'className', headerName: 'Class', width: 150 },
   { field: 'divisionName', headerName: 'Division', width: 150 },
   { field: 'subjectName', headerName: 'Subject', width: 150 },
@@ -45,8 +47,7 @@ const AttendanceList = () => {
             columns={columns}
             editUrl="/masters/attendance/edit"
             sortDir ="desc"
-                        addActionUrl="/masters/attendance/add"
-
+              addActionUrl="/masters/attendance/add"
             deleteUrl="/api/attendance/delete"
             enableFilters={true}
             showSchoolFilter={true}

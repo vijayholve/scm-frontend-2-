@@ -10,6 +10,7 @@ import ProfileHeader from 'ui-component/UserProfile/ProfileHeader';
 import UserDetailsSection from 'ui-component/UserProfile/UserDetailsSection';
 import ActivitySection from 'ui-component/UserProfile/ActivitySection';
 import CollaborationSection from 'ui-component/UserProfile/CollaborationSection';
+import StudentDashboardView from './StudentDashboardView';
 
 /**
  * StudentView Component
@@ -161,12 +162,15 @@ const StudentView = () => {
         <Box sx={{ mt: 4 }}>
           <CollaborationSection user={studentData} />
         </Box>
-
+        <Box sx={{ mt: 4 }}>
+        <StudentDashboardView studentId={studentData.id} />
+      </Box>
       </Paper>
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
         <BackButton BackUrl="/masters/students" />
       </Box>
+   
     </MainCard>
   );
 };

@@ -10,17 +10,39 @@ import {
   CircularProgress,
   Divider,
   Alert,
-  Paper
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { CloudUpload as UploadIcon, FileDownload as DownloadIcon } from '@mui/icons-material';
 import api from 'utils/apiService';
 import { toast } from 'react-hot-toast';
+import { useSelector } from 'react-redux';
 
 const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [uploadResult, setUploadResult] = useState(null);
+
+  // SCD selector state
+  const scd = useSelector((state) => state.scd || {}); // scdProvider / scdSlice should populate this
+  const schools = scd.schools || scd.schoolList || [];
+  const classesList = scd.classes || scd.classList || [];
+  const divisions = scd.divisions || scd.divisionList || [];
+
+  const [selectedSchool, setSelectedSchool] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedDivision, setSelectedDivision] = useState('');
+
+  const isScdSelected = selectedSchool && selectedClass && selectedDivision;
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
@@ -63,6 +85,11 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
   };
 
   const handleUpload = async () => {
+    if (!isScdSelected) {
+      setError('Please select School, Class and Division before uploading.');
+      return;
+    }
+
     if (!file) {
       setError('Please select a file to upload.');
       return;
@@ -73,6 +100,10 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
 
     const formData = new FormData();
     formData.append('file', file);
+    // include SCD selection in form data so backend can associate uploaded users
+    formData.append('schoolId', selectedSchool);
+    formData.append('classId', selectedClass);
+    formData.append('divisionId', selectedDivision);
 
     try {
       const response = await api.post('/api/users/upload', formData, {
@@ -82,7 +113,7 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
       });
       setUploadResult(response.data);
       toast.success(`${response.data.successCount} students uploaded successfully!`);
-      onUploadSuccess(); // Call success callback to notify parent
+      // if (typeof onUploadSuccess === 'function') onUploadSuccess(response.data);
       // Keep the modal open to show the result
     } catch (err) {
       setError('Failed to upload file. Please check the format and try again.');
@@ -104,8 +135,89 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
       <Divider />
       <DialogContent>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          To add multiple students, download the sample Excel file, fill in the details, and upload it here.
+          Select School, Class and Division first. After selection, upload the filled Excel file.
         </Typography>
+
+        {/* SCD selectors */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2, mb: 3 }}>
+          <FormControl size="small" fullWidth>
+            <InputLabel id="school-select-label">School</InputLabel>
+            <Select
+              labelId="school-select-label"
+              label="School"
+              value={selectedSchool}
+              onChange={(e) => {
+                setSelectedSchool(e.target.value);
+                setSelectedClass('');
+                setSelectedDivision('');
+                setUploadResult(null);
+                setError('');
+              }}
+            >
+              <MenuItem value="">Select School</MenuItem>
+              {schools.map((s) => (
+                <MenuItem key={s.id ?? s.schoolId} value={s.id ?? s.schoolId}>
+                  {s.schoolName ?? s.name ?? s.displayName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" fullWidth disabled={!selectedSchool}>
+            <InputLabel id="class-select-label">Class</InputLabel>
+            <Select
+              labelId="class-select-label"
+              label="Class"
+              value={selectedClass}
+              onChange={(e) => {
+                setSelectedClass(e.target.value);
+                setSelectedDivision('');
+                setUploadResult(null);
+                setError('');
+              }}
+            >
+              <MenuItem value="">Select Class</MenuItem>
+              {classesList
+                .filter((c) => {
+                  if (!selectedSchool) return true;
+                  // some scd shapes include schoolId on class entries
+                  return c.schoolId ? String(c.schoolId) === String(selectedSchool) : true;
+                })
+                .map((c) => (
+                  <MenuItem key={c.id ?? c.classId} value={c.id ?? c.classId}>
+                    {c.className ?? c.name}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" fullWidth disabled={!selectedClass}>
+            <InputLabel id="division-select-label">Division</InputLabel>
+            <Select
+              labelId="division-select-label"
+              label="Division"
+              value={selectedDivision}
+              onChange={(e) => {
+                setSelectedDivision(e.target.value);
+                setUploadResult(null);
+                setError('');
+              }}
+            >
+              <MenuItem value="">Select Division</MenuItem>
+              {divisions
+                .filter((d) => {
+                  if (!selectedClass) return true;
+                  // some scd shapes include classId on division entries
+                  return d.classId ? String(d.classId) === String(selectedClass) : true;
+                })
+                .map((d) => (
+                  <MenuItem key={d.id ?? d.divisionId} value={d.id ?? d.divisionId}>
+                    {d.divisionName ?? d.name ?? d.displayName}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleDownloadSample} disabled={loading}>
@@ -123,7 +235,13 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
             borderColor: error ? 'error.main' : 'divider',
             '&:hover': { borderColor: 'primary.main' }
           }}
-          onClick={() => document.getElementById('file-input').click()}
+          onClick={() => {
+            if (!isScdSelected) {
+              setError('Please select School, Class and Division first.');
+              return;
+            }
+            document.getElementById('file-input').click();
+          }}
         >
           <input type="file" id="file-input" accept=".xlsx" style={{ display: 'none' }} onChange={handleFileChange} />
           <UploadIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
@@ -143,18 +261,99 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
 
         {uploadResult && (
           <Paper elevation={2} sx={{ p: 2, mt: 2, backgroundColor: 'background.default' }}>
-            <Typography variant="h6" gutterBottom>
-              Upload Summary
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+              <Typography variant="h6">Upload Summary</Typography>
+              {/* optional: download full response as JSON */}
+              <IconButton
+                size="small"
+                onClick={() => {
+                  const blob = new Blob([JSON.stringify(uploadResult, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'upload-result.json';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                title="Download result JSON"
+              >
+                <DownloadIcon />
+              </IconButton>
+            </Box>
+
+            <Typography color="success.main" sx={{ fontWeight: 700 }}>
+              Created: {uploadResult.successCount ?? 0}
             </Typography>
-            <Typography color="success.main">Successfully created users: {uploadResult.successCount}</Typography>
-            <Typography color="error.main">Failed to create users: {uploadResult.failCount}</Typography>
-            <Typography>Total records processed: {uploadResult.totalCount}</Typography>
-            {uploadResult.failCount > 0 && (
+            <Typography color="error.main" sx={{ fontWeight: 700 }}>
+              Failed: {uploadResult.failCount ?? 0}
+            </Typography>
+            <Typography>
+              Total processed: {uploadResult.totalCount ?? (uploadResult.successCount ?? 0) + (uploadResult.failCount ?? 0)}
+            </Typography>
+
+            {/* Success details if backend returns items (optional) */}
+            {uploadResult.successCount > 0 && uploadResult.successes && Array.isArray(uploadResult.successes) && (
+              <Box mt={2}>
+                <Typography variant="subtitle1" color="success.main">
+                  Created Users
+                </Typography>
+                <List dense>
+                  {uploadResult.successes.map((s, i) => (
+                    <ListItem key={`succ-${i}`}>
+                      <ListItemText primary={s.userName ?? s.studentName ?? s.email ?? String(s.id ?? i)} secondary={s.message ?? null} />
+                      <Chip label="Created" color="success" size="small" />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* Failure details: support object map or array of failures */}
+            {uploadResult.failCount > 0 && uploadResult.failures && (
               <Box mt={2}>
                 <Typography variant="subtitle1" color="error.main">
-                  Failure Details:
+                  Failure Details
                 </Typography>
-                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{JSON.stringify(uploadResult.failures, null, 2)}</pre>
+
+                {typeof uploadResult.failures === 'object' && !Array.isArray(uploadResult.failures) ? (
+                  <List dense>
+                    {Object.entries(uploadResult.failures).map(([key, val]) => (
+                      <ListItem key={key} alignItems="flex-start" sx={{ py: 0.5 }}>
+                        <ListItemText
+                          primary={
+                            <Box display="flex" alignItems="center" justifyContent="space-between">
+                              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                {key}
+                              </Typography>
+                            </Box>
+                          }
+                          secondary={
+                            <Typography variant="caption" color="text.secondary">
+                              {String(val)}
+                            </Typography>
+                          }
+                        />
+                        <Chip label="Failed" color="error" size="small" />
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : Array.isArray(uploadResult.failures) ? (
+                  <List dense>
+                    {uploadResult.failures.map((f, idx) => (
+                      <ListItem key={`fail-${idx}`} sx={{ py: 0.5 }}>
+                        <ListItemText
+                          primary={f.record ?? f.name ?? `Record ${idx + 1}`}
+                          secondary={f.error ?? f.message ?? JSON.stringify(f)}
+                        />
+                        <Chip label="Failed" color="error" size="small" />
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" mt={1}>
+                    {String(uploadResult.failures)}
+                  </Typography>
+                )}
               </Box>
             )}
           </Paper>
@@ -167,7 +366,7 @@ const BulkUploadModal = ({ open, onClose, onUploadSuccess }) => {
         <Button
           variant="contained"
           onClick={handleUpload}
-          disabled={!file || loading}
+          disabled={!file || loading || !isScdSelected}
           startIcon={loading ? <CircularProgress size={20} /> : <UploadIcon />}
         >
           {loading ? 'Uploading...' : 'Upload'}

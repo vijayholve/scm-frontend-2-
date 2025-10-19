@@ -27,6 +27,8 @@ import api from 'utils/apiService';
 import { useSelector } from 'react-redux';
 import FeeStructureForm from 'views/masters/fee/components/FeeStructureForm';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
+import { useTranslation } from 'react-i18next'; // <-- ADDED
+
 const FeeDashboard = () => {
   const navigate = useNavigate(); 
   const [schools, setSchools] = useState([]);
@@ -65,7 +67,7 @@ const FeeDashboard = () => {
     totalPaid: 0,
     totalPending: 0
   });
-
+const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
   const fetchMasters = async () => {
     try {
       setLoading(true);
@@ -189,11 +191,10 @@ const FeeDashboard = () => {
       headerName: 'Status',
       width: 120,
       renderCell: (params) => {
-        console.log(params?.status);
         const statusConfig = {
-          'active': { color: 'success', label: 'Active' },
-          'draft': { color: 'warning', label: 'Draft' },
-          'expired': { color: 'error', label: 'Expired' }
+          'active': { color: 'success', label: t('common.active') }, 
+          'draft': { color: 'warning', label: t('common.draft') },   
+          'expired': { color: 'error', label: t('common.expired') }  
         };
         const config = statusConfig[params.value] || { color: 'default', label: params.value };
         return <Chip label={config.label} color={config.color} size="small" />;
@@ -252,8 +253,7 @@ const FeeDashboard = () => {
         startIcon={<AddIcon />}
         onClick={() => { setEditFeeId(null); setOpenSetupModal(true); }}
       >
-        Add New Fee
-      </Button>
+{t('admin.addNewFee')}      </Button>
     </Box>
   );
 
@@ -265,12 +265,12 @@ const FeeDashboard = () => {
             <TextField
               select
               fullWidth
-              label="School"
-              value={selectedSchool}
+label={t('common.schoolFilter')}            
+  value={selectedSchool}
               onChange={(e) => setSelectedSchool(e.target.value)}
             >
-              <MenuItem value="">All Schools</MenuItem>
-              {schools.map((school) => (
+<MenuItem value="">{t('common.allSchools')}</MenuItem>
+        {schools.map((school) => (
                 <MenuItem key={school.id} value={school.id}>
                   {school.name}
                 </MenuItem>
@@ -281,12 +281,11 @@ const FeeDashboard = () => {
             <TextField
               select
               fullWidth
-              label="Class"
+            label={t('common.classFilter')}
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
             >
-              <MenuItem value="">All Classes</MenuItem>
-              {classes.map((cls) => (
+<MenuItem value="">{t('common.allClasses')}</MenuItem>              {classes.map((cls) => (
                 <MenuItem key={cls.id} value={cls.id}>
                   {cls.name}
                 </MenuItem>
@@ -297,11 +296,11 @@ const FeeDashboard = () => {
             <TextField
               select
               fullWidth
-              label="Division"
+              label={t('common.divisionFilter')}
               value={selectedDivision}
               onChange={(e) => setSelectedDivision(e.target.value)}
             >
-              <MenuItem value="">All Divisions</MenuItem>
+              <MenuItem value="">{t('common.allDivisions')}</MenuItem>
               {divisions.map((division) => (
                 <MenuItem key={division.id} value={division.id}>
                   {division.name}
@@ -313,11 +312,11 @@ const FeeDashboard = () => {
             <TextField
               select
               fullWidth
-              label="From Year"
+              label={t('common.fromYear')}
               value={fromYear}
               onChange={(e) => setFromYear(e.target.value)}
             >
-              <MenuItem value="">All</MenuItem>
+              <MenuItem value="">{t('common.allYears')}</MenuItem>
               {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map((y) => (
                 <MenuItem key={y} value={y}>{`${y}-${y + 1}`}</MenuItem>
               ))}
@@ -327,11 +326,11 @@ const FeeDashboard = () => {
             <TextField
               select
               fullWidth
-              label="To Year"
+              label={t('admin.toYearFilter')} // <-- TRANSLATED
               value={toYear}
               onChange={(e) => setToYear(e.target.value)}
             >
-              <MenuItem value="">All</MenuItem>
+              <MenuItem value="">{t('common.all')}</MenuItem>
               {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map((y) => (
                 <MenuItem key={y} value={y}>{`${y}-${y + 1}`}</MenuItem>
               ))}
@@ -344,7 +343,7 @@ const FeeDashboard = () => {
         <Grid item xs={12} md={4}>
           <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
             <CardContent>
-              <Typography variant="h6">Total Due</Typography>
+       <Typography variant="h6">{t('admin.totalDue')}</Typography> 
               <Typography variant="h4">{formatCurrency(summaryData.totalAmount)}</Typography>
             </CardContent>
           </Card>
@@ -352,15 +351,15 @@ const FeeDashboard = () => {
         <Grid item xs={12} md={4}>
           <Card sx={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
             <CardContent>
-              <Typography variant="h6">Total Collected</Typography>
+<Typography variant="h6">{t('admin.totalCollected')}</Typography>
               <Typography variant="h4">{formatCurrency(summaryData.totalPaid)}</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+     <Grid item xs={12} md={4}>
           <Card sx={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
             <CardContent>
-              <Typography variant="h6">Pending Fees</Typography>
+              <Typography variant="h6">{t('admin.pendingFees')}</Typography>
               <Typography variant="h4">{formatCurrency(summaryData.totalPending)}</Typography>
             </CardContent>
           </Card>

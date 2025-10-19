@@ -118,8 +118,8 @@ const UserProfile = () => {
             <CollaborationSection user={user} />
           </>
         );
-      case 'id-card':
-        return <IDCardDisplay user={user} />;
+      // case 'id-card':
+      //   return <IDCardDisplay user={user} />;
       case 'my-exams':
         return userRole === 'STUDENT' ? <StudentExamsList studentId={user.id} /> : <Typography>Not Applicable</Typography>;
       case 'my-documents':
@@ -169,12 +169,12 @@ const UserProfile = () => {
               </ListItemIcon>
               <ListItemText primary={<Typography variant="body1">Profile</Typography>} />
             </ListItemButton>
-            <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('id-card')}>
+            {/* <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('id-card')}>
               <ListItemIcon>
                 <IconCreditCard stroke={1.5} size="1.3rem" />
               </ListItemIcon>
               <ListItemText primary={<Typography variant="body1">ID Card</Typography>} />
-            </ListItemButton>
+            </ListItemButton> */}
             {userRole === 'STUDENT' && (
               <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('my-exams')}>
                 <ListItemIcon>
@@ -266,7 +266,7 @@ const UserProfile = () => {
           }}
         >
           <BottomNavigationAction label="Profile" value="profile" icon={<IconUser />} />
-          <BottomNavigationAction label="ID Card" value="id-card" icon={<IconCreditCard />} />
+          {/* <BottomNavigationAction label="ID Card" value="id-card" icon={<IconCreditCard />} /> */}
           {userRole === 'STUDENT' && <BottomNavigationAction label="Exams" value="my-exams" icon={<IconAward />} />}
           <BottomNavigationAction label="Documents" value="my-documents" icon={<IconFileText />} />
           <BottomNavigationAction label="Password" value="change-password" icon={<IconLock />} />

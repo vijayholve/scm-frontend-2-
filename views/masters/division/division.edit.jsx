@@ -117,7 +117,7 @@ const EditDivision = ({ ...others }) => {
               </Grid>
               {/* Submit Button */}
               <Grid item xs={12}>
-                <AnimateButton>
+                {/* <AnimateButton> */}
                   {/* <BackButton BackUrl='/masters/divisions'/>
                   <Button
                     disableElevation
@@ -134,7 +134,7 @@ const EditDivision = ({ ...others }) => {
                     backUrl="/masters/divisions"
                     isSubmitting={isSubmitting}
                     ></BackSaveButton>
-                </AnimateButton>
+                {/* </AnimateButton> */}
 
               </Grid>
             </Grid>

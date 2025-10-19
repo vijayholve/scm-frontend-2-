@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Grid, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
+import { useTranslation } from 'react-i18next'; // added
 
 const ListGridFilters = ({
   filters = {},
@@ -18,6 +19,8 @@ const ListGridFilters = ({
   loading = false,
   disableSCDFilter = false
 }) => {
+  const { t } = useTranslation('ListGridFilters'); // added
+
   // Local controlled state synced with incoming filters prop to ensure UI reflects external changes
   const [selectedSchool, setSelectedSchool] = useState(filters.schoolId || '');
   const [selectedClass, setSelectedClass] = useState(filters.classId || '');
@@ -31,7 +34,6 @@ const ListGridFilters = ({
   }, [filters.schoolId, filters.classId, filters.divisionId]);
 
   const emitChange = (newValues) => {
-    // Merge with incoming filters to preserve other filter keys
     const payload = { ...(filters || {}), ...newValues };
     onFiltersChange(payload);
   };
@@ -39,10 +41,8 @@ const ListGridFilters = ({
   const handleSchoolChange = (e) => {
     const { value } = e.target;
     setSelectedSchool(value);
-    // clear dependent selects
     setSelectedClass('');
     setSelectedDivision('');
-    // emit only changed keys (container will enforce student/teacher rules)
     emitChange({ schoolId: value, classId: '', divisionId: '' });
   };
 
@@ -50,14 +50,12 @@ const ListGridFilters = ({
     const { value } = e.target;
     setSelectedClass(value);
     setSelectedDivision('');
-    // emit only changed keys
     emitChange({ classId: value, divisionId: '' });
   };
 
   const handleDivisionChange = (e) => {
     const { value } = e.target;
     setSelectedDivision(value);
-    // emit only changed key
     emitChange({ divisionId: value });
   };
 
@@ -68,19 +66,16 @@ const ListGridFilters = ({
     onFiltersChange({ schoolId: '', classId: '', divisionId: '' });
   };
 
-  // compute visible classes/divisions from SCD lists
-
-  // Render UI (use existing markup — ensure Select components use local state and handlers)
   return (
     <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
       <Grid container spacing={2}>
         {showSchool && (
           <Grid item xs={12} sm={4} md={3}>
             <FormControl fullWidth size="small" disabled={loading}>
-              <InputLabel>School</InputLabel>
-              <Select value={selectedSchool} label="School" onChange={handleSchoolChange}>
+              <InputLabel>{t('label.school')}</InputLabel>
+              <Select value={selectedSchool} label={t('label.school')} onChange={handleSchoolChange}>
                 <MenuItem value="">
-                  <em>All Schools</em>
+                  <em>{t('option.allSchools')}</em>
                 </MenuItem>
                 {!disableSCDFilter &&
                   Array.isArray(schools) &&
@@ -97,10 +92,10 @@ const ListGridFilters = ({
         {showClass && (
           <Grid item xs={12} sm={4} md={3}>
             <FormControl fullWidth size="small" disabled={loading || !classes.length}>
-              <InputLabel>Class</InputLabel>
-              <Select value={selectedClass} label="Class" onChange={handleClassChange}>
+              <InputLabel>{t('label.class')}</InputLabel>
+              <Select value={selectedClass} label={t('label.class')} onChange={handleClassChange}>
                 <MenuItem value="">
-                  <em>All Classes</em>
+                  <em>{t('option.allClasses')}</em>
                 </MenuItem>
                 {!disableSCDFilter &&
                   classes.map((c) => (
@@ -116,10 +111,10 @@ const ListGridFilters = ({
         {showDivision && (
           <Grid item xs={12} sm={4} md={3}>
             <FormControl fullWidth size="small" disabled={loading || !divisions.length}>
-              <InputLabel>Division</InputLabel>
-              <Select value={selectedDivision} label="Division" onChange={handleDivisionChange}>
+              <InputLabel>{t('label.division')}</InputLabel>
+              <Select value={selectedDivision} label={t('label.division')} onChange={handleDivisionChange}>
                 <MenuItem value="">
-                  <em>All Divisions</em>
+                  <em>{t('option.allDivisions')}</em>
                 </MenuItem>
                 {!disableSCDFilter &&
                   divisions.map((d) => (
@@ -132,10 +127,10 @@ const ListGridFilters = ({
           </Grid>
         )}
 
-        {showClearAll && (
+        {showClearAll &&  (
           <Grid item xs={12} sm={12} md={3} sx={{ display: 'flex', alignItems: 'center' }}>
             <Button variant="outlined" onClick={clearAll}>
-              Clear
+              {t('action.clear')}
             </Button>
           </Grid>
         )}
