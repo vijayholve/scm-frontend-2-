@@ -30,7 +30,7 @@ import ReusableLoader from 'ui-component/loader/ReusableLoader';
 import { useTranslation } from 'react-i18next'; // <-- ADDED
 
 const FeeDashboard = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
   const [divisions, setDivisions] = useState([]);
@@ -67,7 +67,7 @@ const FeeDashboard = () => {
     totalPaid: 0,
     totalPending: 0
   });
-const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
+  const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
   const fetchMasters = async () => {
     try {
       setLoading(true);
@@ -133,7 +133,6 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
       } finally {
         setLoading(false);
       }
-
     } catch (err) {
       setSummaryData({ fees: [], totalAmount: 0, totalPaid: 0, totalPending: 0 });
     } finally {
@@ -152,7 +151,7 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
       fetchSummary();
     }
   }, [user?.user?.accountId, selectedSchool, selectedClass, selectedDivision, fromYear, toYear]);
-  
+
   const handleSetupFee = async () => {};
 
   const formatCurrency = (amount) => {
@@ -164,9 +163,9 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      'active': { color: 'success', label: 'Active' },
-      'draft': { color: 'warning', label: 'Draft' },
-      'expired': { color: 'error', label: 'Expired' }
+      active: { color: 'success', label: 'Active' },
+      draft: { color: 'warning', label: 'Draft' },
+      expired: { color: 'error', label: 'Expired' }
     };
 
     const config = statusConfig[status] || { color: 'default', label: status };
@@ -174,7 +173,7 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
   };
 
   if (loading) {
-    return <ReusableLoader message="Loading Fee Dashboard...1" ></ReusableLoader>;
+    return <ReusableLoader message="Loading Fee Dashboard...1"></ReusableLoader>;
   }
 
   const columns = [
@@ -183,23 +182,23 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
     { field: 'schoolName', headerName: 'School', width: 150 },
     { field: 'className', headerName: 'Class', width: 120 },
     { field: 'divisionName', headerName: 'Division', width: 120 },
-    { field: 'totalAmount', headerName: 'Total', width: 120,  },
-    { field: 'paidAmount', headerName: 'Paid', width: 120, },
-    { field: 'pendingAmount', headerName: 'Pending', width: 120, },
+    { field: 'totalAmount', headerName: 'Total', width: 120 },
+    { field: 'paidAmount', headerName: 'Paid', width: 120 },
+    { field: 'pendingAmount', headerName: 'Pending', width: 120 },
     {
       field: 'status',
       headerName: 'Status',
       width: 120,
       renderCell: (params) => {
         const statusConfig = {
-          'active': { color: 'success', label: t('common.active') }, 
-          'draft': { color: 'warning', label: t('common.draft') },   
-          'expired': { color: 'error', label: t('common.expired') }  
+          active: { color: 'success', label: t('common.active') },
+          draft: { color: 'warning', label: t('common.draft') },
+          expired: { color: 'error', label: t('common.expired') }
         };
         const config = statusConfig[params.value] || { color: 'default', label: params.value };
         return <Chip label={config.label} color={config.color} size="small" />;
-      },
-    },
+      }
+    }
   ];
 
   const customActions = [
@@ -251,9 +250,13 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
       <Button
         variant="contained"
         startIcon={<AddIcon />}
-        onClick={() => { setEditFeeId(null); setOpenSetupModal(true); }}
+        onClick={() => {
+          setEditFeeId(null);
+          setOpenSetupModal(true);
+        }}
       >
-{t('admin.addNewFee')}      </Button>
+        {t('admin.addNewFee')}{' '}
+      </Button>
     </Box>
   );
 
@@ -265,12 +268,12 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
             <TextField
               select
               fullWidth
-label={t('common.schoolFilter')}            
-  value={selectedSchool}
+              label={t('common.schoolFilter')}
+              value={selectedSchool}
               onChange={(e) => setSelectedSchool(e.target.value)}
             >
-<MenuItem value="">{t('common.allSchools')}</MenuItem>
-        {schools.map((school) => (
+              <MenuItem value="">{t('common.allSchools')}</MenuItem>
+              {schools.map((school) => (
                 <MenuItem key={school.id} value={school.id}>
                   {school.name}
                 </MenuItem>
@@ -281,11 +284,12 @@ label={t('common.schoolFilter')}
             <TextField
               select
               fullWidth
-            label={t('common.classFilter')}
+              label={t('common.classFilter')}
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
             >
-<MenuItem value="">{t('common.allClasses')}</MenuItem>              {classes.map((cls) => (
+              <MenuItem value="">{t('common.allClasses')}</MenuItem>{' '}
+              {classes.map((cls) => (
                 <MenuItem key={cls.id} value={cls.id}>
                   {cls.name}
                 </MenuItem>
@@ -309,13 +313,7 @@ label={t('common.schoolFilter')}
             </TextField>
           </Grid>
           <Grid item xs={6} sm={3} md={1.5}>
-            <TextField
-              select
-              fullWidth
-              label={t('common.fromYear')}
-              value={fromYear}
-              onChange={(e) => setFromYear(e.target.value)}
-            >
+            <TextField select fullWidth label={t('common.fromYear')} value={fromYear} onChange={(e) => setFromYear(e.target.value)}>
               <MenuItem value="">{t('common.allYears')}</MenuItem>
               {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map((y) => (
                 <MenuItem key={y} value={y}>{`${y}-${y + 1}`}</MenuItem>
@@ -338,12 +336,12 @@ label={t('common.schoolFilter')}
           </Grid>
         </Grid>
       </MainCard>
-      
+
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
             <CardContent>
-       <Typography variant="h6">{t('admin.totalDue')}</Typography> 
+              <Typography variant="h6">{t('admin.totalDue')}</Typography>
               <Typography variant="h4">{formatCurrency(summaryData.totalAmount)}</Typography>
             </CardContent>
           </Card>
@@ -351,12 +349,12 @@ label={t('common.schoolFilter')}
         <Grid item xs={12} md={4}>
           <Card sx={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
             <CardContent>
-<Typography variant="h6">{t('admin.totalCollected')}</Typography>
+              <Typography variant="h6">{t('admin.totalCollected')}</Typography>
               <Typography variant="h4">{formatCurrency(summaryData.totalPaid)}</Typography>
             </CardContent>
           </Card>
         </Grid>
-     <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={4}>
           <Card sx={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
             <CardContent>
               <Typography variant="h6">{t('admin.pendingFees')}</Typography>
@@ -365,15 +363,17 @@ label={t('common.schoolFilter')}
           </Card>
         </Grid>
       </Grid>
-          {/* Fee Structure Create/Edit */}
+      {/* Fee Structure Create/Edit */}
       <FeeStructureForm
         open={openSetupModal}
         onClose={() => setOpenSetupModal(false)}
-        onSaved={() => { fetchSummary(); }}
+        onSaved={() => {
+          fetchSummary();
+        }}
         feeStructureId={editFeeId}
       />
     </Box>
-      );
+  );
 };
 
 export default FeeDashboard;
