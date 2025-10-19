@@ -23,27 +23,35 @@ import en_lgf from './locales/en/ListGridFilters.json';
 import mr_lgf from './locales/mr/ListGridFilters.json';
 import hi_lgf from './locales/hi/ListGridFilters.json';
 
+
+// 5. mainlayout namespace for Navbar title 
+import en_mainlayout from './locales/en/mainlayout.json';
+import mr_mainlayout from './locales/mr/mainlayout.json';
+import hi_mainlayout from './locales/hi/mainlayout.json';
 const resources = {
   en: {
     utilities: en_util.menu.masters,
     dashboard: en_dash,
     translation: { ...en_util, ...en_dash },
     datagrid: en_datagrid,
-    ListGridFilters: en_lgf
+    ListGridFilters: en_lgf ,
+    mainlayout: en_mainlayout
   },
   mr: {
     utilities: mr_util.menu.masters,
     dashboard: mr_dash,
     translation: { ...mr_util, ...mr_dash },
     datagrid: mr_Datagrid,
-    ListGridFilters: mr_lgf
+    ListGridFilters: mr_lgf ,
+    mainlayout: mr_mainlayout
   },
   hi: {
     utilities: hi_util.menu.masters,
     dashboard: hi_dash,
     translation: { ...hi_util, ...hi_dash },
     datagrid: hi_Datagrid,
-    ListGridFilters: hi_lgf
+    ListGridFilters: hi_lgf ,
+    mainlayout: hi_mainlayout
   }
 };
 

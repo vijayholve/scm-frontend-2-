@@ -66,7 +66,7 @@ const CourseProgressCard = ({ course }) => {
     );
 };
 
-const StudentLmsDashboard = ({studentId}) => {
+const StudentLmsDashboard = ({studentId, t}) => {
     const { user } = useSelector((state) => state.user);
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -118,7 +118,7 @@ const StudentLmsDashboard = ({studentId}) => {
             <Grid item xs={12}>
                 <Box display="flex" alignItems="center" gap={1}>
                     <IconBook2 />
-                    <Typography variant="h4">My Courses</Typography>
+                    <Typography variant="h4">{t('student.myCourses')}</Typography>
                 </Box>
             </Grid>
             {courses.length > 0 ? (
@@ -132,7 +132,7 @@ const StudentLmsDashboard = ({studentId}) => {
                    {/* add here enroll selection to redirect on lms  add react router link  Link */}
                    <Link to="/masters/lms">
                        <Button variant="contained" color="primary">
-                           Enroll in Courses
+                           {t('student.enrollInCourses')}
                        </Button>
                    </Link>
                 </Grid>

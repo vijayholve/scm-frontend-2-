@@ -259,7 +259,7 @@ const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
 
   return (
     <Box sx={{ p: 3 }}>
-      <MainCard title="Summary Filters" sx={{ mb: 3 }}>
+      <MainCard title={t('admin.summaryFilters')} sx={{ mb: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
             <TextField

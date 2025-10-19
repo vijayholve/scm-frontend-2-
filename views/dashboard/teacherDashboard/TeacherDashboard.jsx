@@ -34,10 +34,10 @@ const TeacherDashboard = () => {
           }}
         >
           <Typography variant="h4" sx={{ mb: { xs: 2, sm: 0 } }}>
-            Student Dashboard
+            {t('studentDashboard.studentDashboardTitle')}
           </Typography>
           <Button variant="outlined" onClick={handleStudentDashboardToggle} startIcon={<DashboardIcon />}>
-            Back to Main Dashboard
+            {t('studentDashboard.backToMainDashboard')}
           </Button>
         </Box>
         <TeacherStudentDashboard />

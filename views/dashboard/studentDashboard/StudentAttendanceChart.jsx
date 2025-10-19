@@ -6,11 +6,14 @@ import { Box, Typography, CircularProgress } from '@mui/material';
 import MainCard from 'ui-component/cards/MainCard';
 import ReusableBarChart from 'ui-component/charts/ReusableBarChart';
 import api from 'utils/apiService';
+import { useTranslation } from 'react-i18next'; // <-- add
+
 
 const StudentAttendanceChart = ({ studentId }) => {
   const user = useSelector((state) => state.user.user);
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState({ present: 0, absent: 0 });
+  const { t } = useTranslation('dashboard'); // <-- add
 
   useEffect(() => {
     const fetchStudentAttendance = async () => {
@@ -74,10 +77,10 @@ const StudentAttendanceChart = ({ studentId }) => {
   const categories = ['Attendance'];
 
   return (
-    <MainCard title="Student Attendance Summary">
+    <MainCard title={t('student.attendanceOverviewTitle')}>
       {chartData.present === 0 && chartData.absent === 0 ? (
         <Typography variant="body1" align="center">
-          No attendance data found for this student.
+          {t('student.noAttendanceData')}
         </Typography>
       ) : (
         <ReusableBarChart
