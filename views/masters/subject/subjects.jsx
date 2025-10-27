@@ -6,6 +6,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
+import { useTranslation } from 'react-i18next'; 
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -15,6 +16,7 @@ const columns = [
 
 const Subjects = () => {
     const accountId = userDetails.getAccountId();
+    const { t } = useTranslation("title");
     
     const customToolbar = () => (
       <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
@@ -33,7 +35,7 @@ const Subjects = () => {
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
-                     title="SUBJECTS" 
+                     title={t('subjects')}
                      viewScreenIs={true}
                         fetchUrl={`/api/subjects/getAll/${accountId}`}
                         isPostRequest={true}
@@ -44,7 +46,7 @@ const Subjects = () => {
                         entityName="SUBJECT"
                         enableFilters={true}
                         showSchoolFilter={true}
-                        showClassFilter={true}
+                        // showClassFilter={true}
                         showDivisionFilter={false}
                     />
                 </Grid>

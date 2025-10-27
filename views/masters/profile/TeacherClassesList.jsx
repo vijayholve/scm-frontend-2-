@@ -14,7 +14,8 @@ import {
   Divider
 } from '@mui/material';
 import api, { userDetails } from 'utils/apiService';
-
+import { IconSchool } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 /**
  * TeacherClassesList
  * - Fetches allocated classes for a given teacher (teacherId).
@@ -25,6 +26,7 @@ import api, { userDetails } from 'utils/apiService';
  */
 const TeacherClassesList = ({ accountId: accountIdProp, teacherId, teacher }) => {
   const [allocations, setAllocations] = useState([]);
+  const {t} = useTranslation('profile');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const accountId = accountIdProp || userDetails.getAccountId();
@@ -99,7 +101,7 @@ const TeacherClassesList = ({ accountId: accountIdProp, teacherId, teacher }) =>
 
   return (
     <Card>
-      <CardHeader title="Allocated Classes" subheader="Classes & divisions assigned to this teacher" />
+      <CardHeader title={t('labelAllocatedClasses')} subheader={t('labelClassesDivisionsAssigned')} />
       <Divider />
       <CardContent>
         {loading ? (
@@ -112,7 +114,7 @@ const TeacherClassesList = ({ accountId: accountIdProp, teacherId, teacher }) =>
           </Box>
         ) : classesList.length === 0 ? (
           <Box textAlign="center" py={4}>
-            <Typography color="text.secondary">No allocated classes found for this teacher.</Typography>
+            <Typography color="text.secondary">{t('messageNoAllocatedClasses')}</Typography>
           </Box>
         ) : (
           <List>

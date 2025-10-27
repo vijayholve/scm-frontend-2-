@@ -28,7 +28,9 @@
       "notifications": "सूचनाएं",
       "quizTests": "क्विज़ और टेस्ट",
       "manageQuizzes": "क्विज़ प्रबंधित करें",
-      "availableQuizzes": "उपलब्ध क्विझ"
+      "availableQuizzes": "उपलब्ध क्विझ",
+            "leavingCertificateManagement": "छोड़ने का प्रमाणपत्र प्रबंधन"
+
     }
   }
 }

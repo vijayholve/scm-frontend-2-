@@ -24,8 +24,10 @@ const LanguageSelector = () => {
     
     const languageOptions = [
         { code: 'en', label: 'English' },
-        { code: 'mr', label: 'Marathi' },
-        { code: 'hi', label: 'Hindi' },
+        { code: 'mr', label: 'मराठी' },
+        { code: 'hi', label: 'हिन्दी ' },
+        { code: 'sp', label: 'Español' },
+        { code: 'fr', label: 'Français' }
     ];
 
     // Handler for language change

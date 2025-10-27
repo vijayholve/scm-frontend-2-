@@ -6,6 +6,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
+import { useTranslation } from 'react-i18next'; // <-- ADDEDṇ
 
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -15,13 +16,15 @@ const columns = [
 ];
 
 const Devision = () => {
+  const { t } = useTranslation("title"); // <-- ADDED HOOK
+
   const accountId = userDetails.getAccountId();
 
   return (
     <Grid container spacing={gridSpacing}>
       <Grid item xs={12}>
         <ReusableDataGrid
-          title="DIVISION"
+          title={t('divisions')}
           entityName="DIVISION"
           fetchUrl={`/api/divisions/getAll/${accountId}`}
           isPostRequest={true}
@@ -31,7 +34,7 @@ const Devision = () => {
           deleteUrl="/api/devisions/delete"
           enableFilters={true}
           showSchoolFilter={true}
-          showClassFilter={true}
+          // showClassFilter={true}
           showDivisionFilter={false}
           viewScreenIs={true}
         />

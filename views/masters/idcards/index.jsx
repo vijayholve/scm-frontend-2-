@@ -41,7 +41,7 @@ import IdCardGenerationModal from './IdCardGenerationModal';
 import api, { userDetails } from '../../../utils/apiService';
 import { useSelector } from 'react-redux';
 import { hasPermission } from '../../../utils/permissionUtils';
-
+import { useTranslation } from 'react-i18next';
 // Styled components
 const StyledTabs = styled(Tabs)(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
@@ -97,6 +97,7 @@ const IdCardManagement = () => {
   const navigate = useNavigate();
   const permissions = useSelector((state) => state.user.permissions);
   const accountId = userDetails.getAccountId();
+  const { t } = useTranslation('idcard');
   const [tabValue, setTabValue] = useState(0);
   const [selectedRows, setSelectedRows] = useState([]);
   const [allSelected, setAllSelected] = useState(false);
@@ -107,7 +108,7 @@ const IdCardManagement = () => {
   const studentColumns = [
     {
       field: 'select',
-      headerName: 'Select',
+      headerName: t('column.select') || 'Select',
       width: 80,
       renderCell: (params) => (
         <Checkbox
@@ -119,11 +120,11 @@ const IdCardManagement = () => {
       disableColumnMenu: true,
       sortable: false
     },
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'rollNo', headerName: 'Roll No', width: 100 },
+    { field: 'id', headerName: t('column.id') || 'ID', width: 70 },
+    { field: 'rollNo', headerName: t('column.rollNo') || 'Roll No', width: 100 },
     {
       field: 'fullName',
-      headerName: 'Student Name',
+      headerName: t('column.studentName') || 'Student Name',
       width: 200,
       flex: 1,
       renderCell: (params) => (
@@ -137,21 +138,21 @@ const IdCardManagement = () => {
     },
     {
       field: 'className',
-      headerName: 'Class',
+      headerName: t('column.class') || 'Class',
       width: 100,
       renderCell: (params) => <Chip label={params.value} size="small" color="primary" variant="outlined" />
     },
     {
       field: 'divisionName',
-      headerName: 'Division',
+      headerName: t('column.division') || 'Division',
       width: 100,
       renderCell: (params) => <Chip label={params.value} size="small" color="secondary" variant="outlined" />
     },
-    { field: 'email', headerName: 'Email', width: 180 },
-    { field: 'mobile', headerName: 'Mobile', width: 130 },
+    { field: 'email', headerName: t('column.email') || 'Email', width: 180 },
+    { field: 'mobile', headerName: t('column.mobile') || 'Mobile', width: 130 },
     {
       field: 'gender',
-      headerName: 'Gender',
+      headerName: t('column.gender') || 'Gender',
       width: 100,
       renderCell: (params) => (
         <Chip label={params.value} size="small" color={params.value === 'Male' ? 'info' : 'success'} variant="outlined" />
@@ -159,14 +160,19 @@ const IdCardManagement = () => {
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('column.actions') || 'Actions',
       width: 120,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton size="small" color="primary" title="View Details">
+          <IconButton size="small" color="primary" title={t('action.viewDetails') || 'View Details'}>
             <ViewIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="info" title="Generate ID Card" onClick={() => handleSingleIdGeneration(params.row)}>
+          <IconButton
+            size="small"
+            color="info"
+            title={t('action.generateIdCard') || 'Generate ID Card'}
+            onClick={() => handleSingleIdGeneration(params.row)}
+          >
             <IdCardIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -180,7 +186,7 @@ const IdCardManagement = () => {
   const teacherColumns = [
     {
       field: 'select',
-      headerName: 'Select',
+      headerName: t('column.select') || 'Select',
       width: 80,
       renderCell: (params) => (
         <Checkbox
@@ -192,10 +198,10 @@ const IdCardManagement = () => {
       disableColumnMenu: true,
       sortable: false
     },
-    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'id', headerName: t('column.id') || 'ID', width: 70 },
     {
       field: 'fullName',
-      headerName: 'Teacher Name',
+      headerName: t('column.teacherName') || 'Teacher Name',
       width: 200,
       flex: 1,
       renderCell: (params) => (
@@ -207,17 +213,17 @@ const IdCardManagement = () => {
         </Box>
       )
     },
-    { field: 'email', headerName: 'Email', width: 180 },
-    { field: 'mobile', headerName: 'Mobile', width: 130 },
+    { field: 'email', headerName: t('column.email') || 'Email', width: 180 },
+    { field: 'mobile', headerName: t('column.mobile') || 'Mobile', width: 130 },
     {
       field: 'roleName',
-      headerName: 'Role',
+      headerName: t('column.role') || 'Role',
       width: 120,
       renderCell: (params) => <Chip label={params.value} size="small" color="warning" variant="outlined" />
     },
     {
       field: 'gender',
-      headerName: 'Gender',
+      headerName: t('column.gender') || 'Gender',
       width: 100,
       renderCell: (params) => (
         <Chip label={params.value} size="small" color={params.value === 'Male' ? 'info' : 'success'} variant="outlined" />
@@ -225,7 +231,7 @@ const IdCardManagement = () => {
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('column.status') || 'Status',
       width: 100,
       renderCell: (params) => (
         <Chip label={params.value} size="small" color={params.value === 'Active' ? 'success' : 'error'} variant="outlined" />
@@ -233,14 +239,19 @@ const IdCardManagement = () => {
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('column.actions') || 'Actions',
       width: 120,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton size="small" color="primary" title="View Details">
+          <IconButton size="small" color="primary" title={t('action.viewDetails') || 'View Details'}>
             <ViewIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="info" title="Generate ID Card" onClick={() => handleSingleIdGeneration(params.row)}>
+          <IconButton
+            size="small"
+            color="info"
+            title={t('action.generateIdCard') || 'Generate ID Card'}
+            onClick={() => handleSingleIdGeneration(params.row)}
+          >
             <IdCardIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -271,7 +282,7 @@ const IdCardManagement = () => {
     setAllSelected(checked);
     if (checked) {
       // Select all rows from current grid data
-      const allRowIds = currentGridData.map(row => row.id);
+      const allRowIds = currentGridData.map((row) => row.id);
       setSelectedRows(allRowIds);
     } else {
       setSelectedRows([]);
@@ -316,10 +327,12 @@ const IdCardManagement = () => {
       title={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IdCardIcon color="primary" />
-          <Typography variant="h3">ID Card Management</Typography>
+          <Typography variant="h3">{t('title.idCardManagement') || 'ID Card Management'}</Typography>
         </Box>
       }
-      secondary={<SecondaryAction title="Manage student and teacher ID cards with professional templates" />}
+      secondary={
+        <SecondaryAction title={t('secondary.description') || 'Manage student and teacher ID cards with professional templates'} />
+      }
     >
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
@@ -330,7 +343,7 @@ const IdCardManagement = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <PersonIcon />
-                    Students
+                    {t('tab.students') || 'Students'}
                   </Box>
                 }
                 {...a11yProps(0)}
@@ -339,7 +352,7 @@ const IdCardManagement = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <SchoolIcon />
-                    Teachers
+                    {t('tab.teachers') || 'Teachers'}
                   </Box>
                 }
                 {...a11yProps(1)}
@@ -353,7 +366,7 @@ const IdCardManagement = () => {
               <Grid item>
                 <FormControlLabel
                   control={<Checkbox checked={allSelected} onChange={(e) => handleSelectAll(e.target.checked)} color="primary" />}
-                  label="Select All"
+                  label={t('action.selectAll') || 'Select All'}
                 />
               </Grid>
 
@@ -361,7 +374,7 @@ const IdCardManagement = () => {
                 <Grid item>
                   <SelectionInfo>
                     <Typography variant="body2" fontWeight="600">
-                      {selectedRows.length} selected
+                      {selectedRows.length} {t('action.selected') || 'selected'}
                     </Typography>
                   </SelectionInfo>
                 </Grid>
@@ -375,7 +388,7 @@ const IdCardManagement = () => {
                   disabled={selectedRows.length === 0}
                   sx={{ whiteSpace: 'nowrap' }}
                 >
-                  Generate ID Cards
+                  {t('button.generateIdCards') || 'Generate ID Cards'}
                 </Button>
               </Grid>
             </Grid>
@@ -384,10 +397,9 @@ const IdCardManagement = () => {
           {/* Data Grid Tabs */}
           <TabPanel value={tabValue} index={0}>
             <ReusableDataGrid
-              title="Students"
+              title={t('tab.students') || 'Students'}
               fetchUrl={getCurrentFetchUrl()}
               columns={getCurrentColumns()}
-
               entityName="STUDENT"
               checkboxSelection={false}
               requestMethod="POST"
@@ -397,14 +409,14 @@ const IdCardManagement = () => {
               showDivisionFilter={true}
               showSearch={true}
               showRefresh={true}
-              searchPlaceholder="Search by Name/Roll No/Email"
+              searchPlaceholder={t('searchPlaceholder.students') || 'Search by Name/Roll No/Email'}
               onDataChange={handleGridDataChange}
             />
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
             <ReusableDataGrid
-              title="Teachers"
+              title={t('tab.teachers') || 'Teachers'}
               fetchUrl={getCurrentFetchUrl()}
               columns={getCurrentColumns()}
               entityName="TEACHER"
@@ -416,7 +428,7 @@ const IdCardManagement = () => {
               showDivisionFilter={true}
               showSearch={true}
               showRefresh={true}
-              searchPlaceholder="Search by Name/Email"
+              searchPlaceholder={t('searchPlaceholder.teachers') || 'Search by Name/Email'}
               onDataChange={handleGridDataChange}
             />
           </TabPanel>

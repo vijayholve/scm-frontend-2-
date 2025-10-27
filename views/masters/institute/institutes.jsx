@@ -6,7 +6,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
-
+import { useTranslation } from 'react-i18next'; 
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
   { field: 'name', headerName: 'Name', width: 150, flex: 1 },
@@ -18,7 +18,7 @@ const columns = [
 
 const Institutes = () => {
   const accountId = userDetails.getAccountId();
-
+  const { t } = useTranslation("title");
   const customToolbar = () => (
     <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
       <Typography variant="h6">Institutes Overview</Typography>
@@ -33,7 +33,7 @@ const Institutes = () => {
       <Grid item xs={12}>
         <ReusableDataGrid
           viewScreenIs={true}
-          title="INSTITUTES"
+          title={t('institutesItem')}
           fetchUrl={`/api/institutes/getAll/${accountId}`}
           isPostRequest={true}
           columns={columns}

@@ -15,6 +15,7 @@ import api, { userDetails } from '../../../utils/apiService';
 import { hasPermission } from 'utils/permissionUtils.js';
 import { useSelector } from 'react-redux';
 
+import { useTranslation } from 'react-i18next'; // <-- ADDED
 // Define the columns for the assignments data grid.
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -29,6 +30,7 @@ const columns = [
 ];
 
 const Assignments = () => {
+  const { t } = useTranslation("title"); // <-- ADDED HOOK
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
   const user = useSelector((state) => state.user);
@@ -39,7 +41,7 @@ const Assignments = () => {
       <Grid item xs={12}>
         <ReusableDataGrid
           viewScreenIs={true}
-          title={'ASSIGNMENTS'}
+          title={t('assignments')}
           fetchUrl={`/api/assignments/getAllBy/${accountId}`}
           isPostRequest={true}
           columns={columns}

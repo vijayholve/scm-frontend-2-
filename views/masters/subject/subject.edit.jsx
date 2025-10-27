@@ -15,7 +15,10 @@ import ReusableLoader from 'ui-component/loader/ReusableLoader';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 import { useSelector } from 'react-redux';
 
+import { useTranslation } from 'react-i18next';
+
 const EditSubjects = ({ ...others }) => {
+  const { t } = useTranslation('edit');
   const theme = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -27,7 +30,7 @@ const EditSubjects = ({ ...others }) => {
     schoolId: ''
   });
 
-  const Title = subjectId ? 'Edit Subject' : 'Add Subject';
+  const Title = subjectId ? t('subject.title.edit') : t('subject.title.add');
 
   // Fetch schools from scdSelector
   const schools = useSelector((state) => state.scd.schools);

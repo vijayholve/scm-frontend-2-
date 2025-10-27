@@ -293,7 +293,7 @@ const getMainRoutes = (permissions = []) => ({
           element: <Profiles />
         },
         hasPermission(permissions, 'IDCARD', 'view') && {
-          path: 'leavings',
+          path: 'leaving',
           element: <LeavingManagement />
         },
         hasPermission(permissions, 'IDCARD', 'view') && {

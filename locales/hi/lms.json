@@ -1,0 +1,27 @@
+{
+  "title": {
+    "myCourses": "My Courses",
+    "courseList": "Courses Management"
+  },
+  "course": {
+    "title": "Title",
+    "school": "School",
+    "class": "Class",
+    "division": "Division",
+    "status": "Status"
+  },
+  "status": {
+    "completed": "Completed",
+    "inProgress": "In Progress"
+  },
+  "common": {
+    "progress": "Progress"
+  },
+  "action": {
+    "enrollInCourses": "Enroll in Courses",
+    "enroll": "Enroll"
+  },
+  "error": {
+    "loadFailed": "Failed to load courses. Please try again later."
+  }
+}

@@ -7,6 +7,7 @@ import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
 import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
+import { useTranslation } from 'react-i18next'; // <-- ADDED
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -18,6 +19,7 @@ const columns = [
 const Classes = () => {
     const accountId = userDetails.getAccountId();
     const navigate = useNavigate();
+    const { t } = useTranslation("title"); // <-- ADDED HOOK
     
     const customActions = [
       {
@@ -65,21 +67,13 @@ const Classes = () => {
       schoolName: cls.school?.name || 'N/A'
     });
 
-    const customToolbar = () => (
-      <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-        <Typography variant="h6">Classes Overview</Typography>
-        <Typography variant="body2" color="textSecondary">
-          This grid shows all classes, with filtering by school.
-        </Typography>
-      </Box>
-    );
 
     return (
       
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
-                                            title="CLASS"
+          title={t('classes.title')}           
 
                         entityName="CLASS"
                         fetchUrl={`/api/schoolClasses/getAll/${accountId}`}

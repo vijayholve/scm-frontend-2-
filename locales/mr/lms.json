@@ -1,0 +1,27 @@
+{
+  "title": {
+    "myCourses": "माझे कोर्सेस",
+    "courseList": "कोर्सेस व्यवस्थापन"
+  },
+  "course": {
+    "title": "शीर्षक",
+    "school": "शाळा",
+    "class": "वर्ग",
+    "division": "विभाग",
+    "status": "स्थिती"
+  },
+  "status": {
+    "completed": "पूर्ण झाले",
+    "inProgress": "प्रगतीपथावर"
+  },
+  "common": {
+    "progress": "प्रगती"
+  },
+  "action": {
+    "enrollInCourses": "कोर्सेसमध्ये नावनोंदणी करा",
+    "enroll": "नावनोंदणी करा"
+  },
+  "error": {
+    "loadFailed": "कोर्सेस लोड करण्यात अयशस्वी. कृपया नंतर पुन्हा प्रयत्न करा."
+  }
+}

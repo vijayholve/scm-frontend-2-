@@ -12,7 +12,8 @@ import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
 import { hasPermission } from 'utils/permissionUtils.js';
-
+import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'title', headerName: 'Title', width: 200, editable: false },
@@ -51,6 +52,7 @@ const columns = [
 ];
 
 const QuizList = () => {
+    const { t } = useTranslation('title');
     const navigate = useNavigate();
     const accountId = userDetails.getAccountId();
     
@@ -103,7 +105,7 @@ const QuizList = () => {
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid
-                title="QUIZZES"
+                title={t('quizTests')}
                         fetchUrl={`/api/quizzes/getAllBy/${accountId}`}
                         isPostRequest={true}
                         columns={columns}

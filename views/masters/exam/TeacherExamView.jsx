@@ -25,6 +25,14 @@ import QuizResult from '../test/QuizResult';
 import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 import { useSCDData } from 'contexts/SCDProvider';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useTranslation } from 'react-i18next';
+// --- MOCK l18n HOOK (REPLACE WITH YOUR REAL IMPLEMENTATION) ---
+// This mock simulates a translation function 't'
+
+
+
+// --- END MOCK l18n HOOK ---
+
 
 // --- New Dummy Data for Questions and Answers ---
 const dummyQuestions = {
@@ -61,13 +69,14 @@ const QuizResultTab = ({ quizId, studentId }) => {
 
 // Component for the detailed tabbed view
 const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, onBack }) => {
+  const { t } = useTranslation('teacherView');
   const [tabValue, setTabValue] = useState(0);
   const [paperFile, setPaperFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   // Dynamically get the question and answer from dummy data
-  const question = dummyQuestions[subject.id] || 'No question found for this subject.';
-  const studentAnswer = dummyStudentAnswers[student.studentId]?.[subject.id] || 'No answer submitted.';
+  const question = dummyQuestions[subject.id] || t('gradingView.noQuestionFound');
+  const studentAnswer = dummyStudentAnswers[student.studentId]?.[subject.id] || t('gradingView.noAnswerSubmitted');
 
   const handleFileChange = (event) => {
     setPaperFile(event.target.files[0]);
@@ -75,7 +84,7 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
 
   const handlePaperUpload = async () => {
     if (!paperFile) {
-      toast.error('Please select a file to upload.');
+      toast.error(t('toasts.selectFileToUpload'));
       return;
     }
 
@@ -91,11 +100,11 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
           'Content-Type': 'multipart/form-data'
         }
       });
-      toast.success('Exam paper uploaded successfully!');
+      toast.success(t('toasts.uploadSuccess'));
       setPaperFile(null);
     } catch (error) {
       console.error('Failed to upload exam paper:', error);
-      toast.error('Failed to upload exam paper.');
+      toast.error(t('toasts.uploadFail'));
     } finally {
       setUploading(false);
     }
@@ -103,20 +112,24 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
 
   return (
     <Paper sx={{ p: 3, mt: 2 }}>
-      <Typography variant="h4" gutterBottom>{`Grading: ${student.studentName} - ${subject.subjectName}`}</Typography>
-      {/* this is on phone screen view not showing correctly just show two value of tab enter marks and view  */}
+      <Typography variant="h4" gutterBottom>
+        {t('gradingView.titlePrefix')}: {student.studentName} - {subject.subjectName}
+      </Typography>
+      
+      {/* Mobile view tabs as Select/Dropdown */}
       <Box sx={{ display: { xs: 'block', sm: 'none' }, mt: 2 }}>
         <FormControl fullWidth>
           <InputLabel id="tab-select-label">Select View</InputLabel>
           <Select labelId="tab-select-label" value={tabValue} label="Select View" onChange={(e) => setTabValue(e.target.value)}>
-            <MenuItem value={0}>Enter Marks</MenuItem>
-            <MenuItem value={1}>View Paper & Answers</MenuItem>
-            <MenuItem value={2}>View Quiz Result</MenuItem>
-            <MenuItem value={3}>Upload Paper</MenuItem>
+            <MenuItem value={0}>{t('gradingView.tabEnterMarks')}</MenuItem>
+            <MenuItem value={1}>{t('gradingView.tabViewPaperAnswers')}</MenuItem>
+            <MenuItem value={2}>{t('gradingView.tabViewQuizResult')}</MenuItem>
+            <MenuItem value={3}>{t('gradingView.tabUploadPaper')}</MenuItem>
           </Select>
         </FormControl>
       </Box>
 
+      {/* Desktop/Tablet tabs as Tabs component */}
       <Box
         sx={{
           borderBottom: 1,
@@ -126,15 +139,19 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
         }}
       >
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
-          <Tab label="Enter Marks" />
-          <Tab label="View Paper & Answers" />
-          <Tab label="View Quiz Result" />
-          <Tab label="Upload Paper" />
+          <Tab label={t('gradingView.tabEnterMarks')} />
+          <Tab label={t('gradingView.tabViewPaperAnswers')} />
+          <Tab label={t('gradingView.tabViewQuizResult')} />
+          <Tab label={t('gradingView.tabUploadPaper')} />
         </Tabs>
       </Box>
+      
+      {/* Tab 0: Enter Marks */}
       {tabValue === 0 && (
         <Box sx={{ p: 2 }}>
-          <Typography variant="h6">Enter Marks (Out of {subject.maxMarksSubject})</Typography>
+          <Typography variant="h6">
+            {t('gradingView.marksHeading', { maxMarks: subject.maxMarksSubject })}
+          </Typography>
           <TextField
             type="number"
             size="small"
@@ -142,7 +159,7 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
             onChange={(e) => {
               const val = e.target.value;
               if (val > subject.maxMarksSubject) {
-                toast.error(`Marks cannot exceed ${subject.maxMarksSubject}.`);
+                toast.error(t('toasts.marksExceeded', { maxMarks: subject.maxMarksSubject }));
               } else {
                 onMarksChange(student.studentId, subject.subjectId, val);
               }
@@ -152,34 +169,38 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
           />
           <Box>
             <Button variant="contained" color="primary" onClick={() => onSave(student.studentId)} sx={{ mr: 1 }}>
-              Save Marks
+              {t('gradingView.saveMarks')}
             </Button>
-            {/* Back button moved to persistent footer */}
           </Box>
         </Box>
       )}
+
+      {/* Tab 1: View Paper & Answers */}
       {tabValue === 1 && (
         <Box sx={{ p: 2 }}>
-          <Typography variant="h6">Question Paper & Student's Answers</Typography>
+          <Typography variant="h6">{t('gradingView.questionAnswerTitle')}</Typography>
           <Typography sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>
-            This is a placeholder view for the {subject.subjectName} exam.
+            {t('gradingView.placeholderViewText', { subjectName: subject.subjectName })}
           </Typography>
           <Box sx={{ mt: 3, p: 2, border: '1px dashed grey', borderRadius: '4px' }}>
             <Typography>
-              <strong>{question}</strong>
+              <strong>{t('gradingView.questionPrefix')} {question}</strong>
             </Typography>
             <Typography color="primary">
-              {student.studentName}'s Answer: {studentAnswer}
+              {t('gradingView.studentAnswer', { studentName: student.studentName, answer: studentAnswer })}
             </Typography>
           </Box>
-          {/* Back button moved to persistent footer */}
         </Box>
       )}
+
+      {/* Tab 2: View Quiz Result */}
       {tabValue === 2 && <QuizResultTab quizId={subject.quizId} studentId={student.studentId} />}
+      
+      {/* Tab 3: Upload Paper */}
       {tabValue === 3 && (
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
-            Upload Exam Paper
+            {t('gradingView.uploadPaperTitle')}
           </Typography>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={8}>
@@ -188,7 +209,7 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
                 type="file"
                 onChange={handleFileChange}
                 InputLabelProps={{ shrink: true }}
-                label="Select a file to upload"
+                label={t('gradingView.selectFileLabel')}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -199,14 +220,14 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
                 disabled={!paperFile || uploading}
                 startIcon={<CloudUploadIcon />}
               >
-                {uploading ? 'Uploading...' : 'Upload Paper'}
+                {uploading ? t('gradingView.uploadingButton') : t('gradingView.uploadButton')}
               </Button>
             </Grid>
           </Grid>
         </Box>
       )}
 
-      {/* Persistent bottom bar visible for all tabs */}
+      {/* Persistent Back Button Footer */}
       <Box
         sx={{
           position: 'sticky',
@@ -226,7 +247,7 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
         }}
       >
         <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={onBack}>
-          Back
+          {t('gradingView.back')}
         </Button>
       </Box>
     </Paper>
@@ -234,6 +255,7 @@ const StudentGradingView = ({ student, subject, onMarksChange, marks, onSave, on
 };
 
 const TeacherExamView = () => {
+  const { t } = useTranslation('teacherView');
   const [exams, setExams] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [selectedExamId, setSelectedExamId] = useState('');
@@ -262,11 +284,11 @@ const TeacherExamView = () => {
         setExams(examsRes.data.content || []);
       } catch (error) {
         console.error('Failed to fetch exams', error);
-        toast.error('Failed to load exams');
+        toast.error(t('toasts.loadExamsFail'));
       }
     };
     fetchExams();
-  }, [selectedSchoolId, selectedClassId, selectedDivisionId]);
+  }, [selectedSchoolId, selectedClassId, selectedDivisionId, t]);
 
   useEffect(() => {
     if (selectedExamId) {
@@ -310,7 +332,7 @@ const TeacherExamView = () => {
   const handleMarksChange = (studentId, subjectId, value) => {
     const subject = subjects.find((sub) => sub.subjectId === subjectId);
     if (value > subject.maxMarksSubject) {
-      toast.error(`Marks cannot exceed ${subject.maxMarksSubject}.`);
+      toast.error(t('toasts.marksExceeded', { maxMarks: subject.maxMarksSubject }));
     } else {
       setMarks((prev) => ({ ...prev, [`${studentId}-${subjectId}`]: value }));
     }
@@ -327,16 +349,16 @@ const TeacherExamView = () => {
       });
       console.log('Marks saved response:', marksRes);
       const student = enrolledStudents.find((s) => s.studentId === studentId);
-      const studentName = student ? student.studentName : 'a student';
-      toast.success(`Marks saved successfully for ${studentName}!`);
+      const studentName = student ? student.studentName : t('a student'); // Fallback localization not provided, kept simple
+      toast.success(t('toasts.saveMarksSuccess', { studentName }));
     } catch (error) {
       console.error('Failed to save marks', error);
-      toast.error('Failed to save marks. Please try again.');
+      toast.error(t('toasts.saveMarksFail'));
     }
   };
 
   const columns = [
-    { field: 'studentName', headerName: 'Student Name', flex: 1, minWidth: 150 },
+    { field: 'studentName', headerName: t('dataGrid.studentName'), flex: 1, minWidth: 150 },
     ...(subjects || []).map((subject) => ({
       field: `subject-${subject.subjectId}`,
       headerName: `${subject.subjectName} (/${subject.maxMarksSubject})`,
@@ -347,7 +369,7 @@ const TeacherExamView = () => {
           <TextField
             type="number"
             size="small"
-            placeholder="Marks"
+            placeholder={t('dataGrid.placeholderMarks')}
             value={marks[`${params.row.studentId}-${subject.subjectId}`] || ''}
             onChange={(e) => handleMarksChange(params.row.studentId, subject.subjectId, e.target.value)}
             inputProps={{ max: subject.maxMarksSubject, min: 0 }}
@@ -361,7 +383,7 @@ const TeacherExamView = () => {
     })),
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('dataGrid.actions'),
       width: 150,
       sortable: false,
       renderCell: (params) => (
@@ -383,7 +405,7 @@ const TeacherExamView = () => {
             handleSaveMarks(studentId, studentSubjectMarks);
           }}
         >
-          Save All
+          {t('dataGrid.saveAll')}
         </Button>
       )
     }
@@ -391,7 +413,7 @@ const TeacherExamView = () => {
 
   if (currentView) {
     return (
-      <MainCard title="Grade Exam">
+      <MainCard title={t('gradeExamTitle')}>
         <StudentGradingView
           student={currentView.student}
           subject={currentView.subject}
@@ -409,7 +431,7 @@ const TeacherExamView = () => {
   }
 
   return (
-    <MainCard title="Grade Exams">
+    <MainCard title={t('title')}>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {/* School Autocomplete */}
         <Grid item xs={12} sm={6}>
@@ -422,7 +444,7 @@ const TeacherExamView = () => {
             onChange={(event, newValue) => {
               setSelectedSchoolId(newValue ? newValue.id : '');
             }}
-            renderInput={(params) => <TextField {...params} label="Select School" variant="outlined" fullWidth />}
+            renderInput={(params) => <TextField {...params} label={t('filters.selectSchool')} variant="outlined" fullWidth />}
           />
         </Grid>
 
@@ -437,7 +459,7 @@ const TeacherExamView = () => {
             onChange={(event, newValue) => {
               setSelectedClassId(newValue ? newValue.id : '');
             }}
-            renderInput={(params) => <TextField {...params} label="Select Class" variant="outlined" fullWidth />}
+            renderInput={(params) => <TextField {...params} label={t('filters.selectClass')} variant="outlined" fullWidth />}
           />
         </Grid>
 
@@ -452,18 +474,18 @@ const TeacherExamView = () => {
             onChange={(event, newValue) => {
               setSelectedDivisionId(newValue ? newValue.id : '');
             }}
-            renderInput={(params) => <TextField {...params} label="Select Division" variant="outlined" fullWidth />}
+            renderInput={(params) => <TextField {...params} label={t('filters.selectDivision')} variant="outlined" fullWidth />}
           />
         </Grid>
 
         {/* Exam Select */}
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth>
-            <InputLabel id="select-exam-label">Select Exam</InputLabel>
+            <InputLabel id="select-exam-label">{t('filters.selectExam')}</InputLabel>
             <Select
               labelId="select-exam-label"
               value={selectedExamId}
-              label="Select Exam"
+              label={t('filters.selectExam')}
               onChange={(e) => setSelectedExamId(e.target.value)}
             >
               {exams.map((exam) => (
@@ -485,42 +507,7 @@ const TeacherExamView = () => {
 };
 
 // Simple Error Boundary to protect the view from runtime render errors
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
 
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
 
-  componentDidCatch(error, info) {
-    // eslint-disable-next-line no-console
-    console.error('Error in TeacherExamView:', error, info);
-  }
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <MainCard title="Error">
-          <Typography color="error">Something went wrong while loading the page.</Typography>
-          <Box sx={{ mt: 2 }}>
-            <Button variant="contained" onClick={() => this.setState({ hasError: false, error: null })}>
-              Retry
-            </Button>
-          </Box>
-        </MainCard>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-const TeacherExamViewWithBoundary = () => (
-  <ErrorBoundary>
-    <TeacherExamView />
-  </ErrorBoundary>
-);
-
-export default TeacherExamViewWithBoundary;
+export default TeacherExamView;

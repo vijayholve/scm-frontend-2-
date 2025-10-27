@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 
@@ -23,7 +24,6 @@ import { Formik, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
-
 
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
@@ -55,7 +55,8 @@ const EditTimetable = ({ ...others }) => {
     updatedDate: null
   });
 
-  const Title = timetableId ? 'Edit Timetable' : 'Add Timetable';
+  const { t } = useTranslation('edit');
+  const Title = timetableId ? t('timetable.title.edit') : t('timetable.title.add');
 
   const [classes, setClasses] = useState([]);
   const [divisions, setDivisions] = useState([]);
@@ -66,7 +67,6 @@ const EditTimetable = ({ ...others }) => {
 
   useEffect(() => {
     try {
-      
       const authDataString = localStorage.getItem('SCM-AUTH');
       if (authDataString) {
         const parsedAuthData = JSON.parse(authDataString);
@@ -111,12 +111,12 @@ const EditTimetable = ({ ...others }) => {
         sortDir: 'asc',
         search: ''
       };
-      
+
       let url = `${endpoint}/${accountId}?type=${typeFilter}`;
       if (typeFilter) {
         payload.type = typeFilter;
       }
-      
+
       const response = await api.post(url, payload);
       setter(response?.data?.content || []);
     } catch (err) {
@@ -124,7 +124,6 @@ const EditTimetable = ({ ...others }) => {
     }
   };
 
-  
   useEffect(() => {
     if (timetableId) {
       setLoader(true);
@@ -371,7 +370,7 @@ const EditTimetable = ({ ...others }) => {
                                               fullWidth
                                               error={Boolean(
                                                 touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.type &&
-                                                errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.type
+                                                  errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.type
                                               )}
                                             >
                                               <InputLabel id={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-type-label`}>Type</InputLabel>
@@ -416,7 +415,7 @@ const EditTimetable = ({ ...others }) => {
                                                   label="Subject"
                                                   error={Boolean(
                                                     touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.subjectId &&
-                                                    errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.subjectId
+                                                      errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.subjectId
                                                   )}
                                                   helperText={
                                                     touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.subjectId &&
@@ -427,7 +426,13 @@ const EditTimetable = ({ ...others }) => {
                                             />
                                           </Grid>
                                           <Grid item xs={6} sm={2}>
-                                            <FormControl fullWidth error={Boolean(touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour)}>
+                                            <FormControl
+                                              fullWidth
+                                              error={Boolean(
+                                                touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour &&
+                                                  errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour
+                                              )}
+                                            >
                                               <InputLabel htmlFor={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-hour`}>Hour</InputLabel>
                                               <OutlinedInput
                                                 id={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-hour`}
@@ -439,13 +444,20 @@ const EditTimetable = ({ ...others }) => {
                                                 type="number"
                                                 inputProps={{ min: 0, max: 23 }}
                                               />
-                                              {touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour && (
-                                                <FormHelperText error>{errors.dayTimeTable[dayIndex].tsd[slotIndex].hour}</FormHelperText>
-                                              )}
+                                              {touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour &&
+                                                errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.hour && (
+                                                  <FormHelperText error>{errors.dayTimeTable[dayIndex].tsd[slotIndex].hour}</FormHelperText>
+                                                )}
                                             </FormControl>
                                           </Grid>
                                           <Grid item xs={6} sm={2}>
-                                            <FormControl fullWidth error={Boolean(touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute)}>
+                                            <FormControl
+                                              fullWidth
+                                              error={Boolean(
+                                                touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute &&
+                                                  errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute
+                                              )}
+                                            >
                                               <InputLabel htmlFor={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-minute`}>Minute</InputLabel>
                                               <OutlinedInput
                                                 id={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-minute`}
@@ -457,14 +469,25 @@ const EditTimetable = ({ ...others }) => {
                                                 type="number"
                                                 inputProps={{ min: 0, max: 59 }}
                                               />
-                                              {touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute && (
-                                                <FormHelperText error>{errors.dayTimeTable[dayIndex].tsd[slotIndex].minute}</FormHelperText>
-                                              )}
+                                              {touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute &&
+                                                errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.minute && (
+                                                  <FormHelperText error>
+                                                    {errors.dayTimeTable[dayIndex].tsd[slotIndex].minute}
+                                                  </FormHelperText>
+                                                )}
                                             </FormControl>
                                           </Grid>
                                           <Grid item xs={12} sm={4}>
-                                            <FormControl fullWidth error={Boolean(touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence)}>
-                                              <InputLabel htmlFor={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-sequence`}>Sequence</InputLabel>
+                                            <FormControl
+                                              fullWidth
+                                              error={Boolean(
+                                                touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence &&
+                                                  errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence
+                                              )}
+                                            >
+                                              <InputLabel htmlFor={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-sequence`}>
+                                                Sequence
+                                              </InputLabel>
                                               <OutlinedInput
                                                 id={`dayTimeTable-${dayIndex}-tsd-${slotIndex}-sequence`}
                                                 name={`dayTimeTable.${dayIndex}.tsd.${slotIndex}.sequence`}
@@ -474,9 +497,12 @@ const EditTimetable = ({ ...others }) => {
                                                 label="Sequence"
                                                 type="number"
                                               />
-                                              {touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence && (
-                                                <FormHelperText error>{errors.dayTimeTable[dayIndex].tsd[slotIndex].sequence}</FormHelperText>
-                                              )}
+                                              {touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence &&
+                                                errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.sequence && (
+                                                  <FormHelperText error>
+                                                    {errors.dayTimeTable[dayIndex].tsd[slotIndex].sequence}
+                                                  </FormHelperText>
+                                                )}
                                             </FormControl>
                                           </Grid>
                                           <Grid item xs={12} sm={4}>
@@ -487,15 +513,27 @@ const EditTimetable = ({ ...others }) => {
                                               getOptionLabel={(option) => option.firstName + ' ' + option.lastName || ''}
                                               value={teachers.find((teacher) => teacher.id === slot.teacherId) || null}
                                               onChange={(event, newValue) => {
-                                                setFieldValue(`dayTimeTable.${dayIndex}.tsd.${slotIndex}.teacherId`, newValue ? newValue.id : '');
-                                                setFieldValue(`dayTimeTable.${dayIndex}.tsd.${slotIndex}.teacherName`, newValue ? newValue.firstName + ' ' + newValue.lastName : '');
+                                                setFieldValue(
+                                                  `dayTimeTable.${dayIndex}.tsd.${slotIndex}.teacherId`,
+                                                  newValue ? newValue.id : ''
+                                                );
+                                                setFieldValue(
+                                                  `dayTimeTable.${dayIndex}.tsd.${slotIndex}.teacherName`,
+                                                  newValue ? newValue.firstName + ' ' + newValue.lastName : ''
+                                                );
                                               }}
                                               renderInput={(params) => (
                                                 <TextField
                                                   {...params}
                                                   label="Teacher"
-                                                  error={Boolean(touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId)}
-                                                  helperText={touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId && errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId}
+                                                  error={Boolean(
+                                                    touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId &&
+                                                      errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId
+                                                  )}
+                                                  helperText={
+                                                    touched.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId &&
+                                                    errors.dayTimeTable?.[dayIndex]?.tsd?.[slotIndex]?.teacherId
+                                                  }
                                                 />
                                               )}
                                             />

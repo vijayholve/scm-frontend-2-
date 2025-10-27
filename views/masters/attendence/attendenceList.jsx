@@ -8,6 +8,7 @@ import ReusableDataGrid from 'ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
 import dayjs from 'dayjs';
 import { Grid } from '@mui/material';
+import { useTranslation } from 'react-i18next'; // <-- ADDED
 
 // Define the columns for the attendance data grid.
 const columns = [
@@ -30,6 +31,8 @@ const columns = [
 ];
 
 const AttendanceList = () => {
+const { t } = useTranslation("title"); // <-- ADDED HOOK
+
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
   
@@ -38,7 +41,7 @@ const AttendanceList = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-                      title="ATTENDANCE"
+            title={t('attendance')}
           viewScreenIs={true}
 
             entityName="ATTENDANCE"

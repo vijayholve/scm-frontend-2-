@@ -7,6 +7,7 @@ import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
 import api from '../../../utils/apiService';
+import { useTranslation } from 'react-i18next';
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -22,9 +23,11 @@ const columns = [
 const Schools = () => {
     const accountId = userDetails.getAccountId();
     const [schools, setSchools] = useState([]);
+    
     const [loading, setLoading] = useState(true);
 
-    
+    const { t } = useTranslation("title"); // <-- ADDED HOOK
+
     const customToolbar = () => (
       <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #e0e0e0' }}>
         <Typography variant="h6">Schools Overview</Typography>
@@ -39,17 +42,12 @@ const Schools = () => {
             <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
                     <ReusableDataGrid 
-                        title="SCHOOLS" 
+                        title={t("schools")} 
                         fetchUrl={`/api/schoolBranches/getAll/${accountId}`}
                         isPostRequest={true}
-                        
-                        // data={schools}
-                        loading={loading}
-
-                        
+                        loading={loading}                       
                         addActionUrl={"/masters/school/add"}
-                        // fetchUrl={null} // Explicitly set to null to indicate client-side mode
-                        columns={columns}
+                       columns={columns}
                         editUrl="/masters/school/edit"
                         deleteUrl='/api/schoolBranches/delete'
                         entityName="SCHOOL"

@@ -41,7 +41,10 @@ const Item = styled(Paper)(({ theme }) => ({
   })
 }));
 
+import { useTranslation } from 'react-i18next';
+
 const AttendenceEdit = () => {
+  const { t } = useTranslation('edit');
   const theme = useTheme();
   const { id } = useParams();
   const navigate = useNavigate();
@@ -239,8 +242,9 @@ const AttendenceEdit = () => {
   if (loading) {
     return <ReusableLoader></ReusableLoader>;
   }
+  const Title = id ? t('attendance.title.edit') : t('attendance.title.add');
   return (
-    <MainCard title="Attendance">
+    <MainCard title={Title}>
       {/* ... (rest of your component logic) ... */}
 
       {/* All selection fields in a single responsive row */}
@@ -265,7 +269,7 @@ const AttendenceEdit = () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Subject *"
+                label={`${t('attendance.fields.subject')} *`}
                 error={showValidation && !!validationErrors.subjectId}
                 helperText={showValidation && validationErrors.subjectId}
               />
@@ -278,7 +282,7 @@ const AttendenceEdit = () => {
         <Grid item xs={12} sm={6} md={3} lg={2}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              label="Date *"
+              label={`${t('attendance.fields.date')} *`}
               value={reqData.date ? dayjs(reqData.date) : null}
               onChange={(newValue) => {
                 setReqData({ ...reqData, date: newValue ? dayjs(newValue).format('YYYY-MM-DD') : null });
@@ -303,7 +307,7 @@ const AttendenceEdit = () => {
             title={
               reqData.className
                 ? `${reqData.className} - ${reqData.divisionName} - ${reqData.subjectName}`
-                : 'Select Class, Division and Subject'
+                : t('attendance.messages.selectPlaceholder')
             }
           >
             <Grid container spacing={2}>
@@ -344,7 +348,7 @@ const AttendenceEdit = () => {
         {/* Submit Button */}
         <Grid item xs={12}>
           <BackSaveButton
-            title={id ? 'Update' : 'Save'}
+            title={id ? t('common.update') || 'Update' : t('common.save')}
             backUrl="/masters/attendances"
             isSubmitting={false}
             onSaveClick={onHandleClickSubmit}

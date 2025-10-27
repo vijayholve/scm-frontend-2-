@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -19,6 +20,7 @@ import {
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { toast, Toaster } from 'react-hot-toast';
+import PropTypes from 'prop-types';
 
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
@@ -31,7 +33,6 @@ import ReusableLoader from 'ui-component/loader/ReusableLoader';
 import UserDocumentManager from 'views/UserDocumentManager';
 import SCDSelector from 'ui-component/SCDSelector';
 import { useSCDData } from 'contexts/SCDProvider';
-
 // Helper component for Tab Panel content
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -46,6 +47,16 @@ function TabPanel(props) {
     </div>
   );
 }
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  value: PropTypes.number.isRequired,
+  index: PropTypes.number.isRequired
+};
+
+TabPanel.defaultProps = {
+  children: null
+};
 
 // Function to generate accessibility props for tabs
 function a11yProps(index) {
@@ -74,6 +85,8 @@ const EditStudent = () => {
     email: '',
     address: '',
     rollNo: '',
+    // added dob for the form (ISO yyyy-mm-dd string)
+    dob: '',
     schoolId: '',
     schoolName: '',
     classId: '',
@@ -125,13 +138,26 @@ const EditStudent = () => {
       setLoader(true);
       try {
         const response = await api.get(`api/users/getById?id=${id}`);
+        // helper to normalize date to yyyy-mm-dd for native date input
+        const formatDateForInput = (val) => {
+          if (!val) return '';
+          const d = new Date(val);
+          if (Number.isNaN(d.getTime())) return '';
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        };
+
         const fetchedData = {
           ...response.data,
           // Ensure classId and divisionId are treated consistently (e.g., as strings)
           classId: response.data.classId ? String(response.data.classId) : '',
           divisionId: response.data.divisionId ? String(response.data.divisionId) : '',
           rollNo: response.data.rollNo ? String(response.data.rollNo) : '',
-          schoolId: response.data.schoolId ? response.data.schoolId : '',
+          schoolId: response.data.schoolId || '',
+          // map backend DOB (if present) to yyyy-mm-dd for the date input
+          dob: formatDateForInput(response.data.dob || response.data.dob || response.data.date_of_birth),
           role: response.data.role
             ? roles.find((r) => String(r.id) === String(response.data.role.id)) || {
                 id: response.data.role.id,
@@ -190,6 +216,9 @@ const EditStudent = () => {
       type: 'STUDENT',
       accountId: userDetails.getAccountId(),
       status: 'active',
+      // include both dob and bateOfBirth as requested (backend may expect either)
+      dob: values.dob || null,
+      bateOfBirth: values.dob || null,
       // Normalize role payload to expected shape
       role: values.role ? { id: values.role.id, name: values.role.name } : null
     };
@@ -219,9 +248,10 @@ const EditStudent = () => {
     }
   };
 
-  const Title = userId ? 'Edit Student' : 'Add Student';
+  const { t } = useTranslation('edit');
+  const Title = userId ? t('student.title.edit') : t('student.title.add');
   if (loader) {
-    return <ReusableLoader message="Loading Student..." />;
+    return <ReusableLoader message={t('student.messages.loading')} />;
   }
 
   return (
@@ -233,8 +263,8 @@ const EditStudent = () => {
             sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1 }}
           >
             <Tabs value={value} onChange={handleTabChange} aria-label="student form tabs">
-              <Tab label="Student Details" {...a11yProps(0)} />
-              <Tab label="Documents" {...a11yProps(1)} />
+              <Tab label={t('student.tabs.details')} {...a11yProps(0)} />
+              <Tab label={t('student.tabs.documents')} {...a11yProps(1)} />
             </Tabs>
           </Box>
         </AppBar>
@@ -256,6 +286,7 @@ const EditStudent = () => {
                 .max(15, 'Mobile number cannot exceed 15 digits')
                 .required('Mobile number is required'),
               rollNo: Yup.string().required('Roll No is required'),
+              dob: Yup.date().nullable().max(new Date(), 'Date of Birth cannot be in the future').required('Date of Birth is required'),
               classId: Yup.string().required('Class is required'),
               divisionId: Yup.string().required('Division is required'),
               role: Yup.object().nullable().required('Role is required')
@@ -268,14 +299,14 @@ const EditStudent = () => {
                   {/* User Name */}
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.userName && errors.userName)}>
-                      <InputLabel htmlFor="student-user-name">User Name</InputLabel>
+                      <InputLabel htmlFor="student-user-name">{t('student.fields.userName')}</InputLabel>
                       <OutlinedInput
                         id="student-user-name"
                         name="userName"
                         value={values.userName}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="User Name"
+                        label={t('student.fields.userName')}
                       />
                       {touched.userName && errors.userName && <FormHelperText>{errors.userName}</FormHelperText>}
                     </FormControl>
@@ -284,7 +315,7 @@ const EditStudent = () => {
                   {/* Password (conditionally rendered/validated for add/edit) */}
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.password && errors.password)}>
-                      <InputLabel htmlFor="student-password">Password</InputLabel>
+                      <InputLabel htmlFor="student-password">{t('student.fields.password')}</InputLabel>
                       <OutlinedInput
                         id="student-password"
                         name="password"
@@ -292,7 +323,7 @@ const EditStudent = () => {
                         value={values.password}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="Password"
+                        label={t('student.fields.password')}
                       />
                       {touched.password && errors.password && <FormHelperText>{errors.password}</FormHelperText>}
                     </FormControl>
@@ -301,14 +332,14 @@ const EditStudent = () => {
                   {/* First Name */}
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.firstName && errors.firstName)}>
-                      <InputLabel htmlFor="student-name">First Name</InputLabel>
+                      <InputLabel htmlFor="student-name">{t('student.fields.firstName')}</InputLabel>
                       <OutlinedInput
                         id="student-name"
                         name="firstName"
                         value={values.firstName}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="First Name"
+                        label={t('student.fields.firstName')}
                       />
                       {touched.firstName && errors.firstName && <FormHelperText>{errors.firstName}</FormHelperText>}
                     </FormControl>
@@ -318,14 +349,14 @@ const EditStudent = () => {
 
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.lastName && errors.lastName)}>
-                      <InputLabel htmlFor="student-name">Last Name</InputLabel>
+                      <InputLabel htmlFor="student-name">{t('student.fields.lastName')}</InputLabel>
                       <OutlinedInput
                         id="student-name"
                         name="lastName"
                         value={values.lastName}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="Last Name"
+                        label={t('student.fields.lastName')}
                       />
                       {touched.lastName && errors.lastName && <FormHelperText>{errors.lastName}</FormHelperText>}
                     </FormControl>
@@ -334,7 +365,7 @@ const EditStudent = () => {
                   {/* Mobile No */}
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.mobile && errors.mobile)}>
-                      <InputLabel htmlFor="student-mobile-no">Mobile No</InputLabel>
+                      <InputLabel htmlFor="student-mobile-no">{t('student.fields.mobile')}</InputLabel>
                       <OutlinedInput
                         id="student-mobile-no"
                         type="tel"
@@ -342,7 +373,7 @@ const EditStudent = () => {
                         value={values.mobile}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="Mobile No"
+                        label={t('student.fields.mobile')}
                       />
                       {touched.mobile && errors.mobile && <FormHelperText>{errors.mobile}</FormHelperText>}
                     </FormControl>
@@ -351,30 +382,49 @@ const EditStudent = () => {
                   {/* Email */}
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.email && errors.email)}>
-                      <InputLabel htmlFor="student-email">Email</InputLabel>
+                      <InputLabel htmlFor="student-email">{t('student.fields.email')}</InputLabel>
                       <OutlinedInput
                         id="student-email"
                         name="email"
                         value={values.email}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="Email"
+                        label={t('student.fields.email')}
                       />
                       {touched.email && errors.email && <FormHelperText>{errors.email}</FormHelperText>}
+                    </FormControl>
+                  </Grid>
+
+                  {/* Date of Birth */}
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth error={Boolean(touched.dob && errors.dob)}>
+                      {/* native date input gives broad browser support without extra deps */}
+                      <TextField
+                        id="student-dob"
+                        name="dob"
+                        label={t('student.fields.dateOfBirth')}
+                        type="date"
+                        value={values.dob || ''}
+                        onChange={(e) => setFieldValue('dob', e.target.value)}
+                        onBlur={handleBlur}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ max: new Date().toISOString().split('T')[0] }}
+                      />
+                      {touched.dob && errors.dob && <FormHelperText>{errors.dob}</FormHelperText>}
                     </FormControl>
                   </Grid>
 
                   {/* Address */}
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.address && errors.address)}>
-                      <InputLabel htmlFor="student-address">Address</InputLabel>
+                      <InputLabel htmlFor="student-address">{t('student.fields.address')}</InputLabel>
                       <OutlinedInput
                         id="student-address"
                         name="address"
                         value={values.address}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="Address"
+                        label={t('student.fields.address')}
                         multiline
                         rows={2}
                       />
@@ -385,7 +435,7 @@ const EditStudent = () => {
                   {/* Roll No */}
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={Boolean(touched.rollNo && errors.rollNo)}>
-                      <InputLabel htmlFor="student-roll-number">Roll No</InputLabel>
+                      <InputLabel htmlFor="student-roll-number">{t('student.fields.rollNo')}</InputLabel>
                       <OutlinedInput
                         id="student-roll-number"
                         type="number"
@@ -393,7 +443,7 @@ const EditStudent = () => {
                         value={values.rollNo}
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        label="Roll No"
+                        label={t('student.fields.rollNo')}
                       />
                       {touched.rollNo && errors.rollNo && <FormHelperText>{errors.rollNo}</FormHelperText>}
                     </FormControl>
@@ -417,7 +467,7 @@ const EditStudent = () => {
                           setFieldValue('role', newValue);
                         }}
                         isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
-                        renderInput={(params) => <TextField {...params} label="Role" />}
+                        renderInput={(params) => <TextField {...params} label={t('student.fields.role')} />}
                       />
                       {touched.role && errors.role && <FormHelperText>{errors.role}</FormHelperText>}
                     </FormControl>
@@ -425,10 +475,10 @@ const EditStudent = () => {
 
                   {/* Action Buttons */}
                   <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                    <NavingateToOtherPage title="Cancel" PageUrl="/masters/students" />
+                    <NavingateToOtherPage title={t('common.cancel')} PageUrl="/masters/students" />
                     <AnimateButton>
                       <Button disableElevation disabled={isSubmitting} type="submit" variant="contained" color="secondary">
-                        Save
+                        {isSubmitting ? t('common.loading') : t('common.save')}
                       </Button>
                     </AnimateButton>
                     {/* <BackButton/> */}

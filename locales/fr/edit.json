@@ -1,0 +1,227 @@
+{
+  "student": {
+    "title": {
+      "add": "Ajouter un Élève",
+      "edit": "Modifier l'Élève"
+    },
+    "fields": {
+      "userName": "Nom d'Utilisateur",
+      "password": "Mot de Passe",
+      "firstName": "Prénom",
+      "lastName": "Nom de Famille",
+      "mobile": "N° de Mobile",
+      "email": "E-mail",
+      "address": "Adresse",
+      "rollNo": "N° de Matricule",
+      "dateOfBirth": "Date de Naissance",
+      "school": "École",
+      "class": "Classe",
+      "division": "Division",
+      "role": "Rôle",
+      "status": "Statut"
+    },
+    "tabs": {
+      "details": "Student Details",
+      "documents": "Documents"
+    },
+    "messages": {
+      "loading": "Chargement de l'Élève...",
+      "saved": "Élève enregistré avec succès"
+    }
+  },
+  "teacher": {
+    "title": { "add": "Ajouter un Enseignant", "edit": "Modifier l'Enseignant" },
+    "fields": {
+      "userName": "Nom d'Utilisateur",
+      "password": "Mot de Passe",
+      "firstName": "Prénom",
+      "middleName": "Deuxième Prénom",
+      "lastName": "Nom de Famille",
+      "mobile": "N° de Mobile",
+      "email": "E-mail",
+      "address": "Adresse",
+      "dateOfBirth": "Date de Naissance",
+      "gender": "Genre",
+      "school": "École",
+      "role": "Rôle",
+      "allocations": "Attributions de Classe"
+    },
+    "messages": { "loading": "Chargement de l'Enseignant...", "saved": "Enseignant enregistré avec succès" }
+  },
+  "role": {
+    "title": { "add": "Ajouter un Rôle", "edit": "Modifier le Rôle" },
+    "fields": { "name": "Nom du Rôle", "permissions": "Permissions", "school": "École" }
+  },
+  "class": {
+    "title": { "add": "Ajouter une Classe", "edit": "Modifier la Classe" },
+    "fields": { "name": "Nom de la Classe", "school": "École", "institute": "Institut" },
+    "messages": {
+      "loading": "Chargement de la classe...",
+      "savedAdd": "Classe ajoutée avec succès !",
+      "savedUpdate": "Classe mise à jour avec succès !",
+      "duplicate": "Ce nom de classe existe déjà pour l'école sélectionnée.",
+      "instituteRequired": "L'institut est requis",
+      "schoolRequired": "L'école est requise",
+      "saveLabel": "Enregistrer",
+      "updateLabel": "Mettre à jour",
+      "unexpectedError": "Une erreur inattendue est survenue. Veuillez réessayer.",
+      "saveFailed": "Échec de l'enregistrement de la classe. Veuillez réessayer."
+    }
+  },
+  "course": {
+    "title": { "add": "Ajouter un Cours", "edit": "Modifier le Cours" },
+    "fields": { "name": "Nom du Cours", "description": "Description", "school": "École" }
+  },
+  "school": {
+    "title": { "add": "Ajouter une École", "edit": "Modifier l'École" },
+    "fields": { "name": "Nom de l'École", "institute": "Institut", "address": "Adresse", "code": "Code" }
+  },
+  "subject": {
+    "title": { "add": "Ajouter une Matière", "edit": "Modifier la Matière" },
+    "fields": { "name": "Nom de la Matière", "code": "Code de Matière", "school": "École" }
+  },
+  "assignment": {
+    "title": { "add": "Ajouter un Devoir", "edit": "Modifier le Devoir" },
+    "fields": { "name": "Nom", "deadline": "Date Limite", "subject": "Matière", "message": "Message" },
+    "messages": {
+      "loading": "Chargement du devoir...",
+      "saved": "Devoir enregistré avec succès",
+      "uploadTitle": "📁 Télécharger le fichier du devoir",
+      "uploadSubtitle": "Cliquez pour sélectionner un fichier ou glissez-déposez",
+      "submissionsTitle": {
+        "student": "📋 Mes soumissions & commentaires du professeur",
+        "teacher": "📋 Toutes les soumissions des étudiants"
+      },
+      "submissionsSubtitle": {
+        "student": "Voir votre travail soumis et les commentaires du professeur",
+        "teacher": "Examiner et noter les soumissions des étudiants"
+      },
+      "table": {
+        "studentId": "👤 ID étudiant",
+        "submittedFile": "📄 Fichier soumis",
+        "submissionDate": "📅 Date de soumission",
+        "download": "👁️ Télécharger",
+        "status": "⭐ Statut",
+        "feedback": "💬 Commentaire",
+        "actions": "🔧 Actions"
+      },
+      "download": "Télécharger",
+      "downloadAssignment": "Télécharger le devoir",
+      "pending": "En attente",
+      "na": "N/A",
+      "noFeedbackYet": "Pas encore de feedback",
+      "enterFeedback": "Entrer un commentaire",
+      "accept": "Accepter",
+      "reject": "Rejeter",
+      "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer cette soumission ?",
+      "toast": {
+        "submissionUpdated": "Soumission mise à jour",
+        "submissionUpdateFailed": "Échec de la mise à jour de la soumission",
+        "submissionDeleted": "Soumission supprimée",
+        "submissionDeleteFailed": "Échec de la suppression de la soumission"
+      },
+      "empty": {
+        "student": "Vous n'avez soumis aucun travail pour cette mission.",
+        "teacher": "Aucune soumission d'étudiant trouvée pour cette mission."
+      }
+    }
+  },
+  "division": {
+    "title": { "add": "Ajouter une Division", "edit": "Modifier la Division" },
+    "fields": { "name": "Nom de la Division", "code": "Code de la Division" },
+    "messages": {
+      "loading": "Chargement de la division...",
+      "saved": "Division enregistrée avec succès",
+      "saveLabel": "Enregistrer",
+      "updateLabel": "Mettre à jour"
+    }
+  },
+  "attendance": {
+    "title": { "add": "Ajouter une Présence", "edit": "Modifier la Présence" },
+    "fields": { "date": "Date", "class": "Classe", "division": "Division", "subject": "Matière" },
+    "messages": {
+      "selectPlaceholder": "Sélectionnez la classe, la division et la matière",
+      "updated": "Présence mise à jour avec succès"
+    }
+  },
+  "exam": {
+    "title": { "add": "Ajouter un Examen", "edit": "Modifier l'Examen" },
+    "fields": {
+      "school": "École",
+      "class": "Classe",
+      "division": "Division",
+      "examName": "Nom de l'Examen",
+      "academicYear": "Année Scolaire",
+      "examType": "Type d'Examen",
+      "startDate": "Date de Début",
+      "endDate": "Date de Fin",
+      "subject": "Matière",
+      "quiz": "Quiz",
+      "maxMarks": "Note Max",
+      "passingMarks": "Note de Passage",
+      "duration": "Durée (mins)",
+      "examDateTime": "Date et Heure de l'Examen",
+      "totalMarks": "Notes Totales"
+    },
+    "headings": {
+      "examSubjects": "Sujets de l'Examen"
+    },
+    "validation": {
+      "schoolRequired": "L'école est requise",
+      "classRequired": "La classe est requise",
+      "divisionRequired": "La division est requise",
+      "examNameRequired": "Le nom de l'examen est requis",
+      "academicYearRequired": "L'année scolaire est requise",
+      "examTypeRequired": "Le type d'examen est requis",
+      "startDateRequired": "La date de début est requise",
+      "endDateRequired": "La date de fin est requise",
+      "subjectRequired": "La matière est requise",
+      "quizRequired": "Le quiz est requis",
+      "maxMarksNumber": "La note max doit être un nombre",
+      "maxMarksRequired": "La note max est requise",
+      "minOne": "Doit être au moins 1",
+      "passingMarksNumber": "La note de passage doit être un nombre",
+      "passingMarksRequired": "La note de passage est requise",
+      "minZero": "Doit être au moins 0",
+      "durationNumber": "La durée doit être un nombre",
+      "durationRequired": "La durée est requise",
+      "examDateTimeRequired": "La date et l'heure de l'examen sont requises",
+      "atLeastOne": "Au moins un sujet est requis"
+    },
+    "messages": {
+      "loading": "Chargement de l'examen...",
+      "fetchError": "Échec de la récupération des détails de l'examen.",
+      "created": "Examen créé avec succès !",
+      "createFailed": "Échec de la création de l'examen.",
+      "updated": "Examen mis à jour avec succès !",
+      "updateFailed": "Échec de la mise à jour de l'examen.",
+      "createLabel": "Créer l'Examen",
+      "updateLabel": "Mettre à jour l'Examen"
+    }
+  },
+  "timetable": {
+    "title": { "add": "Ajouter un Emploi du Temps", "edit": "Modifier l'Emploi du Temps" },
+    "fields": { "school": "École", "class": "Classe", "division": "Division", "dayTimeTable": "Emploi du Temps du Jour" }
+  },
+  "institute": {
+    "title": { "add": "Ajouter un Institut", "edit": "Modifier l'Institut" },
+    "fields": { "name": "Nom de l'Institut", "address": "Adresse", "code": "Code" }
+  },
+  "studentParent": {
+    "title": { "add": "Ajouter Élève/Parent", "edit": "Modifier Élève/Parent" },
+    "fields": { "name": "Nom", "mobile": "N° de Mobile", "email": "E-mail" }
+  },
+  "notifications": {
+    "title": { "create": "Créer une Notification", "edit": "Modifier la Notification" },
+    "fields": { "title": "Titre", "message": "Message", "sendTo": "Envoyer à" }
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "loading": "Chargement...",
+    "required": "Ce champ est requis",
+    "invalidEmail": "Doit être un e-mail valide",
+    "dateInFuture": "La date ne peut pas être dans le futur"
+  }
+}

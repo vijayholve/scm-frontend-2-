@@ -14,11 +14,12 @@ import BackButton from 'layout/MainLayout/Button/BackButton';
 import SaveButton from 'layout/MainLayout/Button/SaveButton';
 import BackSaveButton from 'layout/MainLayout/Button/BackSaveButton';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
-
+import { useTranslation } from 'react-i18next';
 // ==============================|| EDIT INSTITUTE PAGE ||============================== //
 
 const EditInstitute = ({ ...others }) => {
   const theme = useTheme();
+  const { t } = useTranslation('edit');
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { id: instituteId } = useParams();
@@ -46,7 +47,6 @@ const EditInstitute = ({ ...others }) => {
   // Fetch institute data if we are in "edit" mode
   useEffect(() => {
     if (instituteId) {
-
       fetchInstituteData(instituteId);
     }
   }, [instituteId]);
@@ -61,9 +61,7 @@ const EditInstitute = ({ ...others }) => {
     } catch (error) {
       toast.error('Failed to fetch institute data.');
       console.error('Failed to fetch institute data:', error);
-    }
-    finally
-    {
+    } finally {
       setLoading(false);
     }
   };
@@ -98,12 +96,12 @@ const EditInstitute = ({ ...others }) => {
         // const apiCall = api.put(`/api/institutes/save`, institutePayload);
         // const response ;
         if (instituteId) {
-              await api.put("api/institutes/update", institutePayload);
-                toast.success("institutes updated successfully!");
-              } else {
-               await api.post("api/institutes/save", institutePayload);
-                toast.success("institutes created successfully!");
-              }
+          await api.put('api/institutes/update', institutePayload);
+          toast.success('institutes updated successfully!');
+        } else {
+          await api.post('api/institutes/save', institutePayload);
+          toast.success('institutes created successfully!');
+        }
 
         setSubmitting(false);
         toast.success(instituteId ? 'Institute updated successfully!' : 'Institute created successfully!', {
@@ -330,7 +328,7 @@ const EditInstitute = ({ ...others }) => {
                     >
                       Save
                     </Button> */}
-                    {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
                       <BackButton backUrl="/masters/institutes" />
                       <SaveButton
                         title="Save"
@@ -340,13 +338,13 @@ const EditInstitute = ({ ...others }) => {
                       />
                     </Box>
                   </AnimateButton>
-                </Box> */} 
+                </Box> */}
                 <BackSaveButton
-                  title={instituteId ? "Update":"Save"}
+                  title={instituteId ? 'Update' : 'Save'}
                   backUrl="/masters/institutes"
                   isSubmitting={isSubmitting}
                   // onSaveClick={handleSubmit}
-                  ></BackSaveButton>
+                ></BackSaveButton>
               </Grid>
             </Grid>
           </form>

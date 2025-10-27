@@ -8,7 +8,8 @@ import TeacherTimetableCard from './TeacherTimetableCard';
 import TeacherAssignmentChart from './TeacherAssignmentChart';
 import TeacherQuickActionsCard from './TeacherQuickActionsCard';
 import TeacherStudentDashboard from './TeacherStudentDashboard';
-import { useTranslation } from 'react-i18next'; // <-- ADDED
+import { useTranslation } from 'react-i18next'; // <-- ADDED 
+import TodayBirthdaysCard from '../../dashboard/TodayBirthdaysCard'; // <-- ADDED
 const TeacherDashboard = () => {
   const { user } = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -74,10 +75,10 @@ const TeacherDashboard = () => {
                 <PeopleIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
                 <Box>
                   <Typography variant="h5" fontWeight="bold" color="primary.main">
-                    Student Dashboard
+                    {t('studentDashboard.title')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    View and manage students by class and division
+                    {t('studentDashboard.text2')}
                   </Typography>
                 </Box>
               </Box>
@@ -93,17 +94,17 @@ const TeacherDashboard = () => {
                 <Box textAlign="center">
                   <TrendingUpIcon color="success" />
                   <Typography variant="caption" display="block">
-                    Performance
+                    {t('studentDashboard.tabs.performance')}
                   </Typography>
                 </Box>
                 <Box textAlign="center">
                   <PeopleIcon color="info" />
                   <Typography variant="caption" display="block">
-                    Attendance
+                    {t('studentDashboard.tabs.attendance')}
                   </Typography>
                 </Box>
                 <Button variant="contained" color="primary" onClick={handleStudentDashboardToggle}>
-                  Open Dashboard
+                    {t('studentDashboard.tabs.openDashboard')}
                 </Button>
               </Box>
             </Box>
@@ -120,7 +121,10 @@ const TeacherDashboard = () => {
       </Grid>
       <Grid item xs={12} sm={12} md={6}>
         <TeacherAssignmentChart />
-      </Grid>
+      </Grid> 
+               <Grid item xs={12} md={6} lg={4}> 
+                      <TodayBirthdaysCard />
+                  </Grid>
     </Grid>
   );
 };

@@ -28,7 +28,9 @@
       "notifications": "Notifications",
       "quizTests": "Quiz & Tests",
       "manageQuizzes": "Manage Quizzes",
-      "availableQuizzes": "Available Quizzes"
+      "availableQuizzes": "Available Quizzes",
+      "idCardManagement": "ID Card Management",
+      "leavingCertificateManagement": "Leaving Certificate Management"
     }
   }
 }

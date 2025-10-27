@@ -50,7 +50,10 @@ import ReusableLoader from 'ui-component/loader/ReusableLoader';
 import { useSCDData } from 'contexts/SCDProvider';
 import SCDSelector from 'ui-component/SCDSelector';
 
+import { useTranslation } from 'react-i18next';
+
 const EditAssignment = ({ ...others }) => {
+  const { t } = useTranslation('edit');
   const theme = useTheme();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
@@ -121,9 +124,9 @@ const EditAssignment = ({ ...others }) => {
       };
       fetchSubmissions();
     }
-  }, [assignmentId, user?.id]);
+  }, [assignmentId, user?.id, user?.type]);
 
-  const Title = assignmentId ? 'Edit Assignment' : 'Add Assignment';
+  const Title = assignmentId ? t('assignment.title.edit') : t('assignment.title.add');
 
   useEffect(() => {
     if (assignmentId) {
@@ -161,7 +164,7 @@ const EditAssignment = ({ ...others }) => {
         }
       });
 
-      toast.success('Assignment saved successfully', {
+      toast.success(t('assignment.messages.saved') || 'Assignment saved successfully', {
         autoClose: 500,
         onClose: () => navigate('/masters/assignments')
       });
@@ -174,7 +177,7 @@ const EditAssignment = ({ ...others }) => {
     }
   };
   if (loader) {
-    return <ReusableLoader message="Loading Assignment..."></ReusableLoader>;
+    return <ReusableLoader message={t('assignment.messages.loading') || 'Loading Assignment...'}></ReusableLoader>;
   }
 
   return (
@@ -198,14 +201,14 @@ const EditAssignment = ({ ...others }) => {
               {/* Assignment Name */}
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel htmlFor="assignment-name">Assignment Name</InputLabel>
+                  <InputLabel htmlFor="assignment-name">{t('assignment.fields.name') || 'Assignment Name'}</InputLabel>
                   <OutlinedInput
                     id="name"
                     name="name"
                     value={values.name}
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    label="Assignment Name"
+                    label={t('assignment.fields.name') || 'Assignment Name'}
                   />
                   {touched.name && errors.name && <FormHelperText error>{errors.name}</FormHelperText>}
                 </FormControl>
@@ -254,7 +257,7 @@ const EditAssignment = ({ ...others }) => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Subject *"
+                      label={t('assignment.fields.subject') + ' *'}
                       error={touched.subjectId && !!errors.subjectId}
                       helperText={touched.subjectId && errors.subjectId}
                     />
@@ -265,7 +268,7 @@ const EditAssignment = ({ ...others }) => {
               {/* Deadline */}
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel htmlFor="deadLine">Deadline</InputLabel>
+                  <InputLabel htmlFor="deadLine">{t('assignment.fields.deadline') || 'Deadline'}</InputLabel>
                   <OutlinedInput
                     id="deadLine"
                     name="deadLine"
@@ -273,7 +276,7 @@ const EditAssignment = ({ ...others }) => {
                     value={values.deadLine}
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    label="Deadline"
+                    label={t('assignment.fields.deadline') || 'Deadline'}
                     inputProps={{ shrink: true }}
                   />
                 </FormControl>
@@ -310,14 +313,14 @@ const EditAssignment = ({ ...others }) => {
               {/* Message */}
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel htmlFor="message">Message</InputLabel>
+                  <InputLabel htmlFor="message">{t('assignment.fields.message') || 'Message'}</InputLabel>
                   <OutlinedInput
                     id="message"
                     name="message"
                     value={values.message}
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    label="Message"
+                    label={t('assignment.fields.message') || 'Message'}
                   />
                 </FormControl>
               </Grid>
@@ -350,10 +353,10 @@ const EditAssignment = ({ ...others }) => {
                         <Box sx={{ cursor: 'pointer' }}>
                           <UploadIcon sx={{ fontSize: 48, color: '#2196F3', mb: 1 }} />
                           <Typography variant="h6" sx={{ color: '#1976D2', fontWeight: 600 }}>
-                            📁 Upload Assignment File
+                            {t('assignment.messages.uploadTitle') || '📁 Upload Assignment File'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Click to select file or drag & drop
+                            {t('assignment.messages.uploadSubtitle') || 'Click to select file or drag & drop'}
                           </Typography>
                           {uploadedFile && <Chip label={`📎 ${uploadedFile.name}`} color="primary" variant="outlined" sx={{ mt: 2 }} />}
                         </Box>
@@ -378,7 +381,7 @@ const EditAssignment = ({ ...others }) => {
                         textTransform: 'none'
                       }}
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                     <AnimateButton>
                       <Button
@@ -400,7 +403,7 @@ const EditAssignment = ({ ...others }) => {
                           }
                         }}
                       >
-                        {isSubmitting ? 'Saving...' : assignmentId ? 'Update Assignment' : 'Create Assignment'}
+                        {isSubmitting ? t('common.loading') : t('common.save')}
                       </Button>
                     </AnimateButton>
                   </Box>
@@ -622,10 +625,14 @@ const EditAssignment = ({ ...others }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
               <EditIcon sx={{ mr: 1, color: user?.type === 'STUDENT' ? '#4CAF50' : '#FF9800' }} />
               <Typography variant="h6" sx={{ color: user?.type === 'STUDENT' ? '#2E7D32' : '#F57C00', fontWeight: 600 }}>
-                📋 {user?.type === 'STUDENT' ? 'My Submissions & Teacher Feedback' : 'All Student Submissions'}
+                {user?.type === 'STUDENT'
+                  ? t('assignment.messages.submissionsTitle.student') || '📋 My Submissions & Teacher Feedback'
+                  : t('assignment.messages.submissionsTitle.teacher') || '📋 All Student Submissions'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                {user?.type === 'STUDENT' ? "View your submitted work and teacher's comments" : 'Review and grade student submissions'}
+                {user?.type === 'STUDENT'
+                  ? t('assignment.messages.submissionsSubtitle.student') || "View your submitted work and teacher's comments"
+                  : t('assignment.messages.submissionsSubtitle.teacher') || 'Review and grade student submissions'}
               </Typography>
             </Box>
 
@@ -639,13 +646,20 @@ const EditAssignment = ({ ...others }) => {
               <Table>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    {user?.type !== 'STUDENT' && <TableCell sx={{ fontWeight: 600 }}>👤 Student ID</TableCell>}
-                    <TableCell sx={{ fontWeight: 600 }}>📄 Submitted File</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>📅 Submission Date</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>👁️ Download</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>⭐ Status</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>💬 {user?.type === 'STUDENT' ? "Teacher's Feedback" : 'Comment & Grade'}</TableCell>
-                    {user?.type !== 'STUDENT' && <TableCell sx={{ fontWeight: 600 }}>🔧 Actions</TableCell>}
+                    {user?.type !== 'STUDENT' && (
+                      <TableCell sx={{ fontWeight: 600 }}>{t('assignment.messages.table.studentId') || '👤 Student ID'}</TableCell>
+                    )}
+                    <TableCell sx={{ fontWeight: 600 }}>{t('assignment.messages.table.submittedFile') || '📄 Submitted File'}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{t('assignment.messages.table.submissionDate') || '📅 Submission Date'}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{t('assignment.messages.table.download') || '👁️ Download'}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{t('assignment.messages.table.status') || '⭐ Status'}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {t('assignment.messages.table.feedback') ||
+                        (user?.type === 'STUDENT' ? "💬 Teacher's Feedback" : '💬 Comment & Grade')}
+                    </TableCell>
+                    {user?.type !== 'STUDENT' && (
+                      <TableCell sx={{ fontWeight: 600 }}>{t('assignment.messages.table.actions') || '🔧 Actions'}</TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -675,7 +689,7 @@ const EditAssignment = ({ ...others }) => {
                       {/* Submission Date */}
                       <TableCell>
                         <Typography variant="body2" color="text.secondary">
-                          {sub.submissionDate ? new Date(sub.submissionDate).toLocaleDateString() : 'N/A'}
+                          {sub.submissionDate ? new Date(sub.submissionDate).toLocaleDateString() : t('assignment.messages.na') || 'N/A'}
                         </Typography>
                       </TableCell>
 
@@ -713,14 +727,14 @@ const EditAssignment = ({ ...others }) => {
                             }
                           }}
                         >
-                          Download
+                          {t('assignment.messages.download') || 'Download'}
                         </Button>
                       </TableCell>
 
                       {/* Status */}
                       <TableCell>
                         <Chip
-                          label={sub.status || 'Pending'}
+                          label={sub.status || t('assignment.messages.pending') || 'Pending'}
                           size="small"
                           color={sub.status === 'accepted' ? 'success' : sub.status === 'rejected' ? 'error' : 'default'}
                           variant="outlined"
@@ -733,7 +747,7 @@ const EditAssignment = ({ ...others }) => {
                           /* Student view - Read-only teacher feedback */
                           <Box>
                             <Typography variant="body2" color="text.secondary">
-                              {sub.message || 'No feedback yet'}
+                              {sub.message || t('assignment.messages.noFeedbackYet') || 'No feedback yet'}
                             </Typography>
                           </Box>
                         ) : (
@@ -743,7 +757,7 @@ const EditAssignment = ({ ...others }) => {
                               size="small"
                               variant="outlined"
                               value={sub.message || ''}
-                              placeholder="Enter feedback"
+                              placeholder={t('assignment.messages.enterFeedback') || 'Enter feedback'}
                               onChange={(e) => {
                                 const updated = [...submissions];
                                 updated[idx].message = e.target.value;
@@ -775,7 +789,7 @@ const EditAssignment = ({ ...others }) => {
                                 minWidth: '70px'
                               }}
                             >
-                              Accept
+                              {t('assignment.messages.accept') || 'Accept'}
                             </Button>
                             <Button
                               size="small"
@@ -793,7 +807,7 @@ const EditAssignment = ({ ...others }) => {
                                 minWidth: '70px'
                               }}
                             >
-                              Reject
+                              {t('assignment.messages.reject') || 'Reject'}
                             </Button>
                             <Button
                               variant="contained"
@@ -818,15 +832,15 @@ const EditAssignment = ({ ...others }) => {
                                 api
                                   .put(`/api/assignments/submissions/update/${submission.id}`, payload)
                                   .then((res) => {
-                                    toast.success('Submission updated');
+                                    toast.success(t('assignment.messages.toast.submissionUpdated') || 'Submission updated');
                                   })
                                   .catch((err) => {
-                                    toast.error('Failed to update submission');
+                                    toast.error(t('assignment.messages.toast.submissionUpdateFailed') || 'Failed to update submission');
                                     console.error(err);
                                   });
                               }}
                             >
-                              Save
+                              {t('common.save')}
                             </Button>
                             <IconButton
                               color="error"
@@ -839,14 +853,18 @@ const EditAssignment = ({ ...others }) => {
                               }}
                               onClick={async () => {
                                 const submission = submissions[idx];
-                                if (window.confirm('Are you sure you want to delete this submission?')) {
+                                if (
+                                  window.confirm(
+                                    t('assignment.messages.deleteConfirmation') || 'Are you sure you want to delete this submission?'
+                                  )
+                                ) {
                                   try {
                                     await api.delete(`/api/assignments/submissions/delete/${submission.id}`);
-                                    toast.success('Submission deleted');
+                                    toast.success(t('assignment.messages.toast.submissionDeleted') || 'Submission deleted');
                                     const updated = submissions.filter((_, i) => i !== idx);
                                     setSubmissions(updated);
                                   } catch (err) {
-                                    toast.error('Failed to delete submission');
+                                    toast.error(t('assignment.messages.toast.submissionDeleteFailed') || 'Failed to delete submission');
                                     console.error(err);
                                   }
                                 }
@@ -864,8 +882,8 @@ const EditAssignment = ({ ...others }) => {
                       <TableCell colSpan={user?.type === 'STUDENT' ? 5 : 7} sx={{ textAlign: 'center', py: 4 }}>
                         <Typography variant="body1" color="text.secondary">
                           {user?.type === 'STUDENT'
-                            ? "You haven't submitted any work for this assignment yet."
-                            : 'No student submissions found for this assignment.'}
+                            ? t('assignment.messages.empty.student') || "You haven't submitted any work for this assignment yet."
+                            : t('assignment.messages.empty.teacher') || 'No student submissions found for this assignment.'}
                         </Typography>
                       </TableCell>
                     </TableRow>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { Autocomplete, Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput, TextField, Stack } from '@mui/material';
@@ -26,7 +27,8 @@ const EditClass = ({ ...others }) => {
     instituteId: ''
   });
 
-  const Title = classId ? 'Edit Class' : 'Add Class';
+  const { t } = useTranslation('edit');
+  const Title = classId ? t('class.title.edit') : t('class.title.add');
   const isEditMode = !!classId;
 
   // Get SCD data from context (schools only)
@@ -102,7 +104,7 @@ const EditClass = ({ ...others }) => {
   };
 
   if (loading) {
-    return <ReusableLoader></ReusableLoader>;
+    return <ReusableLoader message={t('class.messages.loading') || 'Loading...'}></ReusableLoader>;
   }
 
   return (
@@ -113,23 +115,27 @@ const EditClass = ({ ...others }) => {
         validationSchema={Yup.object().shape({
           name: Yup.string()
             .max(255)
-            .required('Name is required')
-            .test('is-unique', 'This class name already exists for the selected school.', function (value) {
-              const { schoolbranchId } = this.parent;
-              if (!value || !schoolbranchId) return true;
+            .required(t('common.required') || 'This field is required')
+            .test(
+              'is-unique',
+              t('class.messages.duplicate') || 'This class name already exists for the selected school.',
+              function (value) {
+                const { schoolbranchId } = this.parent;
+                if (!value || !schoolbranchId) return true;
 
-              const existingClass = allClasses.find(
-                (c) => c.name.toLowerCase() === value.toLowerCase() && c.schoolbranchId === schoolbranchId
-              );
+                const existingClass = allClasses.find(
+                  (c) => c.name.toLowerCase() === value.toLowerCase() && c.schoolbranchId === schoolbranchId
+                );
 
-              if (isEditMode && existingClass && existingClass.id === parseInt(classId, 10)) {
-                return true;
+                if (isEditMode && existingClass && existingClass.id === parseInt(classId, 10)) {
+                  return true;
+                }
+
+                return !existingClass;
               }
-
-              return !existingClass;
-            }),
-          instituteId: Yup.string().required('Institute is required'),
-          schoolbranchId: Yup.string().required('School is required')
+            ),
+          instituteId: Yup.string().required(t('class.messages.instituteRequired') || 'Institute is required'),
+          schoolbranchId: Yup.string().required(t('class.messages.schoolRequired') || 'School is required')
         })}
         onSubmit={handleSubmit}
       >
@@ -139,14 +145,14 @@ const EditClass = ({ ...others }) => {
               {/* Class Name */}
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={Boolean(touched.name && errors.name)}>
-                  <InputLabel htmlFor="class-name-input">Class Name</InputLabel>
+                  <InputLabel htmlFor="class-name-input">{t('class.fields.name') || 'Class Name'}</InputLabel>
                   <OutlinedInput
                     id="class-name-input"
                     name="name"
                     value={values.name}
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    label="Class Name"
+                    label={t('class.fields.name') || 'Class Name'}
                   />
                   {touched.name && errors.name && <FormHelperText error>{errors.name}</FormHelperText>}
                 </FormControl>
@@ -165,7 +171,7 @@ const EditClass = ({ ...others }) => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Institute"
+                      label={t('class.fields.institute') || 'Institute'}
                       error={Boolean(touched.instituteId && errors.instituteId)}
                       helperText={touched.instituteId && errors.instituteId}
                     />
@@ -186,7 +192,7 @@ const EditClass = ({ ...others }) => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="School"
+                      label={t('class.fields.school') || 'School'}
                       error={Boolean(touched.schoolbranchId && errors.schoolbranchId)}
                       helperText={touched.schoolbranchId && errors.schoolbranchId}
                     />
@@ -203,7 +209,7 @@ const EditClass = ({ ...others }) => {
                   </Button>
                 </Stack> */}
                 <BackSaveButton
-                  title={classId ? 'Update' : 'Save'}
+                  title={classId ? t('class.messages.updateLabel') || 'Update' : t('class.messages.saveLabel') || 'Save'}
                   backUrl="/masters/classes"
                   isSubmitting={isSubmitting}
                   // onSaveClick={handleSubmit}

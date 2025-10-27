@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -39,13 +40,7 @@ function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
+    <div role="tabpanel" hidden={value !== index} id={`simple-tabpanel-${index}`} aria-labelledby={`simple-tab-${index}`} {...other}>
       {value === index && (
         <Box sx={{ p: 3, overflowY: 'auto', maxHeight: 'calc(100vh - 150px)' }}>
           <Typography component="div">{children}</Typography>
@@ -87,6 +82,8 @@ const EditUsers = ({ ...others }) => {
     mobile: '',
     email: '',
     address: '',
+    // added dob for the form (ISO yyyy-mm-dd string)
+    dob: '',
     role: null,
     gender: null,
     schoolId: null,
@@ -95,7 +92,8 @@ const EditUsers = ({ ...others }) => {
     allocatedClasses: []
   });
 
-  const Title = userId ? 'Edit Teacher' : 'Add Teacher';
+  const { t } = useTranslation('edit');
+  const Title = userId ? t('teacher.title.edit') : t('teacher.title.add');
 
   // Get SCD data from context instead of API calls
   const { schools = [], classes = [], divisions = [], loading: scdLoading } = useSCDData();
@@ -117,31 +115,44 @@ const EditUsers = ({ ...others }) => {
     }
   }, [userId]);
 
-  const fetchData = async (endpoint, setter) => {
-    try {
-      const pagination = {
-        page: page,
-        size: pageSize,
-        sortBy: 'id',
-        sortDir: 'asc',
-        search: ''
-      };
-      const response = await api.post(endpoint, pagination);
-      setter(response.data.content || []);
-    } catch (error) {
-      console.error(`Failed to fetch ${endpoint}:`, error);
-    }
-  };
+  const fetchData = React.useCallback(
+    async (endpoint, setter) => {
+      try {
+        const pagination = {
+          page: page,
+          size: pageSize,
+          sortBy: 'id',
+          sortDir: 'asc',
+          search: ''
+        };
+        const response = await api.post(endpoint, pagination);
+        setter(response.data.content || []);
+      } catch (error) {
+        console.error(`Failed to fetch ${endpoint}:`, error);
+      }
+    },
+    [page, pageSize]
+  );
 
   useEffect(() => {
     fetchData(`api/roles/getAll/${userDetails.getAccountId()}`, setRoles);
-  }, []);
+  }, [fetchData]);
 
   const fetchTeacherData = async (id) => {
     setLoader(true);
     try {
       const response = await api.get(`api/users/getById?id=${id}`);
       const data = response.data || {};
+      // normalize incoming date to yyyy-mm-dd for the date input
+      const normalizeDateForInput = (val) => {
+        if (!val) return '';
+        const d = new Date(val);
+        if (Number.isNaN(d.getTime())) return '';
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      };
       const normalizedEducations = Array.isArray(data.educations) ? data.educations : data.educations ? [data.educations] : [];
       const normalizedAllocations = Array.isArray(data.allocatedClasses)
         ? data.allocatedClasses
@@ -153,7 +164,12 @@ const EditUsers = ({ ...others }) => {
             })
             .filter(Boolean)
         : [];
-      setTeacherData({ ...data, educations: normalizedEducations, allocatedClasses: normalizedAllocations });
+      setTeacherData({
+        ...data,
+        educations: normalizedEducations,
+        allocatedClasses: normalizedAllocations,
+        dob: normalizeDateForInput(data.dob || data.dob || data.date_of_birth)
+      });
     } catch (error) {
       console.error('Failed to fetch teacher data:', error);
     } finally {
@@ -165,7 +181,13 @@ const EditUsers = ({ ...others }) => {
   }
 
   const handleSubmit = async (values, { setSubmitting }) => {
-    const userData = { ...values, id: teacherData.id, accountId: userDetails.getAccountId() };
+    const userData = {
+      ...values,
+      id: teacherData.id,
+      accountId: userDetails.getAccountId(),
+      dob: values.dob || null,
+      bateOfBirth: values.dob || null
+    };
     try {
       const apiCall = userId ? api.put(`api/users/update`, userData) : api.post(`api/users/save`, userData);
       const response = await apiCall;
@@ -372,7 +394,7 @@ const EditUsers = ({ ...others }) => {
                     options={roles}
                     getOptionLabel={(option) => option.name}
                     onChange={(event, newValue) => {
-                      setFieldValue('role', newValue ? newValue : null);
+                      setFieldValue('role', newValue || null);
                     }}
                     renderInput={(params) => <TextField {...params} label="Role" />}
                   />
@@ -397,10 +419,27 @@ const EditUsers = ({ ...others }) => {
                     options={schools}
                     getOptionLabel={(option) => option.name}
                     onChange={(event, newValue) => {
-                      setFieldValue('schoolId', newValue?.id ? newValue?.id : null);
+                      setFieldValue('schoolId', newValue?.id || null);
                     }}
                     renderInput={(params) => <TextField {...params} label="School" />}
                   />
+                </Grid>
+
+                {/* Date of Birth */}
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <TextField
+                      id="teacher-dob"
+                      name="dob"
+                      label="Date of Birth"
+                      type="date"
+                      value={values.dob || ''}
+                      onChange={(e) => setFieldValue('dob', e.target.value)}
+                      onBlur={handleBlur}
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ max: new Date().toISOString().split('T')[0] }}
+                    />
+                  </FormControl>
                 </Grid>
                 {/* Type Selection */}
                 <Grid item xs={12} sm={6}>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { Autocomplete, Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput, TextField } from '@mui/material';
@@ -67,7 +68,8 @@ const EditStudent = ({ ...others }) => {
     }
   };
 
-  const Title = userId ? 'Edit Student' : 'Add Student';
+  const { t } = useTranslation('edit');
+  const Title = userId ? t('studentParent.title.edit') : t('studentParent.title.add');
 
   useEffect(() => {
     if (userId) {

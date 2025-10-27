@@ -28,6 +28,7 @@ import StudentAttendanceChart from './StudentAttendanceChart';
 import StudentLmsDashboard from './StudentLmsDashboard';
 import { useTranslation } from 'react-i18next'; // <-- ADDED
 
+import TodayBirthdaysCard from '../../dashboard/TodayBirthdaysCard';
 // ==============================|| STUDENT TIMETABLE COMPONENT ||============================== //
 const StudentTimetable = ({ t }) => {
     const [timetable, setTimetable] = useState([]);
@@ -393,15 +394,17 @@ const StudentDashboardV1 = () => {
 
     return (
         <Grid container spacing={3}>
+
             <Grid item xs={12}>
                 <StudentSummaryCard t={t} />
             </Grid>
-            <Grid item xs={12} lg={4}>
-                <StudentTimetable t={t} />
+            <Grid item xs={12} md={6} lg={4}> 
+                <TodayBirthdaysCard />
             </Grid>
-            <Grid item xs={12} md={6} lg={4}>
-                <StudentAttendanceChart studentId={user?.id} />
+<Grid item xs={12} md={6} lg={4}>
+                    <StudentTimetable t={t} />
             </Grid>
+ 
             <Grid item xs={12} md={6} lg={4}>
                 <StudentQuickLinks t={t} />
             </Grid>
@@ -429,7 +432,10 @@ const StudentDashboardV1 = () => {
                     </List>
                 </MainCard>
             </Grid>
-            <Grid item xs={12} md={6}>
+                       <Grid item xs={12} md={6} lg={4}>
+                <StudentAttendanceChart studentId={user?.id} />
+            </Grid>
+            {/* <Grid item xs={12} md={6}>
                 <MainCard title={t('student.upcomingAssignmentsTitle')} sx={{ height: '100%' }}>
                     <List dense>
                         {dashboardData.upcomingAssignments.length > 0 ? (
@@ -448,7 +454,7 @@ const StudentDashboardV1 = () => {
                         )}
                     </List>
                 </MainCard>
-            </Grid>
+            </Grid> */}
             <Grid item xs={12}>
                 <MyDocuments t={t} />
             </Grid>

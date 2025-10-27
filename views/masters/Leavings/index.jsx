@@ -31,7 +31,7 @@ import {
   School as SchoolIcon,
   Person as PersonIcon
 } from '@mui/icons-material';
-
+import { useTranslation } from 'react-i18next'; 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import SecondaryAction from 'ui-component/cards/CardSecondaryAction';
@@ -109,7 +109,7 @@ const LeavingCertificateManagement = () => {
   const [allSelected, setAllSelected] = useState(false);
   const [generationModalOpen, setGenerationModalOpen] = useState(false);
   const [currentGridData, setCurrentGridData] = useState([]); // Track current grid data for Select All
-
+  const { t } = useTranslation("title");
   // Student columns configuration
   const studentColumns = [
     {
@@ -328,7 +328,7 @@ const LeavingCertificateManagement = () => {
       title={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <LeavingCertificateIcon color="primary" />
-          <Typography variant="h3">ID Card Management</Typography>
+          <Typography variant="h3">{t('leavingCertificateManagement')}</Typography>
         </Box>
       }
       secondary={<SecondaryAction title="Manage student and teacher ID cards with professional templates" />}

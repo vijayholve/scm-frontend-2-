@@ -24,23 +24,26 @@ import BackButton from 'layout/MainLayout/Button/BackButton';
 import { toast } from 'react-hot-toast';
 import ReusableLoader from 'ui-component/loader/ReusableLoader';
 
-const defaultActions = ["add", "edit", "view", "delete"];
+const defaultActions = ['add', 'edit', 'view', 'delete'];
+
+import { useTranslation } from 'react-i18next';
 
 const RoleEdit = () => {
+  const { t } = useTranslation('edit');
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState({
     id: null,
-    name: "",
+    name: '',
     permissions: [],
     schoolId: null,
-    schoolName: ""
+    schoolName: ''
   });
   const [entities, setEntities] = useState([]);
   const [schools, setSchools] = useState([]);
   const accountId = userDetails.getAccountId();
-  
+
   // Fetch entities, schools, and role data if editing
   useEffect(() => {
     const fetchData = async () => {
@@ -56,15 +59,13 @@ const RoleEdit = () => {
         setSchools(schoolsRes.data || []);
 
         if (id) {
-          
           const roleRes = await api.get(`api/roles/getById?id=${id}`);
           setRole(roleRes.data);
         }
       } catch (err) {
-        toast.error("Failed to fetch initial data.");
+        toast.error('Failed to fetch initial data.');
         console.error(err);
-      }
-      finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -84,7 +85,7 @@ const RoleEdit = () => {
       if (permIdx === -1) {
         permissions.push({
           id: null,
-          name: entities.find((ent) => ent.name === entityName)?.name || "",
+          name: entities.find((ent) => ent.name === entityName)?.name || '',
           entityName: entityName,
           actions: {
             id: null,
@@ -120,15 +121,15 @@ const RoleEdit = () => {
     const payload = { ...role, accountId: accountId };
     try {
       if (id) {
-        await api.put("api/roles/update", payload);
-        toast.success("Role updated successfully!");
+        await api.put('api/roles/update', payload);
+        toast.success('Role updated successfully!');
       } else {
-        await api.post("api/roles/save", payload);
-        toast.success("Role created successfully!");
+        await api.post('api/roles/save', payload);
+        toast.success('Role created successfully!');
       }
-      navigate("/masters/roles");
+      navigate('/masters/roles');
     } catch (err) {
-      toast.error("Failed to save role.");
+      toast.error('Failed to save role.');
       console.error(err);
     }
   };
@@ -137,24 +138,18 @@ const RoleEdit = () => {
   }
 
   return (
-    <MainCard title={role.id ? "Edit Role" : "Create Role"}>
+    <MainCard title={role.id ? 'Edit Role' : 'Create Role'}>
       <form onSubmit={handleSubmit}>
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12} sm={6}>
-            <TextField
-              label="Role Name"
-              value={role.name}
-              onChange={handleNameChange}
-              fullWidth
-              required
-            />
+            <TextField label="Role Name" value={role.name} onChange={handleNameChange} fullWidth required />
           </Grid>
           <Grid item xs={12} sm={6}>
             <Autocomplete
               disablePortal
               options={schools}
               getOptionLabel={(option) => option.name}
-              value={schools.find(s => s.id === role.schoolId) || null}
+              value={schools.find((s) => s.id === role.schoolId) || null}
               onChange={(event, newValue) => {
                 setRole({ ...role, schoolId: newValue?.id, schoolName: newValue?.name });
               }}
@@ -172,7 +167,7 @@ const RoleEdit = () => {
                 <TableRow>
                   <TableCell>Entity</TableCell>
                   {defaultActions.map((action) => (
-                    <TableCell key={action} align="center" sx={{ textTransform: "capitalize" }}>
+                    <TableCell key={action} align="center" sx={{ textTransform: 'capitalize' }}>
                       {action}
                     </TableCell>
                   ))}
@@ -197,14 +192,13 @@ const RoleEdit = () => {
             </Table>
           </TableContainer>
         </Box>
-        <Box mt={3} display="flex" gap={2}>
-        
-        </Box>  <Button type="submit" variant="contained" color="primary">
-            {role.id ? "Update" : "Create"}
-          </Button>
-          <Grid container spacing={gridSpacing}>
-            <BackButton BackUrl={"/masters/roles"}/> 
-          </Grid>
+        <Box mt={3} display="flex" gap={2}></Box>{' '}
+        <Button type="submit" variant="contained" color="primary">
+          {role.id ? 'Update' : 'Create'}
+        </Button>
+        <Grid container spacing={gridSpacing}>
+          <BackButton BackUrl={'/masters/roles'} />
+        </Grid>
       </form>
     </MainCard>
   );

@@ -30,7 +30,8 @@ import ReusableLoader from 'ui-component/loader/ReusableLoader';
 import { useTranslation } from 'react-i18next'; // <-- ADDED
 const FeeDashboard = () => {
   const { t } = useTranslation('dashboard'); // <-- ADDED HOOK
-  const navigate = useNavigate(); 
+  const { tTitle } = useTranslation('title');
+  const navigate = useNavigate();
   const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
   const [divisions, setDivisions] = useState([]);

@@ -12,6 +12,7 @@ import { useSelector } from 'react-redux';
 import { Download as DownloadIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import api from '../../../utils/apiService';
 import { useSCDData } from 'contexts/SCDProvider';
+import { useTranslation } from 'react-i18next'; 
 
 // Dummy Data (This data is no longer used, as we'll fetch from the API)
 
@@ -29,6 +30,7 @@ const columns = [
 
 const DocumentList = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation("title");
     const [loading, setLoading] = useState(true);
   
   const accountId = userDetails.getAccountId();
@@ -177,7 +179,7 @@ const DocumentList = () => {
     <Grid container spacing={gridSpacing}>
       <Grid item xs={12}>
         <ReusableDataGrid
-          title="Document Hub"
+          title={t('documentHub')}
           // Use a proper API endpoint to fetch data from the server
           fetchUrl={`/api/documents/getAllBy/${accountId}`}
           isPostRequest={true}

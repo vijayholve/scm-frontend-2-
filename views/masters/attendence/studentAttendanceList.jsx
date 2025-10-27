@@ -24,11 +24,10 @@ import {
 import DownloadIcon from '@mui/icons-material/Download';
 import FilePresentIcon from '@mui/icons-material/CheckCircleOutline';
 import FileAbsentIcon from '@mui/icons-material/HighlightOff';
-
+import { useTranslation } from 'react-i18next';
 // Helper: group API content by attendanceDate (same as before, but cleaned)
 function groupAttendanceByDate(content) {
   const grouped = {}; // { date: { className, divisionName, subjects: { subject: vailable } } }
-
   content.forEach((item) => {
     const date = item.attendanceDate;
     if (!grouped[date]) {
@@ -69,6 +68,7 @@ const StudentAttendanceList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
+  const { t } = useTranslation("title"); // <-- ADDED HOOK
 
   // Fetch raw content so we can compute accurate stats
   useEffect(() => {
@@ -165,7 +165,7 @@ const StudentAttendanceList = () => {
   return (
     <Card>
       <CardHeader
-        title="My Attendance"
+        title={t("myattendance")}
         subheader="Review your subject-wise attendance — clean, compact and exportable"
         action={
           <Box display="flex" alignItems="center" gap={1}>

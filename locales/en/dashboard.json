@@ -29,7 +29,9 @@
     "assignmentPending": "Pending",
     "loadingTimetable": "Error fetching timetable.",
     "loadingAssignment": "Error fetching assignment data.",
-    "yAxisTitle": "Number of Students"
+    "yAxisTitle": "Number of Students",
+    "todayBirthdays": "Today's Birthdays",
+    "noBirthdaysToday": "No birthdays today."
   },
   "student": {
     "todaysTimetable": "Today's Timetable",
@@ -74,7 +76,9 @@
     "absentDaysLabel": "Absent",
     "enrollInCourses": "Enroll in Courses",
     "absentDaysLabel": "Absent",
-    "myCourses": "My Courses"
+    "myCourses": "My Courses",
+    "todayBirthdays": "Today's Birthdays",
+    "noBirthdaysToday": "No birthdays today."
   },
   "common": {
     "allSchools": "All Schools",
@@ -91,6 +95,7 @@
   },
   "studentDashboard": {
     "title": "Student Dashboard - Teacher View",
+    "text2":"View and manage students by class and division.",
     "noAllocatedClasses": "No allocated classes found for this teacher. Please contact administrator.",
     "selectClass": "Select Class",
     "selectDivision": "Select Division",
@@ -105,7 +110,8 @@
     "tabs": {
       "studentList": "Student List",
       "performance": "Performance Overview",
-      "attendance": "Attendance Tracking"
+      "attendance": "Attendance Tracking",
+      "openDashboard":"Open Dashboard"
     },
     "studentList": {
       "noData": "No students found for the selected class and division.",

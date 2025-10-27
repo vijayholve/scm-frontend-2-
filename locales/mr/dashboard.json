@@ -29,7 +29,9 @@
     "assignmentPending": "प्रलंबित",
     "loadingTimetable": "वेळापत्रक मिळविण्यात त्रुटी.",
     "loadingAssignment": "असाइनमेंट डेटा मिळविण्यात त्रुटी.",
-    "yAxisTitle": "विद्यार्थ्यांची संख्या"
+    "yAxisTitle": "विद्यार्थ्यांची संख्या",
+    "todayBirthdays": "आजचा जन्मदिन",
+    "noBirthdaysToday": "आज कोई जन्मदिन नहीं है।"
   },
   "student": {
     "todaysTimetable": "आजचे वेळापत्रक",
@@ -75,7 +77,9 @@
     "presentDaysLabel": "उपस्थित",
     "absentDaysLabel": "गैरहजर",
     "enrollInCourses": "अभ्यासक्रमांमध्ये नोंदणी करा",
-    "myCourses": "माझे अभ्यासक्रम"
+    "myCourses": "माझे अभ्यासक्रम",
+    "todayBirthdays": "आजचा जन्मदिन",
+    "noBirthdaysToday": "आज कोई जन्मदिन नहीं है।"
   },
   "common": {
     "allSchools": "सर्व शाळा",
@@ -92,6 +96,7 @@
   },
   "studentDashboard": {
     "title": "विद्यार्थी डॅशबोर्ड - शिक्षक दृश्य",
+    "text2":"कक्षा आणि विभागाद्वारे विद्यार्थी पहा आणि व्यवस्थापित करा.",
     "noAllocatedClasses": "या शिक्षकासाठी कोणतीही वर्ग नियुक्त नाही. कृपया प्रशासकाशी संपर्क करा.",
     "selectClass": "वर्ग निवडा",
     "selectDivision": "विभाग निवडा", 
@@ -107,7 +112,8 @@
     "tabs": {
       "studentList": "विद्यार्थी सूची",
       "performance": "कामगिरी आढावा",
-      "attendance": "हजेरी ट्रॅकिंग"
+      "attendance": "हजेरी ट्रॅकिंग",
+      "openDashboard":"डॅशबोर्ड उघडा"
     },
     "studentList": {
       "noData": "निवडलेल्या वर्ग व विभागासाठी कोणतेही विद्यार्थी सापडले नाहीत.",

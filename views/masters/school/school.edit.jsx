@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput, Select, MenuItem
-} from '@mui/material';
+import { Box, Button, FormControl, FormHelperText, Grid, InputLabel, OutlinedInput, Select, MenuItem } from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 
 import MainCard from 'ui-component/cards/MainCard';
 import AnimateButton from 'ui-component/extended/AnimateButton';
-import api, { userDetails } from "../../../utils/apiService";
+import api, { userDetails } from '../../../utils/apiService';
 import { gridSpacing } from 'store/constant';
 import BackButton from 'layout/MainLayout/Button/BackButton';
 import SaveButton from 'layout/MainLayout/Button/SaveButton';
@@ -41,26 +40,30 @@ const EditSchool = ({ ...others }) => {
   // State for the list of institutes to populate the dropdown
   const [institutes, setInstitutes] = useState([]);
 
-  const Title = schoolId ? 'Edit School' : 'Add School';
+  const { t } = useTranslation('edit');
+  const Title = schoolId ? t('school.title.edit') : t('school.title.add');
 
   // Fetch the list of institutes on component mount
   useEffect(() => {
     // This function now uses POST with a body, as implied by the user's feedback.
     // It requests a large number of items to populate the dropdown without actual pagination.
     const fetchInstitutes = () => {
-      api.post(`api/institutes/getAll/${userDetails.getAccountId()}`, {
-        page: 0,
-        size: 1000, // Fetch a large number to simulate getting all records for the dropdown
-        sortBy: "id",
-        sortDir: "asc",
-        search: ""
-      }).then(response => {
-        // The backend returns a paginated response, so we use `response.data.content`
-        setInstitutes(response.data.content || []);
-      }).catch(err => {
-        toast.error("Failed to fetch institutes.");
-        console.error("Failed to fetch institutes:", err);
-      });
+      api
+        .post(`api/institutes/getAll/${userDetails.getAccountId()}`, {
+          page: 0,
+          size: 1000, // Fetch a large number to simulate getting all records for the dropdown
+          sortBy: 'id',
+          sortDir: 'asc',
+          search: ''
+        })
+        .then((response) => {
+          // The backend returns a paginated response, so we use `response.data.content`
+          setInstitutes(response.data.content || []);
+        })
+        .catch((err) => {
+          toast.error('Failed to fetch institutes.');
+          console.error('Failed to fetch institutes:', err);
+        });
     };
     fetchInstitutes();
   }, []);
@@ -78,8 +81,7 @@ const EditSchool = ({ ...others }) => {
         } catch (error) {
           toast.error('Failed to fetch school data.');
           console.error('Failed to fetch school data:', error);
-        }
-        finally {
+        } finally {
           setLoading(false);
         }
       };
@@ -99,21 +101,19 @@ const EditSchool = ({ ...others }) => {
     };
 
     try {
-      const apiCall = schoolId
-        ? api.put(`/api/schoolBranches/update`, schoolPayload)
-        : api.post(`/api/schoolBranches/save`, schoolPayload);
+      const apiCall = schoolId ? api.put(`/api/schoolBranches/update`, schoolPayload) : api.post(`/api/schoolBranches/save`, schoolPayload);
 
       await apiCall;
 
       setSubmitting(false);
-      toast.success(schoolId ? "School updated successfully!" : "School created successfully!", {
+      toast.success(schoolId ? 'School updated successfully!' : 'School created successfully!', {
         autoClose: 1000,
         onClose: () => navigate('/masters/schools')
       });
     } catch (error) {
-      toast.error("An error occurred while saving the school. Please try again.");
+      toast.error('An error occurred while saving the school. Please try again.');
       setSubmitting(false);
-      console.error("Failed to save school data:", error);
+      console.error('Failed to save school data:', error);
     }
   };
   if (loading) {
@@ -142,10 +142,7 @@ const EditSchool = ({ ...others }) => {
           telephoneNumber: Yup.string()
             .matches(/^[0-9]\d{2,4}-\d{6,8}$/, 'Enter a valid telephone number (e.g., 020-12345678)')
             .required('Telephone Number is required'),
-          email: Yup.string()
-            .email('Must be a valid email')
-            .max(255)
-            .required('Email is required'),
+          email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
           code: Yup.string().max(50).required('School Code is required')
         })}
         onSubmit={handleSubmit}
@@ -181,7 +178,9 @@ const EditSchool = ({ ...others }) => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                   >
-                    <MenuItem value="" disabled><em>Select an Institute</em></MenuItem>
+                    <MenuItem value="" disabled>
+                      <em>Select an Institute</em>
+                    </MenuItem>
                     {institutes.map((institute) => (
                       <MenuItem key={institute.id} value={institute.id}>
                         {institute.name}
@@ -227,14 +226,7 @@ const EditSchool = ({ ...others }) => {
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={Boolean(touched.city && errors.city)}>
                   <InputLabel htmlFor="city">City</InputLabel>
-                  <OutlinedInput
-                    id="city"
-                    name="city"
-                    value={values.city}
-                    label="City"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                  />
+                  <OutlinedInput id="city" name="city" value={values.city} label="City" onBlur={handleBlur} onChange={handleChange} />
                   {touched.city && errors.city && <FormHelperText error>{errors.city}</FormHelperText>}
                 </FormControl>
               </Grid>
@@ -243,14 +235,7 @@ const EditSchool = ({ ...others }) => {
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={Boolean(touched.state && errors.state)}>
                   <InputLabel htmlFor="state">State</InputLabel>
-                  <OutlinedInput
-                    id="state"
-                    name="state"
-                    value={values.state}
-                    label="State"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                  />
+                  <OutlinedInput id="state" name="state" value={values.state} label="State" onBlur={handleBlur} onChange={handleChange} />
                   {touched.state && errors.state && <FormHelperText error>{errors.state}</FormHelperText>}
                 </FormControl>
               </Grid>
@@ -339,15 +324,15 @@ const EditSchool = ({ ...others }) => {
               {/* Submit Button */}
               <Grid item xs={12}>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-                      <BackButton backUrl="/masters/institutes" />
-                      <SaveButton
-                        title={schoolId ? "Update":"Save"}
-                        isSubmitting={isSubmitting}
-                        // onClick={handleSubmit} // Pass Formik's handleSubmit
-                        disabled={isSubmitting} // Disable if no file selected
-                      />
-                    </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                    <BackButton backUrl="/masters/institutes" />
+                    <SaveButton
+                      title={schoolId ? 'Update' : 'Save'}
+                      isSubmitting={isSubmitting}
+                      // onClick={handleSubmit} // Pass Formik's handleSubmit
+                      disabled={isSubmitting} // Disable if no file selected
+                    />
+                  </Box>
                 </Box>
               </Grid>
             </Grid>

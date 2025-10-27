@@ -8,6 +8,7 @@ import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next'; 
 
 const columnsConfig = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -18,6 +19,7 @@ const columnsConfig = [
 ];
 
 const Teachers = () => {
+  const { t } = useTranslation('title');
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
   
@@ -50,7 +52,7 @@ const Teachers = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid
-          title={"Teachers"}
+          title={t('teachers')}
           // viewScreenIs={true}
             fetchUrl={`/api/users/getAllBy/${accountId}?type=${userTypeForApi}`}
             isPostRequest={true}

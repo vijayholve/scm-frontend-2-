@@ -26,11 +26,27 @@ apiClient.interceptors.request.use(
     const authData = getAuthData();
     const token = authData?.accessToken;
     const userId = authData?.data?.id;
+    const username = authData?.data?.userName;
+    console.log('Request made by user:', username);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
+// pif post api call then created by and updated by
+    if (userId) {
+      if (config.method === 'POST') {
+        config.data = {
+          ...config.data,
+          createdBy: userId,
+          updatedBy: userId
+        };
+      } else if (config.method === 'put' || config.method === 'patch') {
+        config.data = {
+          ...config.data, 
+          updatedBy: username  
+        };
+      }
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -73,7 +89,32 @@ export const userDetails = {
   getUserType: () => getAuthData()?.data?.type || 'GUEST',
   isLoggedIn: () => !!getAuthData()?.accessToken
 };
+export const getTodayBirthdays = async () => {
+  const accountId = userDetails.getAccountId();
+  const user = userDetails.getUser();
+  const schoolId = user?.schoolId; // Get schoolId from logged-in user
 
+  if (!accountId) {
+    console.error('Account ID not available for fetching birthdays.');
+    return [];
+  }
+  
+  let url = `/api/users/birthdays/today/1`;
+  if (schoolId) {
+      // API endpoint includes schoolId as a query parameter: .../{accountID}?schoolId=1
+      url += `?schoolId=${schoolId}`;
+  }
+  
+  try {
+    const response = await apiClient.get(url);
+    // The API might return an array directly, or an object with a 'content'/'data' field.
+    return response.data?.content || response.data || []; 
+  } catch (error) {
+    console.error("Failed to fetch today's birthdays:", error);
+    // Silent error return empty array for UI consistency
+    return [];
+  }
+};
 // NEW: document helpers
 export const getDocumentsByAccountAndUser = (accountId, userId) => {
   return apiClient.get(`/api/documents/${accountId}/${userId}`);

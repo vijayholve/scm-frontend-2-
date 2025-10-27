@@ -1,4 +1,5 @@
-// src/views/masters/profile/index.jsx
+// vijayholve/scm-frontend-2-/scm-frontend-2--99de9307ae1a364fb21e20fbb2fb04cd318f2064/views/masters/profile/index.jsx
+
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -23,6 +24,8 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Grid from '@mui/material/Grid';
+import Input from '@mui/material/Input'; // <-- NEW: Imported Input for file upload
+import { BottomNavigation, BottomNavigationAction } from '@mui/material'; // <-- Already imported in original file
 
 // assets
 import {
@@ -37,7 +40,8 @@ import {
   IconAward,
   IconHome,
   IconReceipt2,
-  IconUser
+  IconUser,
+  IconEdit // <-- NEW: Imported IconEdit
 } from '@tabler/icons-react';
 
 // project imports
@@ -53,18 +57,36 @@ import StudentFeeDetails from './StudentFeeDetails';
 import StudentExamsList from './StudentExamsList';
 import MyDocuments from './MyDocuments';
 import TeacherDetails from './TeacherDetails';
-import { BottomNavigation, BottomNavigationAction } from '@mui/material';
+import {useTranslation} from "react-i18next";
+
 
 const UserProfile = () => {
   const theme = useTheme();
   const customization = useSelector((state) => state.customization);
   const navigate = useNavigate();
+  const { t } = useTranslation('profile');
+  // NOTE: User data must be set in state to allow dynamic updates (like DOB)
+  const rawUser = userDetails.getUser();
+  const [user, setUser] = useState({
+      ...rawUser,
+      // Mock data for initial testing. Replace with actual data retrieval.
+      // If dob is null/undefined, the "Add Birthday" button will show.
+      dob: rawUser?.dob || '1995-10-21',
+  });
 
-  const user = userDetails.getUser();
   const userRole = user?.type?.toUpperCase();
 
   const [activeTab, setActiveTab] = useState('profile');
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
+  
+  // NEW: State for Birthday Modal and Input
+  const [openBirthdayModal, setOpenBirthdayModal] = useState(false);
+  const [birthdayInput, setBirthdayInput] = useState(user.dob || '');
+  
+  // NEW: State for Picture Modal and Input
+  const [openPictureModal, setOpenPictureModal] = useState(false);
+  const [selectedPictureFile, setSelectedPictureFile] = useState(null);
+
   const [passwords, setPasswords] = useState({
     username: '',
     newPassword: '',
@@ -73,6 +95,42 @@ const UserProfile = () => {
   const [showUsername, setShowUsername] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
+  const fileInputRef = useRef(null);
+
+  // --- New Handlers ---
+
+  const handleEditPicture = () => {
+      setOpenPictureModal(true);
+  };
+  
+  const handlePictureFileChange = (event) => {
+    setSelectedPictureFile(event.target.files[0]);
+  };
+  
+
+
+  const handleOpenBirthdayModal = () => {
+      // Set the input field to the current user DOB (formatted for date input: YYYY-MM-DD)
+      setBirthdayInput(user.dob ? new Date(user.dob).toISOString().substring(0, 10) : ''); 
+      setOpenBirthdayModal(true);
+  };
+  
+  const handleSaveBirthday = () => {
+      if (!birthdayInput) {
+          toast.error('Please enter a date.');
+          return;
+      }
+      
+      // TODO: Integrate actual API call here (e.g., PUT /api/users/update) to save the birthday.
+      
+      // Update local user state on success
+      setUser(prev => ({ ...prev, dob: birthdayInput }));
+      toast.success('Birthday saved successfully!');
+      setOpenBirthdayModal(false);
+  };
+  // --- End New Handlers ---
+  
 
   const handleLogout = () => {
     localStorage.removeItem('SCM-AUTH');
@@ -103,7 +161,7 @@ const UserProfile = () => {
       case 'profile':
         return (
           <>
-            <UserDetailsSection user={user} />
+            <UserDetailsSection user={user} onEditBirthday={handleOpenBirthdayModal} /> 
             {userRole === 'STUDENT' && (
               <Box sx={{ mt: 4 }}>
                 <StudentFeeDetails studentId={user.id} />
@@ -118,14 +176,15 @@ const UserProfile = () => {
             <CollaborationSection user={user} />
           </>
         );
-      // case 'id-card':
-      //   return <IDCardDisplay user={user} />;
       case 'my-exams':
-        return userRole === 'STUDENT' ? <StudentExamsList studentId={user.id} /> : <Typography>Not Applicable</Typography>;
+        return userRole === 'STUDENT' ? <StudentExamsList studentId={user.id} /> : 
+        <Typography> 
+          {t('messageExamsNotAvailable')}
+        </Typography>;
       case 'my-documents':
         return <MyDocuments />;
       default:
-        return <Typography>Content not found.</Typography>;
+        return <Typography>{t('messageContentNotFound')}</Typography>;
     }
   };
 
@@ -160,40 +219,35 @@ const UserProfile = () => {
             }
           }}
         >
-          <ProfileHeader user={user} onBack={handleBack} />
+          {/* Passing onEditPicture to ProfileHeader */}
+          <ProfileHeader user={user} onBack={handleBack} onEditPicture={handleEditPicture} /> 
           <Divider sx={{ width: '100%', mb: 3 }} />
           <List component="nav" sx={{ width: '100%' }}>
             <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('profile')}>
               <ListItemIcon>
                 <IconHome stroke={1.5} size="1.3rem" />
               </ListItemIcon>
-              <ListItemText primary={<Typography variant="body1">Profile</Typography>} />
+              <ListItemText primary={<Typography variant="body1">{t('labelProfile')}</Typography>} />
             </ListItemButton>
-            {/* <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('id-card')}>
-              <ListItemIcon>
-                <IconCreditCard stroke={1.5} size="1.3rem" />
-              </ListItemIcon>
-              <ListItemText primary={<Typography variant="body1">ID Card</Typography>} />
-            </ListItemButton> */}
             {userRole === 'STUDENT' && (
               <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('my-exams')}>
                 <ListItemIcon>
                   <IconAward stroke={1.5} size="1.3rem" />
                 </ListItemIcon>
-                <ListItemText primary={<Typography variant="body1">My Exams</Typography>} />
+                <ListItemText primary={<Typography variant="body1">{t('labelMyExams')}</Typography>} />
               </ListItemButton>
             )}
             <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setActiveTab('my-documents')}>
               <ListItemIcon>
                 <IconFileText stroke={1.5} size="1.3rem" />
               </ListItemIcon>
-              <ListItemText primary={<Typography variant="body1">My Documents</Typography>} />
+              <ListItemText primary={<Typography variant="body1">{t('labelmyDocuments')}</Typography>} />
             </ListItemButton>
             <ListItemButton sx={{ borderRadius: `${customization.borderRadius}px`, mb: 1 }} onClick={() => setOpenPasswordModal(true)}>
               <ListItemIcon>
                 <IconLock stroke={1.5} size="1.3rem" />
               </ListItemIcon>
-              <ListItemText primary={<Typography variant="body1">Change Password</Typography>} />
+              <ListItemText primary={<Typography variant="body1">{t('labelChangePassword')}</Typography>} />
             </ListItemButton>
           </List>
           <Divider sx={{ width: '100%', my: 3 }} />
@@ -214,7 +268,7 @@ const UserProfile = () => {
             <ListItemText
               primary={
                 <Typography variant="body1" color="error">
-                  Logout
+                  {t('labelLogout')}
                 </Typography>
               }
             />
@@ -240,7 +294,7 @@ const UserProfile = () => {
           </Paper>
         </Box>
       </Box>
-      {/* Bottom Navigation for Mobile */}
+      {/* Bottom Navigation for Mobile (Unchanged) */}
       <Paper
         sx={{
           position: 'fixed',
@@ -265,26 +319,25 @@ const UserProfile = () => {
             }
           }}
         >
-          <BottomNavigationAction label="Profile" value="profile" icon={<IconUser />} />
-          {/* <BottomNavigationAction label="ID Card" value="id-card" icon={<IconCreditCard />} /> */}
-          {userRole === 'STUDENT' && <BottomNavigationAction label="Exams" value="my-exams" icon={<IconAward />} />}
-          <BottomNavigationAction label="Documents" value="my-documents" icon={<IconFileText />} />
-          <BottomNavigationAction label="Password" value="change-password" icon={<IconLock />} />
-          <BottomNavigationAction label="Logout" value="logout" icon={<IconLogout />} />
+          <BottomNavigationAction label={t('labelProfile')} value="profile" icon={<IconUser />} />
+          {userRole === 'STUDENT' && <BottomNavigationAction label={t('labelExams')} value="my-exams" icon={<IconAward />} />}
+          <BottomNavigationAction label={t('labelDocuments')} value="my-documents" icon={<IconFileText />} />
+          <BottomNavigationAction label={t('labelPassword')} value="change-password" icon={<IconLock />} />
+          <BottomNavigationAction label={t('labelLogout')} value="logout" icon={<IconLogout />} />
         </BottomNavigation>
       </Paper>
 
-      {/* Change Password Modal */}
+      {/* Change Password Modal (Unchanged) */}
       <Dialog open={openPasswordModal} onClose={() => setOpenPasswordModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          <Typography variant="h4">Change Password for {user.userName}</Typography>
+          <Typography variant="h4">{t('labelChangePassword')} {t('labelFor')} {user.userName}</Typography>
         </DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Old Password"
+                label= {t('labelCurrentPassword')}
                 type={showUsername ? 'text' : 'password'}
                 value={passwords.username}
                 onChange={(e) => setPasswords({ ...passwords, username: e.target.value })}
@@ -302,7 +355,7 @@ const UserProfile = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="New Password"
+                label={t('labelNewPassword')}
                 type={showNewPassword ? 'text' : 'password'}
                 value={passwords.newPassword}
                 onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
@@ -320,7 +373,7 @@ const UserProfile = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Confirm New Password"
+                label={t('labelConfirmNewPassword')}
                 type={showConfirmNewPassword ? 'text' : 'password'}
                 value={passwords.confirmNewPassword}
                 onChange={(e) => setPasswords({ ...passwords, confirmNewPassword: e.target.value })}
@@ -338,12 +391,14 @@ const UserProfile = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenPasswordModal(false)}>Cancel</Button>
+          <Button onClick={() => setOpenPasswordModal(false)}>{t('labelCancel')}</Button>
           <Button onClick={handlePasswordChange} variant="contained" color="primary">
-            Save Changes
+            {t('labelSaveChanges')}
           </Button>
         </DialogActions>
       </Dialog>
+      
+   
     </>
   );
 };

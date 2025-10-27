@@ -9,6 +9,7 @@ import ReusableDataGrid from 'ui-component/ReusableDataGrid';
 import { userDetails } from '../../../utils/apiService';
 import api from '../../../utils/apiService';
 import ExamResultCell from './components/ExamResultCell';
+import { useTranslation } from 'react-i18next'; 
 
 // Cell component - fetches current user's percentage & rank for the exam
 
@@ -37,6 +38,7 @@ const columnsConfig = [
 ];
 
 const Exams = () => {
+  const { t } = useTranslation("title");
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
 
@@ -83,7 +85,7 @@ const Exams = () => {
     <Grid container spacing={gridSpacing}>
       <Grid item xs={12}>
         <ReusableDataGrid
-          title="Exams Management"
+          title={t('exams')}
           fetchUrl={`/api/exams/getAllBy/${accountId}`}
           isPostRequest={true}
           columns={columnsConfig}

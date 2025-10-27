@@ -14,7 +14,7 @@ import { setAllStudents, filterStudents } from '../../../store/userSlice';
 import ListGridFilters from '../../../ui-component/ListGridFilters';
 import BulkUploadModal from './BulkUploadModal';
 import { useSCDData } from '../../../contexts/SCDProvider';
-
+import { useTranslation } from 'react-i18next';
 const columnsConfig = [
   { field: 'rollNo', headerName: 'Roll No', width: 90 },
   { field: 'userName', headerName: 'User Name', width: 150, flex: 1 },
@@ -29,6 +29,7 @@ const columnsConfig = [
 
 const Students = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('title');
   const accountId = userDetails.getAccountId();
   // Get SCD data from context instead of API calls
   const { schools = [], classes = [], divisions = [], loading: scdLoading } = useSCDData();
@@ -95,6 +96,7 @@ const Students = () => {
       </Button>
     </Stack>
   );
+  const type = 'STUDENT';
 
   return (
     <>
@@ -102,8 +104,10 @@ const Students = () => {
         <Grid item xs={12}>
           <ReusableDataGrid
             // viewScreenIs={true}
-            title="STUDENTS"
-            fetchUrl={`/api/users/getAllBy/${accountId}?type=${type}}`}
+            title={t('students')}
+
+            fetchUrl={`/api/users/getAllBy/${accountId}?type=${type}`}
+
             isPostRequest={true}
             columns={columnsConfig}
             addActionUrl={'/masters/student/add'}

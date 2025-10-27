@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   TextField,
@@ -31,6 +32,7 @@ const examTypes = ['MIDTERM', 'FINAL', 'QUIZ', 'PRACTICAL', 'ORAL', 'INTERNAL', 
 const CreateExam = () => {
   const navigate = useNavigate();
   const { id: examId } = useParams();
+  const { t } = useTranslation('edit');
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subjects, setSubjects] = useState([]);
@@ -143,7 +145,7 @@ const CreateExam = () => {
 
   if (loading) {
     return (
-      <MainCard title="Loading...">
+      <MainCard title={t('exam.messages.loading') || 'Loading...'}>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
@@ -152,7 +154,7 @@ const CreateExam = () => {
   }
 
   return (
-    <MainCard title={examId ? 'Edit Exam' : 'Create New Exam'}>
+    <MainCard title={examId ? t('exam.title.edit') || 'Edit Exam' : t('exam.title.add') || 'Create New Exam'}>
       <Formik
         enableReinitialize
         initialValues={{
@@ -172,35 +174,35 @@ const CreateExam = () => {
             : [{ subjectId: '', quizId: '', maxMarksSubject: '', passingMarksSubject: '', durationMinutes: '', examDateTime: '' }]
         }}
         validationSchema={Yup.object().shape({
-          schoolId: Yup.string().required('School is required'),
-          classId: Yup.string().required('Class is required'),
-          divisionId: Yup.string().required('Division is required'),
-          examName: Yup.string().required('Exam Name is required'),
-          academicYear: Yup.string().required('Academic Year is required'),
-          examType: Yup.string().required('Exam Type is required'),
-          startDate: Yup.string().required('Start Date is required'),
-          endDate: Yup.string().required('End Date is required'),
+          schoolId: Yup.string().required(t('exam.validation.schoolRequired') || 'School is required'),
+          classId: Yup.string().required(t('exam.validation.classRequired') || 'Class is required'),
+          divisionId: Yup.string().required(t('exam.validation.divisionRequired') || 'Division is required'),
+          examName: Yup.string().required(t('exam.validation.examNameRequired') || 'Exam Name is required'),
+          academicYear: Yup.string().required(t('exam.validation.academicYearRequired') || 'Academic Year is required'),
+          examType: Yup.string().required(t('exam.validation.examTypeRequired') || 'Exam Type is required'),
+          startDate: Yup.string().required(t('exam.validation.startDateRequired') || 'Start Date is required'),
+          endDate: Yup.string().required(t('exam.validation.endDateRequired') || 'End Date is required'),
           examSubjects: Yup.array()
             .of(
               Yup.object().shape({
-                subjectId: Yup.string().required('Subject is required'),
-                quizId: Yup.string().required('Quiz is required'),
+                subjectId: Yup.string().required(t('exam.validation.subjectRequired') || 'Subject is required'),
+                quizId: Yup.string().required(t('exam.validation.quizRequired') || 'Quiz is required'),
                 maxMarksSubject: Yup.number()
-                  .typeError('Max Marks must be a number')
-                  .required('Max Marks is required')
-                  .min(1, 'Must be at least 1'),
+                  .typeError(t('exam.validation.maxMarksNumber') || 'Max Marks must be a number')
+                  .required(t('exam.validation.maxMarksRequired') || 'Max Marks is required')
+                  .min(1, t('exam.validation.minOne') || 'Must be at least 1'),
                 passingMarksSubject: Yup.number()
-                  .typeError('Passing Marks must be a number')
-                  .required('Passing Marks is required')
-                  .min(0, 'Must be at least 0'),
+                  .typeError(t('exam.validation.passingMarksNumber') || 'Passing Marks must be a number')
+                  .required(t('exam.validation.passingMarksRequired') || 'Passing Marks is required')
+                  .min(0, t('exam.validation.minZero') || 'Must be at least 0'),
                 durationMinutes: Yup.number()
-                  .typeError('Duration must be a number')
-                  .required('Duration is required')
-                  .min(1, 'Must be at least 1'),
-                examDateTime: Yup.string().required('Exam Date & Time is required')
+                  .typeError(t('exam.validation.durationNumber') || 'Duration must be a number')
+                  .required(t('exam.validation.durationRequired') || 'Duration is required')
+                  .min(1, t('exam.validation.minOne') || 'Must be at least 1'),
+                examDateTime: Yup.string().required(t('exam.validation.examDateTimeRequired') || 'Exam Date & Time is required')
               })
             )
-            .min(1, 'At least one subject is required')
+            .min(1, t('exam.validation.atLeastOne') || 'At least one subject is required')
         })}
         onSubmit={async (values, { setSubmitting }) => {
           setIsSubmitting(true);
@@ -247,7 +249,7 @@ const CreateExam = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="School"
+                      label={t('exam.fields.school') || 'School'}
                       error={Boolean(touched.schoolId && errors.schoolId)}
                       helperText={touched.schoolId && errors.schoolId}
                     />
@@ -271,7 +273,7 @@ const CreateExam = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Class"
+                      label={t('exam.fields.class') || 'Class'}
                       error={Boolean(touched.classId && errors.classId)}
                       helperText={touched.classId && errors.classId}
                     />
@@ -295,7 +297,7 @@ const CreateExam = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Division"
+                      label={t('exam.fields.division') || 'Division'}
                       error={Boolean(touched.divisionId && errors.divisionId)}
                       helperText={touched.divisionId && errors.divisionId}
                     />
@@ -307,7 +309,7 @@ const CreateExam = () => {
                   fullWidth
                   required
                   name="examName"
-                  label="Exam Name"
+                  label={t('exam.fields.examName') || 'Exam Name'}
                   value={values.examName}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -320,7 +322,7 @@ const CreateExam = () => {
                   fullWidth
                   required
                   name="academicYear"
-                  label="Academic Year"
+                  label={t('exam.fields.academicYear') || 'Academic Year'}
                   value={values.academicYear}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -334,7 +336,7 @@ const CreateExam = () => {
                   required
                   select
                   name="examType"
-                  label="Exam Type"
+                  label={t('exam.fields.examType') || 'Exam Type'}
                   value={values.examType}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -353,7 +355,7 @@ const CreateExam = () => {
                   fullWidth
                   required
                   name="startDate"
-                  label="Start Date"
+                  label={t('exam.fields.startDate') || 'Start Date'}
                   type="datetime-local"
                   value={values.startDate}
                   onChange={handleChange}
@@ -368,7 +370,7 @@ const CreateExam = () => {
                   fullWidth
                   required
                   name="endDate"
-                  label="End Date"
+                  label={t('exam.fields.endDate') || 'End Date'}
                   type="datetime-local"
                   value={values.endDate}
                   onChange={handleChange}
@@ -381,7 +383,7 @@ const CreateExam = () => {
 
               <Grid item xs={12}>
                 <Typography variant="h5" gutterBottom>
-                  Exam Subjects
+                  {t('exam.headings.examSubjects') || 'Exam Subjects'}
                 </Typography>
                 <FieldArray name="examSubjects">
                   {({ push, remove }) => (
@@ -393,7 +395,7 @@ const CreateExam = () => {
                               fullWidth
                               error={Boolean(touched.examSubjects?.[index]?.subjectId && errors.examSubjects?.[index]?.subjectId)}
                             >
-                              <InputLabel>Subject</InputLabel>
+                              <InputLabel>{t('exam.fields.subject') || 'Subject'}</InputLabel>
                               <Select
                                 name={`examSubjects.${index}.subjectId`}
                                 value={subject.subjectId}
@@ -416,7 +418,7 @@ const CreateExam = () => {
                               fullWidth
                               error={Boolean(touched.examSubjects?.[index]?.quizId && errors.examSubjects?.[index]?.quizId)}
                             >
-                              <InputLabel>Quiz</InputLabel>
+                              <InputLabel>{t('exam.fields.quiz') || 'Quiz'}</InputLabel>
                               <Select
                                 name={`examSubjects.${index}.quizId`}
                                 value={subject.quizId}
@@ -438,7 +440,7 @@ const CreateExam = () => {
                             <TextField
                               fullWidth
                               name={`examSubjects.${index}.maxMarksSubject`}
-                              label="Max Marks"
+                              label={t('exam.fields.maxMarks') || 'Max Marks'}
                               type="number"
                               value={subject.maxMarksSubject}
                               onChange={handleChange}
@@ -453,7 +455,7 @@ const CreateExam = () => {
                             <TextField
                               fullWidth
                               name={`examSubjects.${index}.passingMarksSubject`}
-                              label="Passing Marks"
+                              label={t('exam.fields.passingMarks') || 'Passing Marks'}
                               type="number"
                               value={subject.passingMarksSubject}
                               onChange={handleChange}
@@ -470,7 +472,7 @@ const CreateExam = () => {
                             <TextField
                               fullWidth
                               name={`examSubjects.${index}.durationMinutes`}
-                              label="Duration (Mins)"
+                              label={t('exam.fields.duration') || 'Duration (Mins)'}
                               type="number"
                               value={subject.durationMinutes}
                               onChange={handleChange}
@@ -485,7 +487,7 @@ const CreateExam = () => {
                             <TextField
                               fullWidth
                               name={`examSubjects.${index}.examDateTime`}
-                              label="Exam Date & Time"
+                              label={t('exam.fields.examDateTime') || 'Exam Date & Time'}
                               type="datetime-local"
                               value={subject.examDateTime}
                               onChange={handleChange}
@@ -526,7 +528,11 @@ const CreateExam = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                   <BackButton BackUrl="/masters/exams" />
                   <Button color="primary" variant="contained" type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Saving...' : examId ? 'Update Exam' : 'Create Exam'}
+                    {isSubmitting
+                      ? t('common.loading') || 'Saving...'
+                      : examId
+                        ? t('exam.messages.updateLabel') || 'Update Exam'
+                        : t('exam.messages.createLabel') || 'Create Exam'}
                   </Button>
                 </Box>
               </Grid>

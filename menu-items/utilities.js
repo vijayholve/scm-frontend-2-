@@ -251,6 +251,14 @@ const getUtilitiesMenu = (t) => ({
       breadcrumbs: false
     },
     {
+      id: 'IDCARD',
+      title: t('leavingCertificateManagement'),
+      type: 'item',
+      url: '/masters/leaving',
+      icon: icons.IconCreditCard,
+      breadcrumbs: false
+    },
+    {
       id: 'FEE_MANAGEMENT_COLLAPSE',
       title: t('feeManagement'),
       type: 'collapse',
@@ -284,7 +292,7 @@ const getUtilitiesMenu = (t) => ({
       breadcrumbs: false
     },
     {
-      id: 'NOTIFICATION',
+      id: 'DOCUMENT_HUB',
       title: t('notifications'),
       type: 'item',
       url: '/masters/notifications',

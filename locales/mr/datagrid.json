@@ -32,11 +32,55 @@
     "clear": "साफ करा",
     "all": "सर्व"
   },
-  "columnHeader": {
+"columnHeader": {
+    "id": "आयडी",
+    "name": "नाव",
+    "rollNo": "रोल नंबर",
+    "userName": "वापरकर्ता नाव",
+    "firstName": "पहिले नाव",
+    "lastName": "आडनाव",
+    "email": "ईमेल",
+    "mobile": "मोबाईल क्रमांक",
+    "code": "कोड",
+    "address": "पत्ता",
+    "status": "स्थिती",
+    "subjectCode": "विषय कोड",
+
     "school": "शाळा",
+    "schoolName": "शाळेचे नाव",
     "class": "वर्ग",
-    "division": "विभाग"
-  },
+    "className": "वर्गाचे नाव",
+    "division": "विभाग",
+    "divisionName": "विभागाचे नाव",
+    "subject": "विषय",
+    "documentName": "दस्तऐवजाचे नाव",
+    "instituteName": "संस्था",
+    "instituteId": "संस्थेचा आयडी",
+
+    "select": "निवडा",
+    "gender": "लिंग",
+    "actions": "क्रिया",
+    "faxNumber": "फॅक्स क्रमांक",
+    "attendanceDate": "उपस्थितीची तारीख",
+
+    "examName": "परीक्षेचे नाव",
+    "examType": "परीक्षेचा प्रकार",
+    "year": "वर्ष",
+    "totalMark": "एकूण गुण",
+    "showScore": "गुण दाखवा",
+
+    "total": "एकूण",
+    "paid": "भरले",
+    "pending": "प्रलंबित",
+    "feeName": "फीचे नाव",
+    "title": "शीर्षक",
+    "description": "वर्णन",
+    "createdBy": "द्वारे तयार केले",
+    "deadLine": "अंतिम मुदत",
+    "startDate": "सुरू होण्याची तारीख",
+    "startTime": "सुरू होण्याची वेळ",
+    "endTime": "समाप्तीची वेळ"
+},
   "confirm": {
     "deleteItem": "आपण ही वस्तू हटवू इच्छिता याची खात्री आहे?"
   },

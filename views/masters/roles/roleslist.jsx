@@ -6,7 +6,7 @@ import { gridSpacing } from 'store/constant';
 import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import api, { userDetails } from '../../../utils/apiService';
 import MainCard from 'ui-component/cards/MainCard';
-
+import {useTranslation} from 'react-i18next';
 const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'name', headerName: 'Role Name', width: 200, flex: 1 }
@@ -14,12 +14,13 @@ const columns = [
 
 const RolesList = () => {
     const accountId = userDetails.getAccountId();
-    
+    const { t } = useTranslation('title');
+
     return (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12}>
             <ReusableDataGrid
-              title="Manage Roles"
+              title={t('manageRoles')}
               fetchUrl={`/api/roles/getAll/${accountId}`}
               isPostRequest={true}
               columns={columns}

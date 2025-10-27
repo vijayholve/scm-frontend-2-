@@ -9,6 +9,7 @@ import ReusableDataGrid from '../../../ui-component/ReusableDataGrid.jsx';
 import { userDetails } from '../../../utils/apiService';
 import { useSelector } from 'react-redux';
 import { hasPermission } from '../../../utils/permissionUtils';
+import { useTranslation } from 'react-i18next';
 
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -42,6 +43,7 @@ const columns = [
 ];
 
 const Timetables = () => {
+  const { t } = useTranslation('title');
   const navigate = useNavigate();
   const accountId = userDetails.getAccountId();
   const user = useSelector((state) => state.user.user);
@@ -52,7 +54,7 @@ const Timetables = () => {
       <Grid container spacing={gridSpacing}>
         <Grid item xs={12}>
           <ReusableDataGrid 
-             title="TIMETABLES"
+            title={t('timetables')}
             fetchUrl={`/api/timetable/getAllBy/${accountId}`}
             isPostRequest={true}
             columns={columns}

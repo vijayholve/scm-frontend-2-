@@ -44,6 +44,7 @@ import ListGridFiltersContainer from './ListGridFiltersContainer';
 import { useSCDData } from 'contexts/SCDProvider'; // add SCD hook
 import { useTranslation } from 'react-i18next'; // <-- add
 
+
 const ActionWrapper = styled(Box)({
   display: 'flex',
   justifyContent: 'center',
@@ -591,44 +592,149 @@ const ReusableDataGrid = ({
       return {
         ...col,
         valueFormatter: (params) => getNameForId(params.value, schoolNameMap),
-        headerName: col.headerName || t('columnHeader.school') // <-- localized
       };
     }
     // Resolve school/class/division names using SCD data when available
-    if (col.field === 'schoolId') {
-      return {
-        ...col,
-        headerName: col.headerName || t('columnHeader.school'), // <-- localized
-        valueGetter: (params) => {
-          // defensive guards: params may be null during some grid lifecycle phases
-          const idFromParam = params?.value;
-          const row = params?.row || {};
-          const id = idFromParam ?? row.schoolId ?? null;
+    console.log('Processing column:', col.field);
+    // if (col.headerName === 'School' || col.headerName === 'school') {
 
-          if (!id) {
-            return '';
-          }
-          if (schoolNameMap && schoolNameMap[id]) {
-            return schoolNameMap[id];
-          }
-          const school = schools.find((sch) => String(sch.id) === String(id));
-          return school ? school.name : '';
-        },
-        renderCell: (params) => {
-          const text = params?.value ?? '';
-          return (
-            <Typography variant="body2" title={text}>
-              {text}
-            </Typography>
-          );
-        }
-      };
-    }
+    //   col.headerName = t('columnHeader.school'); // <-- localized
+    // }
+    // if(col.headerName === 'Class' || col.headerName === 'class'){
+    //   col.headerName = t('columnHeader.class'); // <-- localized
+    // }
+    // if(col.headerName === 'Division' || col.headerName === 'division'){
+    //   col.headerName = t('columnHeader.division'); // <-- localized
+    // }
+    // if(col.headerName === 'Subject' || col.headerName === 'subject'){
+    //   col.headerName = t('columnHeader.subject'); // <-- localized
+    // }
+    // if(col.headerName === 'Document Name' || col.headerName === 'documentName'){
+    //   col.headerName = t('columnHeader.documentName'); // <-- localized
+    // }
+    // Define a map for quick lookup of header names to their translation keys
+const headerTranslationMap = {
+  // Common Keys (ID, Name, User, Status)
+  'ID': 'columnHeader.id',
+  'id': 'columnHeader.id',
+  'Name': 'columnHeader.name',
+  'name': 'columnHeader.name',
+  'Student Name': 'columnHeader.name', // Assuming 'Student Name' maps to generic 'name' key
+  'userName': 'columnHeader.userName',
+  'User Name': 'columnHeader.userName',
+  'Status': 'columnHeader.status',
+  'status': 'columnHeader.status',
 
+  // User Details / Core Fields
+  'Roll No': 'columnHeader.rollNo',
+  'rollNo': 'columnHeader.rollNo',
+  'First Name': 'columnHeader.firstName',
+  'firstName': 'columnHeader.firstName',
+  'Last Name': 'columnHeader.lastName',
+  'lastName': 'columnHeader.lastName',
+  'Email': 'columnHeader.email',
+  'email': 'columnHeader.email',
+  'Mobile': 'columnHeader.mobile',
+  'mobile': 'columnHeader.mobile',
+  'Mobile Number': 'columnHeader.mobile', // Map 'Mobile Number' to the existing 'mobile' key
+  'mobileNumber': 'columnHeader.mobile',
+  'Address': 'columnHeader.address',
+  'address': 'columnHeader.address',
+  'Code': 'columnHeader.code',
+  'code': 'columnHeader.code',
+  'Fax Number': 'columnHeader.faxNumber',
+  'faxNumber': 'columnHeader.faxNumber',
+  'Gender': 'columnHeader.gender',
+  'gender': 'columnHeader.gender',
+
+  // School/Class/Division/Subject/Institute
+  'School': 'columnHeader.school',
+  'school': 'columnHeader.school',
+  'School Name': 'columnHeader.schoolName',
+  'schoolName': 'columnHeader.schoolName',
+  'Class': 'columnHeader.class',
+  'class': 'columnHeader.class',
+  'Class Name': 'columnHeader.className',
+  'className': 'columnHeader.className',
+  'Division': 'columnHeader.division',
+  'division': 'columnHeader.division',
+  'Division Name': 'columnHeader.divisionName',
+  'divisionName': 'columnHeader.divisionName',
+  'Subject': 'columnHeader.subject',
+  'subject': 'columnHeader.subject',
+  'Subject Code': 'columnHeader.subjectCode',
+  'subjectCode': 'columnHeader.subjectCode',
+  'Institute': 'columnHeader.instituteName',
+  'instituteName': 'columnHeader.instituteName',
+  'Institute Id': 'columnHeader.instituteId',
+  'instituteId': 'columnHeader.instituteId',
+
+  // Documents
+  'Document Name': 'columnHeader.documentName',
+  'documentName': 'columnHeader.documentName',
+
+  // Assignments / Schedules
+  'Created By': 'columnHeader.createdBy',
+  'createdBy': 'columnHeader.createdBy',
+  'Deadline': 'columnHeader.deadLine',
+  'deadLine': 'columnHeader.deadLine',
+  'Start Date': 'columnHeader.startDate',
+  'startDate': 'columnHeader.startDate',
+  'Start Time': 'columnHeader.startTime',
+  'startTime': 'columnHeader.startTime',
+  'End Time': 'columnHeader.endTime',
+  'endTime': 'columnHeader.endTime',
+
+  // Attendance
+  'Attendance Date': 'columnHeader.attendanceDate',
+  'attendanceDate': 'columnHeader.attendanceDate',
+
+  // Exams
+  'Exam Name': 'columnHeader.examName',
+  'examName': 'columnHeader.examName',
+  'Year': 'columnHeader.year',
+  'year': 'columnHeader.year',
+  'Exam Type': 'columnHeader.examType',
+  'examType': 'columnHeader.examType',
+  'Total Mark': 'columnHeader.totalMark',
+  'totalMark': 'columnHeader.totalMark',
+  'Show Score': 'columnHeader.showScore',
+  'showScore': 'columnHeader.showScore',
+
+  // Fees
+  'Total': 'columnHeader.total',
+  'total': 'columnHeader.total',
+  'Paid': 'columnHeader.paid',
+  'paid': 'columnHeader.paid',
+  'Pending': 'columnHeader.pending',
+  'pending': 'columnHeader.pending',
+  'Fee Name': 'columnHeader.feeName',
+  'feeName': 'columnHeader.feeName',
+
+  // Generic Content / UI
+  'Select': 'columnHeader.select',
+  'select': 'columnHeader.select',
+  'Actions': 'columnHeader.actions',
+  'actions': 'columnHeader.actions',
+  'Title': 'columnHeader.title',
+  'title': 'columnHeader.title',
+  'Description': 'columnHeader.description',
+  'description': 'columnHeader.description'
+};
+
+// ... inside the loop where you process the 'col' object ...
+
+const translationKey = headerTranslationMap[col.headerName];
+
+if (translationKey) {
+  col.headerName = t(translationKey); // <-- localized
+}
+
+// ... rest of your column processing logic ...
     if (col.field === 'classId') {
       return {
         ...col,
-        headerName: col.headerName || t('columnHeader.class'), // <-- localized
+        headerName: col.headerName || t('columnHeader.class'), 
         valueGetter: (params) => {
           const idFromParam = params?.value;
           const row = params?.row || {};
@@ -693,7 +799,7 @@ const ReusableDataGrid = ({
     </Grid>
   );
   // Header content to be passed to MainCard's secondary prop
-  const searchPlaceholderText = searchPlaceholder || t('search.placeholder'); // <-- localized placeholder
+  const searchPlaceholderText =  t('search.placeholder'); // <-- localized placeholder
   const headerSearchControls = (
     <HeaderSearchWrapper>
       {showSearch && (
